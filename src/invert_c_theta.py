@@ -5,9 +5,9 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-from create_mesh import fetch_outline, create_mesh
-from helper_functions import get_min_max_coords, plot_bounded_antarctica
-from data_preprocessing import clean_imported_data, get_windowed_velocity_file, create_vertex_only_mesh_for_sparse_data, interpolate_data_onto_vertex_only_mesh
+from src.create_mesh import fetch_outline, create_mesh
+from src.helper_functions import get_min_max_coords, plot_bounded_antarctica
+from src.data_preprocessing import clean_imported_data, get_windowed_velocity_file, create_vertex_only_mesh_for_sparse_data, interpolate_data_onto_vertex_only_mesh
 from firedrake import assemble, Constant, inner, grad, dx
 import icepack.models.friction
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g

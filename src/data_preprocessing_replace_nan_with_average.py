@@ -1,7 +1,7 @@
 import os
 
 # Assuming your function is defined in a module named my_module
-from data_preprocessing import take_average_where_nan
+from src.data_preprocessing import take_average_where_nan
 
 def process_completed_folder(base_folder, total_folders):
     for folder_number in range(1, total_folders+1):

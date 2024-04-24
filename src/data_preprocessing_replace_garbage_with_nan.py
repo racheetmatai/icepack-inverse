@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import firedrake
-from data_preprocessing import clean_imported_data
+from src.data_preprocessing import clean_imported_data
 
 # Assuming your data folder is in the current working directory
 data_folder = 'completed'

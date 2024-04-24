@@ -3,7 +3,7 @@ import numpy as np
 import firedrake
 import os
 import icepack
-from helper_functions import interpolate_2d_array, get_min_max_coords
+from src.helper_functions import interpolate_2d_array, get_min_max_coords
 
 
 def take_average_where_nan(base_folder, current_folder, previous_folder, next_folder, total_folders, file_type = 'vx'):

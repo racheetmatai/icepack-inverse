@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from data_preprocessing import replace_nans_recursive
+from src.data_preprocessing import replace_nans_recursive
 
 # Replace "your_base_folder" with the actual path to your main folder
 # Replace "total_folders" with the total number of folders
