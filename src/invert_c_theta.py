@@ -17,6 +17,7 @@ import joblib
 from scipy.ndimage import gaussian_filter
 from firedrake import *
 from scipy.interpolate import interp1d
+from sklearn.preprocessing import MinMaxScaler
 
 class Invert:
     """Class for solving inverse problems related to Antarctic ice flow.
@@ -302,8 +303,75 @@ class Invert:
         cluster_df_full = pandas.DataFrame(cluster, columns=['invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag'])
         self.cluster_df_full = cluster_df_full
 
-    def compute_C_kMeans(self, filename = 'kmeans_model.joblib', cluster_val = 'avg', cluster_values = None, verbose = False):
+    def classify_regress(self, filename = 'C_6'):
+        """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
+    
+        Args:
+            filename (str, optional): The base filename for the classifier and regressor models. Default is 'C_6'.
+        """
+
+        variable_name = filename.split('_')[0]
         
+        classifier_name = filename+'_classifier.joblib'
+        classifier, meta_classifier = joblib.load(classifier_name)
+
+        input_columns_cl = meta_classifier['input_columns']
+        input_scaler_cl = meta_classifier['input_scaler']
+        output_scaler_cl = meta_classifier['output_scaler']
+ 
+        regressor_name = filename+'_regressor.joblib'
+        regressor, meta_regressor = joblib.load(regressor_name)
+
+        input_columns_reg = meta_regressor['input_columns']
+        input_scaler_reg = meta_regressor['input_scaler']
+        output_scaler_reg = meta_regressor['output_scaler']
+
+        if input_columns_reg != input_columns_cl:
+            raise ValueError("Input columns of classifier and regressor are not the same")
+
+
+        df = self.cluster_df_full[input_columns_cl].copy()
+        df_cl_scaled = input_scaler_cl.transform(df.to_numpy())
+        importance = output_scaler_cl.inverse_transform(classifier.predict(df_cl_scaled).reshape(-1, 1))
+        df['importance'] = importance
+
+        df_reg = df[df['importance'] > 0.5]
+        df_reg_scaled = input_scaler_reg.transform(df_reg[input_columns_reg].to_numpy())
+        #print(df_reg_scaled.shape)
+        variable_values = output_scaler_reg.inverse_transform(regressor.predict(df_reg_scaled).reshape(-1,1))
+
+        # Create an array of zeros with the same length as df
+        df[variable_name] = np.zeros(len(df))
+        
+        # Conditionally assign variable_values where importance > 0.5
+        df.loc[df['importance'] > 0.5, variable_name] = variable_values
+                
+        self.cluster_df_full[['importance', variable_name]] = df[['importance', variable_name]]
+        
+    def compute_C_theta_ML(self, C_name = 'C_6', theta_name = 'theta_6'):
+        """Compute values for the variables C and theta using classification and regression models.
+
+        Args:
+            C_name (str, optional): The base filename for the C classifier and regressor models. Default is 'C_6'.
+            theta_name (str, optional): The base filename for the theta classifier and regressor models. Default is 'theta_6'.
+        """
+        self.classify_regress(C_name)
+        self.classify_regress(theta_name)
+        self.C.dat.data[:] = self.cluster_df_full['C'].to_numpy()
+        self.θ.dat.data[:] = self.cluster_df_full['theta'].to_numpy()
+
+    def load_kMeans(self, filename = 'kmeans_model.joblib', cluster_val = 'avg', cluster_values = None, verbose = False):
+        """Load a pre-trained k-Means clustering model and use it to predict cluster values for the data stored in the object.
+
+        Args:
+            filename (str, optional): The filename for the pre-trained k-Means clustering model. Default is 'kmeans_model.joblib'.
+            cluster_val (str, optional): The method to determine cluster values, either 'avg' (average) or 'median'. Default is 'avg'.
+            cluster_values (list, optional): Precomputed cluster values to use instead of those calculated from the model. Default is None.
+            verbose (bool, optional): If True, print additional information during execution. Default is False.
+    
+        Returns:
+            numpy.ndarray: An array of predicted cluster values for the data.
+        """
         kmeans , loaded_averages_dict = joblib.load(filename)
         # Access the input columns used for clustering
         input_columns = loaded_averages_dict['input_columns']
@@ -331,41 +399,29 @@ class Invert:
         #cluster_values = np.clip(cluster_values, min_threshold, max_threshold)
         print(cluster_values)
         cluster_df['predicted_cluster_value'] = cluster_df['predicted_cluster'].map(lambda x: cluster_values[x])
+        return cluster_df['predicted_cluster_value'].to_numpy()
 
-        self.C.dat.data[:] = cluster_df['predicted_cluster_value'].to_numpy()
+    def compute_C_kMeans(self, filename = 'kmeans_model.joblib', cluster_val = 'avg', cluster_values = None, verbose = False):
+        """Compute values for the variable C using a pre-trained k-Means clustering model.
 
+        Args:
+            filename (str, optional): The filename for the pre-trained k-Means clustering model. Default is 'kmeans_model.joblib'.
+            cluster_val (str, optional): The method to determine cluster values, either 'avg' (average) or 'median'. Default is 'avg'.
+            cluster_values (list, optional): Precomputed cluster values to use instead of those calculated from the model. Default is None.
+            verbose (bool, optional): If True, print additional information during execution. Default is False.
+        """
+        self.C.dat.data[:] = self.load_kMeans(filename, cluster_val, cluster_values, verbose)
 
     def compute_theta_kMeans(self, filename = 'kmeans_model.joblib', cluster_val = 'avg', cluster_values = None, verbose = False):
-        
-        kmeans , loaded_averages_dict = joblib.load(filename)
-        # Access the input columns used for clustering
-        input_columns = loaded_averages_dict['input_columns']
-        if verbose:
-            print("Input columns used for clustering:", input_columns)
-        
-        
-        # Access the averages dictionary
-        average_c_per_cluster = loaded_averages_dict['average_c_per_cluster']
-        std_c_per_cluster = loaded_averages_dict['std_c_per_cluster']
-        median_c_per_cluster = loaded_averages_dict['median_c_per_cluster']
+        """Compute values for the variable theta using a pre-trained k-Means clustering model.
 
-
-        cluster_df = self.cluster_df_full[input_columns].copy()
-        cluster_df['predicted_cluster'] = kmeans.predict(cluster_df)
-        if cluster_values is None:
-            if cluster_val == 'avg':
-                cluster_values = list(average_c_per_cluster.values())
-            else:
-                cluster_values = list(median_c_per_cluster.values())
-
-        if verbose:
-            print("Number of clusters:", len(cluster_values))
-        # Cap or threshold the cluster values
-        #cluster_values = np.clip(cluster_values, min_threshold, max_threshold)
-        print(cluster_values)
-        cluster_df['predicted_cluster_value'] = cluster_df['predicted_cluster'].map(lambda x: cluster_values[x])
-
-        self.θ.dat.data[:] = cluster_df['predicted_cluster_value'].to_numpy()
+        Args:
+            filename (str, optional): The filename for the pre-trained k-Means clustering model. Default is 'kmeans_model.joblib'.
+            cluster_val (str, optional): The method to determine cluster values, either 'avg' (average) or 'median'. Default is 'avg'.
+            cluster_values (list, optional): Precomputed cluster values to use instead of those calculated from the model. Default is None.
+            verbose (bool, optional): If True, print additional information during execution. Default is False.
+        """
+        self.θ.dat.data[:] = self.load_kMeans(filename, cluster_val, cluster_values, verbose)
         
     def import_velocity_data(self, name = None, modified_exists = True):
         """Import velocity data and preprocess.
@@ -464,6 +520,21 @@ class Invert:
         v_interp = firedrake.interpolate(u[1], self.Δ)
         δu, δv = u_interp - self.u_o, v_interp - self.v_o
         return 0.5 / Constant(self.N) * ((δu / self.σ_x)**2 + (δv / self.σ_y)**2) * dx
+
+    def loss_functional_nosigma(self, u):
+        """Compute the loss for optimization.
+
+        Args:
+            u (firedrake.Function): Velocity field.
+
+        Returns:
+            firedrake.Constant: Loss functional.
+        """
+               
+        u_interp = firedrake.interpolate(u[0], self.Δ)
+        v_interp = firedrake.interpolate(u[1], self.Δ)
+        δu, δv = u_interp - self.u_o, v_interp - self.v_o
+        return 0.5 / Constant(self.N) * ((δu)**2 + (δv)**2) * dx
     
     def simulation_theta(self, θ):
         """Simulate ice flow with a given fluidity.
@@ -598,7 +669,7 @@ class Invert:
         L = Constant(7.5e3)
         return 0.5 / self.area * (    ((L / self.Θ_theta)**2 * (C_θ[1]*C_θ[1])) +  ((L / self.Θ_C)**2 * (C_θ[0]*C_θ[0])) ) * dx 
 
-    def invert_C_theta_simultaneously(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, **kwargs):
+    def invert_C_theta_simultaneously(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, nosigma_lossfcn = False, **kwargs):
         """Invert for C and fluidity simultaneously.
 
         Args:
@@ -609,11 +680,15 @@ class Invert:
         Returns:
             None
         """
+        if nosigma_lossfcn:
+            loss_fcn = self.loss_functional_nosigma
+        else:
+            loss_fcn = self.loss_functional
         self.θ = firedrake.Function(self.Q)
         self.C = firedrake.Function(self.Q)
         problem = StatisticsProblem(
             simulation=self.simulation_C_theta,
-            loss_functional=self.loss_functional,
+            loss_functional=loss_fcn,
             regularization=self.regularization_C_theta,
             controls=(self.C , self.θ),)
         estimator = MaximumProbabilityEstimator(
