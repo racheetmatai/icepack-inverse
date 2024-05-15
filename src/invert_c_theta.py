@@ -113,11 +113,20 @@ class Invert:
         self.reg_C_theta = Constant(reg_constant_simultaneous)
         self.θ = firedrake.Function(self.Q)
         self.C = firedrake.Function(self.Q)
+        self.opts = opts
+        self.drichlet_ids = drichlet_ids
+        self.side_ids = side_ids
+        self.create_model_weertman()
 
+        if accumulation_rate_vs_elevation_file is not None:
+            self.set_accumulation_rate(accumulation_rate_vs_elevation_file)
+            
+    def create_model_weertman(self):
         model_weertman = icepack.models.IceStream(friction=self.weertman_friction_with_ramp, viscosity = self.viscosity)
+        opts = self.opts
         if opts is None:
-            opts = {"dirichlet_ids": drichlet_ids,
-                    "side_wall_ids": side_ids,
+            opts = {"dirichlet_ids": self.drichlet_ids,
+                    "side_wall_ids": self.side_ids,
                    "diagnostic_solver_type": "petsc",
                 "diagnostic_solver_parameters": {
                     "snes_type": "newtontr",
@@ -126,10 +135,7 @@ class Invert:
                     "pc_factor_mat_solver_type": "mumps",
                 },} 
         self.solver_weertman = icepack.solvers.FlowSolver(model_weertman, **opts)
-
-        if accumulation_rate_vs_elevation_file is not None:
-            self.set_accumulation_rate(accumulation_rate_vs_elevation_file)
-
+    
     def smooth_h(self):
         """
         smooth h if inversions are failing
@@ -187,6 +193,7 @@ class Invert:
     def plot_u_error(self, u, vmin=0, vmax=50):
         """Plot error in u compared to u_initial."""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         δu = firedrake.interpolate((u - self.u_initial)**2/ (2 * self.σ**2), self.Q)
         colors = firedrake.tripcolor(
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
@@ -198,46 +205,51 @@ class Invert:
     def plot_theta(self, vmin=-10, vmax=5):
         """Plot theta"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             self.θ, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors)
-        plt.title("Theta")
+        plt.title("θ")
         plt.show()
 
     def plot_accumulation(self, vmin=None, vmax=None):
         """Plot accumulation"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             self.a, axes=axes, vmin=vmin, vmax=vmax
         )
-        fig.colorbar(colors)
+        fig.colorbar(colors,)
         plt.title("Accumulation")
         plt.show()
 
     def plot_thickness(self, vmin=None, vmax=None):
         """Plot thickness"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             self.h, axes=axes, vmin=vmin, vmax=vmax
         )
-        fig.colorbar(colors)
+        fig.colorbar(colors, label="meters")
         plt.title("Thickness")
         plt.show()
 
     def plot_surface(self, vmin=None, vmax=None):
         """Plot surface elevation"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             self.s, axes=axes, vmin=vmin, vmax=vmax
         )
-        fig.colorbar(colors)
+        fig.colorbar(colors, label="meters")
         plt.title("surface elevation")
         plt.show()
 
     def plot_C(self, vmin=-2, vmax=2):
         """Plot C"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             self.C, axes=axes, vmin=vmin, vmax=vmax
         )
@@ -250,16 +262,31 @@ class Invert:
         expr = self.C0*firedrake.exp(self.C)
         total_C = firedrake.interpolate(expr, self.Q)
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
             total_C, axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("Basal Friction Coefficient")
+        plt.title("$C_{b}$")
+        fig.colorbar(colors);
+        plt.show()
+
+    def plot_A(self, vmin=None, vmax=None):
+        """Plot A0*exp(θ)"""
+        expr = self.A0*firedrake.exp(self.θ)
+        A = firedrake.interpolate(expr, self.Q)
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            A, axes=axes, vmin=vmin, vmax=vmax
+        )
+        plt.title("$A$")
         fig.colorbar(colors);
         plt.show()
 
     def plot_streamline_u(self, u, resolution = 2500):
         """Plot u streamlines"""
         fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
         kwargs = {"resolution": resolution}
         streamlines = firedrake.streamplot(u, axes=axes, **kwargs)
         fig.colorbar(streamlines, label="meters/year");
@@ -269,6 +296,7 @@ class Invert:
         """Compute the friction coefficient field (C)."""
         expr = ρ_I * g * firedrake.sqrt(inner(grad(self.s), grad(self.s))) / (firedrake.sqrt(inner(grad(self.u_initial), grad(self.u_initial))) ** (1/self.m))
         self.C0 = firedrake.interpolate(expr, self.Q)
+        self.create_model_weertman()
 
     def cell_areas(self, mesh):
         area = Function(self.Q)
@@ -286,12 +314,15 @@ class Invert:
         C0_clipped = np.clip(self.C0.dat.data, percentiles[0], percentiles[1])
         # Assign clipped values back to the function
         self.C0.dat.data[:] = C0_clipped
+        self.create_model_weertman()
 
     def compute_C(self, constant_val = 1e-3):
         self.C0 = firedrake.Constant(constant_val)
+        self.create_model_weertman()
 
-    def compute_features(self):
-        u = self.simulation()
+    def compute_features(self, u = None):
+        if u is None:
+            u = self.simulation()
         u1, u2 = firedrake.split(u)
         vel_mag = firedrake.sqrt(u1**2 + u2**2)
         grad_u_1 = firedrake.grad(u1)  # Gradient of u1  field
@@ -331,14 +362,17 @@ class Invert:
         s_npy = self.s.dat.data[:]
         b_npy = self.b.dat.data[:]
         
-
+        y, x = firedrake.split(firedrake.interpolate(vel_mag_fcn.function_space().mesh().coordinates, self.V))
+        x_npy = firedrake.interpolate(x,self.Q).dat.data[:]
+        y_npy = firedrake.interpolate(y,self.Q).dat.data[:]
+        
         # Create a new DataFrame with the new data
-        cluster = np.array([inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy]).T
-        cluster_df_full = pandas.DataFrame(cluster, columns=['invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag'])
+        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy]).T
+        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
         self.cluster_df_full = cluster_df_full
 
-    def regress(self, filename = 'model.pkl'):
+    def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3):
         # To load everything back from the file
         with open(filename+'.pkl', "rb") as f:
             loaded_model_bundle = pickle.load(f)
@@ -350,20 +384,34 @@ class Invert:
         loaded_output_scaler = loaded_model_bundle['output_scaler']
         loaded_input_columns = loaded_model_bundle['input_columns']
         loaded_output_columns = loaded_model_bundle['output_columns']
-
-        self.compute_features()
-        
-        
+      
         loaded_model = keras.models.load_model(filename+'.h5')
 
         df = self.cluster_df_full[loaded_input_columns].copy()
         df_scaled = loaded_input_scaler.transform(df.to_numpy())
         prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
-        return prediction
 
-    def compute_C_theta_ML_regress(self,   filename = 'model'):
-        self.C.dat.data[:] = self.regress(filename+'_C')
-        self.θ.dat.data[:] = self.regress(filename+'_theta')
+        # use regressor to compute C only on one half of the domain
+        if half:
+            y_median = self.cluster_df_full['y'].median()
+            new_df = pandas.DataFrame()
+            if flip:
+                new_df['y_binary'] = (self.cluster_df_full['y'] > y_median).astype(int)
+            else:
+                new_df['y_binary'] = (self.cluster_df_full['y'] <= y_median).astype(int)
+            prediction = prediction * new_df['y_binary'].values
+            # use driving stress to predict C0 where we dont use the regressor to compute C
+            if use_driving_stress and filename[-1] == 'C':
+                print('setting C0 using driving stress on one side')
+                self.compute_C_driving_stress()
+                self.C0.dat.data[new_df['y_binary'].values == 1] = const_val 
+        return prediction
+    
+    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False):
+        self.compute_features()
+        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress)
+        self.create_model_weertman()
+        self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress)
 
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
