@@ -407,10 +407,10 @@ class Invert:
                 self.C0.dat.data[new_df['y_binary'].values == 1] = const_val 
         return prediction
     
-    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False):
-        self.compute_features()
+    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None):
+        self.compute_features(u=u)
         self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress)
-        self.create_model_weertman()
+        #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
         self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress)
 
     def classify_regress(self, filename = 'C_6'):
@@ -707,6 +707,19 @@ class Invert:
         velocity=self.u_initial, thickness=self.h, surface=self.s,  log_fluidity=C_θ[1], log_friction=C_θ[0]
         )
 
+    def simulation_explicit_iterations(self, max_iterations = 50, u =None, recompute_C_theta = False, **kwargs):
+        self.opts = {"dirichlet_ids": self.drichlet_ids,
+                    "side_wall_ids": self.side_ids,
+                   "diagnostic_solver_type": "icepack",
+                "diagnostic_solver_parameters": {
+                    "max_iterations":1,},}
+        self.create_model_weertman()
+        u = self.simulation(u)
+        for i in range(max_iterations-1):
+            if recompute_C_theta:
+                self.compute_C_theta_ML_regress(u = u, **kwargs)
+            u =  self.simulation(u)
+        return u
     
     def simulation_prognostic(self, u, δt):
         """Simulate thickness evolution.
