@@ -29,12 +29,19 @@ import keras
 class Invert:
     """Class for solving inverse problems related to Antarctic ice flow.
 
-    Args:
+        read_mesh (bool): Flag indicating whether the mesh should be read from a file or created.
         outline (str): Name of the outline (e.g., 'pine-island').
         mesh_name (str): Name of the mesh.
         δ (float): Mesh resolution.
         temperature (float): Ice temperature.
         m (float): Friction exponent.
+        reg_constant_c (float): Regularization constant for friction coefficient.
+        reg_constant_theta (float): Regularization constant for fluidity.
+        reg_constant_simultaneous (float): Regularization constant for simultaneous inversion.
+        lcar (float): Length of the glacier/ice-sheet's calving front.
+        drichlet_ids (list[int]): IDs of Dirichlet boundary nodes.
+        side_ids (list[int]): IDs of side boundaries.
+        accumulation_rate_vs_elevation_file (str): File containing the relationship between elevation and accumulation rate.
 
     Attributes:
         outline (GeoJSON): GeoJSON outline data.
@@ -70,23 +77,22 @@ class Invert:
         get_theta(): Get the computed fluidity field.
         get_outline(): Get the outline of glacier/ice-sheet.
         get_mesh(): Get the computational mesh.
-    """
-    def __init__(
-        self,
-        read_mesh = False,
-        outline = 'pine-island', 
-        mesh_name = 'pig', 
-        δ = 5e3,
-        temperature = 260,
-        m = 3.0,
-        reg_constant_c = 1.0,
-        reg_constant_theta = 1.0,
-        reg_constant_simultaneous = 1.0,
-        lcar = 5e3,
-        drichlet_ids = [1,2,3,4],
-        side_ids = [],
-        accumulation_rate_vs_elevation_file = 'PIG_elevation_vs_accumulation.csv',
-        opts = None):
+"""
+    def __init__(self,
+                 read_mesh=False,
+                 outline='pine-island',
+                 mesh_name='pig',
+                 δ=5e3,
+                 temperature=260,
+                 m=3.0,
+                 reg_constant_c=1.0,
+                 reg_constant_theta=1.0,
+                 reg_constant_simultaneous=1.0,
+                 lcar=5e3,
+                 drichlet_ids=[1,2,3,4],
+                 side_ids=[],
+                 accumulation_rate_vs_elevation_file='PIG_elevation_vs_accumulation.csv',
+                 opts=None):
         """Initialize the Invert instance."""
         self.outline = fetch_outline(outline)
         if not read_mesh:
@@ -257,6 +263,17 @@ class Invert:
         plt.title("C")
         plt.show()
 
+    def plot_C0(self, vmin=None, vmax=None):
+        """Plot C0"""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            self.C0, axes=axes, vmin=vmin, vmax=vmax
+        )
+        fig.colorbar(colors);
+        plt.title("C")
+        plt.show()
+
     def plot_C_total(self, vmin=None, vmax=None):
         """Plot C0*exp(C)"""
         expr = self.C0*firedrake.exp(self.C)
@@ -320,7 +337,7 @@ class Invert:
         self.C0 = firedrake.Constant(constant_val)
         self.create_model_weertman()
 
-    def compute_features(self, u = None):
+    def compute_features(self, u=None, max_tu1_threshold=1998.30, max_tu2_threshold=555.53, max_tu3_threshold=593.56, max_tu4_threshold=859.16, max_tu5_threshold=1088.52):
         if u is None:
             u = self.simulation()
         u1, u2 = firedrake.split(u)
@@ -370,9 +387,33 @@ class Invert:
         cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy]).T
         cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
+        # Calculate 'tu' columns with conditions to handle zero or negative 'vel_mag'
+        cluster_df_full['tu1'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / cluster_df_full['vel_mag'], max_tu1_threshold)
+        cluster_df_full['tu2'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / (cluster_df_full['vel_mag']**(1/2)), max_tu2_threshold)
+        cluster_df_full['tu3'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / (cluster_df_full['vel_mag']**(1/3)), max_tu3_threshold)
+        cluster_df_full['tu4'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / (cluster_df_full['vel_mag']**(1/4)), max_tu4_threshold)
+        cluster_df_full['tu5'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / (cluster_df_full['vel_mag']**(1/5)), max_tu5_threshold)
+        
+        # Clip the 'tu' columns to their respective maximum thresholds
+        cluster_df_full['tu1'] = np.clip(cluster_df_full['tu1'], None, max_tu1_threshold)
+        cluster_df_full['tu2'] = np.clip(cluster_df_full['tu2'], None, max_tu2_threshold)
+        cluster_df_full['tu3'] = np.clip(cluster_df_full['tu3'], None, max_tu3_threshold)
+        cluster_df_full['tu4'] = np.clip(cluster_df_full['tu4'], None, max_tu4_threshold)
+        cluster_df_full['tu5'] = np.clip(cluster_df_full['tu5'], None, max_tu5_threshold)
+
+        cluster_df_full['1/tu1'] = cluster_df_full['vel_mag'] / cluster_df_full['driving_stress']
+        cluster_df_full['1/tu2'] = (cluster_df_full['vel_mag']**(1/2)) / cluster_df_full['driving_stress']
+        cluster_df_full['1/tu3'] = (cluster_df_full['vel_mag']**(1/3)) / cluster_df_full['driving_stress']
+        cluster_df_full['1/tu4'] = (cluster_df_full['vel_mag']**(1/4)) / cluster_df_full['driving_stress']
+        cluster_df_full['1/tu5'] = (cluster_df_full['vel_mag']**(1/5)) / cluster_df_full['driving_stress']
+        cluster_df_full['1/tu6'] = (cluster_df_full['vel_mag']**(1/6)) / cluster_df_full['driving_stress']
+        cluster_df_full['invariant1_pow2'] = np.abs(cluster_df_full['invariant1'])**(1/2)
+        cluster_df_full['invariant1_pow3'] = np.abs(cluster_df_full['invariant1'])**(1/3)
+        cluster_df_full['invariant2_pow2'] = np.abs(cluster_df_full['invariant2'])**(1/2)
+        cluster_df_full['invariant2_pow3'] = np.abs(cluster_df_full['invariant2'])**(1/3)
         self.cluster_df_full = cluster_df_full
 
-    def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3):
+    def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
         # To load everything back from the file
         with open(filename+'.pkl', "rb") as f:
             loaded_model_bundle = pickle.load(f)
@@ -390,7 +431,7 @@ class Invert:
         df = self.cluster_df_full[loaded_input_columns].copy()
         df_scaled = loaded_input_scaler.transform(df.to_numpy())
         prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
-
+        
         # use regressor to compute C only on one half of the domain
         if half:
             y_median = self.cluster_df_full['y'].median()
@@ -405,13 +446,14 @@ class Invert:
                 print('setting C0 using driving stress on one side')
                 self.compute_C_driving_stress()
                 self.C0.dat.data[new_df['y_binary'].values == 1] = const_val 
+        prediction = np.clip(prediction, bounds[0], bounds[1])
         return prediction
     
-    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None):
+    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [- 0.17, 8.3], θ_bounds =[-8.4, 4.3] ):
         self.compute_features(u=u)
-        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress)
+        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
-        self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress)
+        self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds)
 
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
@@ -1133,3 +1175,4 @@ class Invert:
 
 
     
+
