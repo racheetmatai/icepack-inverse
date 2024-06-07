@@ -196,11 +196,24 @@ class Invert:
         firedrake.triplot(self.get_mesh(), axes=axes, **kwargs)
         axes.legend();
 
+    def plot_grounding_line(self):
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        p_W = ρ_W * g * firedrake.max_value(0, self.h - self.s)
+        p_I = ρ_I * g * self.h
+        ϕ = 1 - p_W / p_I
+        line = firedrake.interpolate(ϕ, self.Q)
+        colors = firedrake.tripcolor(
+            line, axes=axes #,vmax = 1, vmin= -1
+        )
+        fig.colorbar(colors) #, ticks=[-1,0,1])
+        plt.title('Grounding Line')
+
     def plot_u_error(self, u, vmin=0, vmax=50):
         """Plot error in u compared to u_initial."""
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
-        δu = firedrake.interpolate((u - self.u_initial)**2/ (2 * self.σ**2), self.Q)
+        δu = firedrake.interpolate(firedrake.sqrt((u - self.u_initial)**2)/ firedrake.sqrt(self.u_initial**2), self.Q)
         colors = firedrake.tripcolor(
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
@@ -208,7 +221,31 @@ class Invert:
         plt.title("Error in U")
         plt.show()
 
-    def plot_theta(self, vmin=-10, vmax=5):
+    def plot_u_error_percentage(self, u, vmin=0, vmax=10):
+        """Plot % error in u compared to u_initial."""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        δu = firedrake.interpolate(100*(u - self.u_initial)**2/ (self.u_initial**2), self.Q)
+        colors = firedrake.tripcolor(
+            δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
+        )
+        fig.colorbar(colors);
+        plt.title("% Error in U")
+        plt.show()     
+    
+    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None):
+        """Plot error in u compared to u_initial."""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        δu = firedrake.interpolate(firedrake.sqrt((u - self.u_initial)**2), self.Q)
+        colors = firedrake.tripcolor(
+            δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
+        )
+        fig.colorbar(colors);
+        plt.title("Error in U")
+        plt.show()
+
+    def plot_theta(self, vmin=None, vmax=None):
         """Plot theta"""
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
@@ -252,7 +289,7 @@ class Invert:
         plt.title("surface elevation")
         plt.show()
 
-    def plot_C(self, vmin=-2, vmax=2):
+    def plot_C(self, vmin=None, vmax=None):
         """Plot C"""
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
@@ -309,20 +346,52 @@ class Invert:
         fig.colorbar(streamlines, label="meters/year");
         plt.title("Surface velocity streamlines")
 
+    def plot_u_initial_mag(self, vmin=None, vmax=None):
+        """Plot magnitude of velocity dataset"""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            self.u_exp_mag, axes=axes, vmin=vmin, vmax=vmax
+        )
+        plt.title("$||V||$ experimental")
+        fig.colorbar(colors);
+        plt.show()
+
+    def plot_u_mag(self, u, vmin=None, vmax=None):
+        """Plot magnitude of velocity """
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            u, axes=axes, vmin=vmin, vmax=vmax
+        )
+        plt.title("$||V||$")
+        fig.colorbar(colors);
+        plt.show()
+
+    def plot_u_sigma_mag(self, vmin=None, vmax=None):
+        """Plot magnitude of σ  dataset"""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            self.σ , axes=axes, vmin=vmin, vmax=vmax
+        )
+        plt.title("$||σ||$ experimental")
+        fig.colorbar(colors);
+        plt.show()
+
     def compute_C_old(self):
         """Compute the friction coefficient field (C)."""
         expr = ρ_I * g * firedrake.sqrt(inner(grad(self.s), grad(self.s))) / (firedrake.sqrt(inner(grad(self.u_initial), grad(self.u_initial))) ** (1/self.m))
         self.C0 = firedrake.interpolate(expr, self.Q)
         self.create_model_weertman()
 
-    def cell_areas(self, mesh):
+    def cell_areas(self):
         area = Function(self.Q)
         area.interpolate(CellSize(self.mesh))
         return area
     
     def compute_C_driving_stress(self):
-        d_areas = self.cell_areas(self.mesh)
-        area = assemble(d_areas*dx)
+        """Compute the friction coefficient field (C) using driving stress."""
         expr = (ρ_I * g * self.h * firedrake.sqrt(inner(grad(self.s), grad(self.s))) / (firedrake.sqrt(inner(self.u_initial, self.u_initial)) ** (1/self.m)))
         self.C0 = icepack.interpolate(expr, self.Q)     
         # Compute percentiles
@@ -334,6 +403,7 @@ class Invert:
         self.create_model_weertman()
 
     def compute_C(self, constant_val = 1e-3):
+        """Use constant value for C exponent."""
         self.C0 = firedrake.Constant(constant_val)
         self.create_model_weertman()
 
@@ -411,6 +481,7 @@ class Invert:
         cluster_df_full['invariant1_pow3'] = np.abs(cluster_df_full['invariant1'])**(1/3)
         cluster_df_full['invariant2_pow2'] = np.abs(cluster_df_full['invariant2'])**(1/2)
         cluster_df_full['invariant2_pow3'] = np.abs(cluster_df_full['invariant2'])**(1/3)
+        cluster_df_full['phi'] = 1 - (ρ_W*np.max((cluster_df_full['h'] - cluster_df_full['s']), 0)/(ρ_I*cluster_df_full['h']))
         self.cluster_df_full = cluster_df_full
 
     def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
@@ -449,7 +520,7 @@ class Invert:
         prediction = np.clip(prediction, bounds[0], bounds[1])
         return prediction
     
-    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [- 0.17, 8.3], θ_bounds =[-8.4, 4.3] ):
+    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111] ):
         self.compute_features(u=u)
         self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
@@ -593,6 +664,9 @@ class Invert:
         self.σ_x = interpolate_data_onto_vertex_only_mesh(self.Δ, self.stdx, self.indices)
         self.σ_y = interpolate_data_onto_vertex_only_mesh(self.Δ, self.stdy, self.indices)
         self.u_initial = icepack.interpolate((self.vx_file, self.vy_file), self.V)
+        self.u_exp_x = icepack.interpolate(self.vx_file, self.Q)
+        self.u_exp_y = icepack.interpolate(self.vy_file, self.Q)
+        self.u_exp_mag = firedrake.interpolate(firedrake.sqrt(self.u_exp_x**2 + self.u_exp_y**2), self.Q)
         if C == 'constant':
             print('C0 is constant:',constant_val)
             self.compute_C(constant_val = constant_val)
@@ -696,6 +770,21 @@ class Invert:
         δu, δv = u_interp - self.u_o, v_interp - self.v_o
         return 0.5 / Constant(self.N) * ((δu)**2 + (δv)**2) * dx
     
+    def loss_functional_percentage(self, u):
+        """Compute the loss for optimization.
+
+        Args:
+            u (firedrake.Function): Velocity field.
+
+        Returns:
+            firedrake.Constant: Loss functional.
+        """
+               
+        u_interp = firedrake.interpolate(u[0], self.Δ)
+        v_interp = firedrake.interpolate(u[1], self.Δ)
+        δu, δv = u_interp - self.u_o, v_interp - self.v_o
+        return 0.5*100 / Constant(self.N) * (firedrake.sqrt((δu)**2 + (δv)**2)/firedrake.sqrt((u_interp)**2 + (v_interp)**2)) * dx
+    
     def simulation_theta(self, θ):
         """Simulate ice flow with a given fluidity.
 
@@ -794,7 +883,7 @@ class Invert:
     
     
     def regularization_theta_grad(self, θ):
-        """Regularization term for fluidity.
+        """Regularization term for fluidity exponent.
 
         Args:
             θ (firedrake.Function): Fluidity field.
@@ -806,7 +895,7 @@ class Invert:
         return 0.5 / self.area * (L / self.reg_theta)**2 * inner(grad(θ), grad(θ)) * dx
 
     def regularization_C(self, C):
-        """Regularization term for friction coefficient.
+        """Regularization term for basal friction coefficient exponent.
 
         Args:
             C (firedrake.Function): Friction coefficient field.
@@ -819,7 +908,7 @@ class Invert:
         return 0.5 / self.area * (L / self.reg_C)**2 * (C*C) * dx
 
     def regularization_theta(self, θ):
-        """Regularization term for fluidity.
+        """Regularization term for fluidity exponent.
 
         Args:
             θ (firedrake.Function): Fluidity field.
@@ -831,7 +920,7 @@ class Invert:
         return 0.5 / self.area * (L / self.reg_theta)**2 * (θ*θ) * dx
 
     def regularization_C_theta(self, C_θ):
-        """Regularization term for fluidity.
+        """Regularization term for basal friction and fluidity exponent.
 
         Args:
             C_θ (firedrake.Function): Friction and Fluidity field.
@@ -843,7 +932,7 @@ class Invert:
         return 0.5 / self.area * (L / self.reg_C_theta)**2 * (  (C_θ[1]*C_θ[1]) +   (C_θ[0]*C_θ[0]) ) * dx 
 
     def regularization_C_theta_grad(self, C_θ):
-        """Regularization term for fluidity.
+        """Regularization term for basal friction and fluidity exponent.
 
         Args:
             C_θ (firedrake.Function): Friction and Fluidity field.
@@ -854,7 +943,7 @@ class Invert:
         L = Constant(7.5e3)
         return 0.5 / self.area * (L / self.reg_C_theta)**2 * (  inner(grad(C_θ[1]),grad(C_θ[1]))+  inner(grad(C_θ[0]),grad(C_θ[0])) ) * dx 
 
-    def invert_C_theta_simultaneously(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, nosigma_lossfcn = False, regularization_grad_fcn= False, **kwargs):
+    def invert_C_theta_simultaneously(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, loss_fcn_type = 'regular', regularization_grad_fcn= False, **kwargs):
         """Invert for C and fluidity simultaneously.
 
         Args:
@@ -865,10 +954,17 @@ class Invert:
         Returns:
             None
         """
-        if nosigma_lossfcn:
+        if loss_fcn_type ==  'nosigma':
+            print("Using loss function without sigma")
             loss_fcn = self.loss_functional_nosigma
-        else:
+        elif loss_fcn_type == 'percentage':
+            print("Using loss function with percentage")
+            loss_fcn = self.loss_functional_percentage
+        elif loss_fcn_type == 'regular':
+            print("Using loss function with sigma")
             loss_fcn = self.loss_functional
+        else:
+            raise ValueError("Invalid loss function type")
 
         if regularization_grad_fcn:
             reg_fcn = self.regularization_C_theta_grad
@@ -1043,6 +1139,7 @@ class Invert:
             pandas.DataFrame: Return DataFrame.
         """
         u1, u2 = firedrake.split(u)
+        C_exp = firedrake.interpolate(self.weertman_friction_with_ramp(velocity = u, thickness = self.h, surface = self.s, log_friction = self.C),self.Q)
         u1_initial, u2_initial = firedrake.split(self.u_initial)
         grad_u_1 = firedrake.grad(u1)  # Gradient of u1  field
         grad_u_2 = firedrake.grad(u2)  # Gradient of u2  field
@@ -1117,9 +1214,12 @@ class Invert:
         gs2_npy = gs2.dat.data[:]
         gb1_npy = gb1.dat.data[:]
         gb2_npy = gb2.dat.data[:]
+
+        C_delta = icepack.interpolate(C_exp, self.Δ)
         
         theta_npy = θ_1.dat.data[:]
         C_npy = C_1.dat.data[:]
+        C_total_npy = C_delta.dat.data[:]
         x = θ_1.function_space().mesh().coordinates.dat.data_ro[:,1]
         y = θ_1.function_space().mesh().coordinates.dat.data_ro[:,0]
         u1 =  icepack.interpolate(u1, self.Δ)
@@ -1142,6 +1242,7 @@ class Invert:
         df = pandas.DataFrame({
             'theta': theta_npy,
             'C':C_npy,
+            'C_total':C_total_npy,
             'x': x,
             'y': y,
             's11': gu1_npy,
