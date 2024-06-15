@@ -91,7 +91,7 @@ class Invert:
                  lcar=5e3,
                  drichlet_ids=[1,2,3,4],
                  side_ids=[],
-                 accumulation_rate_vs_elevation_file='PIG_elevation_vs_accumulation.csv',
+                 accumulation_rate_vs_elevation_file=None,
                  opts=None):
         """Initialize the Invert instance."""
         self.outline = fetch_outline(outline)
@@ -146,7 +146,7 @@ class Invert:
                     "ksp_type": "gmres",
                     "pc_type": "lu",
                     "pc_factor_mat_solver_type": "mumps",
-                    "snes_monitor": None,
+                    #"snes_monitor": None,
                 },} 
         self.solver_weertman = icepack.solvers.FlowSolver(model_weertman, **opts)
     
@@ -687,6 +687,23 @@ class Invert:
         self.σx = icepack.interpolate(self.stdx_file, self.Q)
         self.σy = icepack.interpolate(self.stdy_file, self.Q)
         self.σ = firedrake.interpolate(firedrake.sqrt(self.σx**2 + self.σy**2), self.Q)
+
+    def get_friction_coefficient_with_ramp(self, C, h, s):
+        """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
+
+        Args:
+            C (firedrake.Function): Friction coefficient field.
+            h (firedrake.Function): Thickness field.
+            s (firedrake.Function): Surface field.
+
+        Returns:
+            firedrake.Function: Friction term.
+        """
+        p_W = ρ_W * g * firedrake.max_value(0, h - s)
+        p_I = ρ_I * g * h
+        ϕ = 1 - p_W / p_I
+        friction = self.C0 * ϕ * firedrake.exp(C)
+        return friction
     
     def weertman_friction_with_ramp(self, **kwargs):
         """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
@@ -702,11 +719,8 @@ class Invert:
         s = kwargs["surface"]
         C = kwargs["log_friction"]
     
-        p_W = ρ_W * g * firedrake.max_value(0, h - s)
-        p_I = ρ_I * g * h
-        ϕ = 1 - p_W / p_I
+        friction = self.get_friction_coefficient_with_ramp(C, h, s)
 
-        friction = self.C0 * ϕ * firedrake.exp(C)
         return icepack.models.friction.bed_friction(
             velocity=u,
             friction=friction,
@@ -992,43 +1006,8 @@ class Invert:
                 max_iterations=max_iterations,
                 **kwargs)
         self.C, self.θ = estimator.solve()
-    
-    def invert_theta(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, nosigma_lossfcn = False, regularization_grad_fcn= False, **kwargs):
-        """Invert for fluidity.
 
-        Args:
-            gradient_tolerance (float): Tolerance for the gradient norm.
-            step_tolerance (float): Tolerance for the step size.
-            max_iterations (int): Maximum number of iterations.
-
-        Returns:
-            None
-        """
-        if nosigma_lossfcn:
-            loss_fcn = self.loss_functional_nosigma
-        else:
-            loss_fcn = self.loss_functional
-
-        if regularization_grad_fcn:
-            reg_fcn = self.regularization_theta_grad
-        else:
-            reg_fcn = self.regularization_theta
-        self.θ = firedrake.Function(self.Q)
-        problem = StatisticsProblem(
-            simulation=self.simulation_theta,
-            loss_functional=loss_fcn,
-            regularization=reg_fcn,
-            controls=self.θ,)
-        estimator = MaximumProbabilityEstimator(
-                problem,
-                gradient_tolerance=gradient_tolerance,
-                step_tolerance=step_tolerance,
-                max_iterations=max_iterations,
-                **kwargs
-            )
-        self.θ = estimator.solve()
-
-    def invert_C(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, nosigma_lossfcn = False, regularization_grad_fcn= False, **kwargs):
+    def invert_C(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, loss_fcn_type = 'regular', regularization_grad_fcn= False, **kwargs):
         """Invert for friction coefficient.
 
         Args:
@@ -1039,10 +1018,17 @@ class Invert:
         Returns:
             None
         """
-        if nosigma_lossfcn:
+        if loss_fcn_type ==  'nosigma':
+            print("Using loss function without sigma")
             loss_fcn = self.loss_functional_nosigma
-        else:
+        elif loss_fcn_type == 'percentage':
+            print("Using loss function with percentage")
+            loss_fcn = self.loss_functional_percentage
+        elif loss_fcn_type == 'regular':
+            print("Using loss function with sigma")
             loss_fcn = self.loss_functional
+        else:
+            raise ValueError("Invalid loss function type")
 
         if regularization_grad_fcn:
             reg_fcn = self.regularization_C_grad
@@ -1063,31 +1049,48 @@ class Invert:
             )
         self.C = estimator.solve()    
     
-    def get_C(self):
-        """Get the computed friction coefficient field.
+    def invert_theta(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, loss_fcn_type = 'regular', regularization_grad_fcn= False, **kwargs):
+        """Invert for fluidity.
+
+        Args:
+            gradient_tolerance (float): Tolerance for the gradient norm.
+            step_tolerance (float): Tolerance for the step size.
+            max_iterations (int): Maximum number of iterations.
 
         Returns:
-            firedrake.Function: Friction coefficient field.
+            None
         """
-        return self.C
+        if loss_fcn_type ==  'nosigma':
+            print("Using loss function without sigma")
+            loss_fcn = self.loss_functional_nosigma
+        elif loss_fcn_type == 'percentage':
+            print("Using loss function with percentage")
+            loss_fcn = self.loss_functional_percentage
+        elif loss_fcn_type == 'regular':
+            print("Using loss function with sigma")
+            loss_fcn = self.loss_functional
+        else:
+            raise ValueError("Invalid loss function type")
 
-    def get_theta(self):
-        """Get the computed fluidity exponent field.
-
-        Returns:
-            firedrake.Function: Fluidity exponent coefficient field.
-        """
-        return self.θ
-
-    def set_C(self, C):
-        self.C = C
+        if regularization_grad_fcn:
+            reg_fcn = self.regularization_theta_grad
+        else:
+            reg_fcn = self.regularization_theta
+        self.θ = firedrake.Function(self.Q)
+        problem = StatisticsProblem(
+            simulation=self.simulation_theta,
+            loss_functional=loss_fcn,
+            regularization=reg_fcn,
+            controls=self.θ,)
+        estimator = MaximumProbabilityEstimator(
+                problem,
+                gradient_tolerance=gradient_tolerance,
+                step_tolerance=step_tolerance,
+                max_iterations=max_iterations,
+                **kwargs
+            )
+        self.θ = estimator.solve()
     
-    def set_theta(self, θ):
-        self.θ = θ
-
-    def set_mesh(self, mesh):
-        self.mesh = mesh
-
     def invert_C_theta_alternate(self, gradient_tolerance=1e-100, step_tolerance=1e-100, max_iterations=50, per_variable_iteration = 1, **kwargs):
         self.θ = firedrake.Function(self.Q)
         self.C = firedrake.Function(self.Q)
@@ -1119,7 +1122,31 @@ class Invert:
             )
             self.C = estimator_C.solve()
             self.θ = estimator_theta.solve()
-        
+    
+    def get_C(self):
+        """Get the computed friction coefficient field.
+
+        Returns:
+            firedrake.Function: Friction coefficient field.
+        """
+        return self.C
+
+    def get_theta(self):
+        """Get the computed fluidity exponent field.
+
+        Returns:
+            firedrake.Function: Fluidity exponent coefficient field.
+        """
+        return self.θ
+
+    def set_C(self, C):
+        self.C = C
+    
+    def set_theta(self, θ):
+        self.θ = θ
+
+    def set_mesh(self, mesh):
+        self.mesh = mesh       
     
     def get_outline(self):
         """Get the GeoJSON outline data.
@@ -1147,7 +1174,7 @@ class Invert:
             pandas.DataFrame: Return DataFrame.
         """
         u1, u2 = firedrake.split(u)
-        C_exp = firedrake.interpolate(self.weertman_friction_with_ramp(velocity = u, thickness = self.h, surface = self.s, log_friction = self.C),self.Q)
+        C_exp = firedrake.interpolate(self.get_friction_coefficient_with_ramp(self.C, self.h, self.s),self.Q)
         u1_initial, u2_initial = firedrake.split(self.u_initial)
         grad_u_1 = firedrake.grad(u1)  # Gradient of u1  field
         grad_u_2 = firedrake.grad(u2)  # Gradient of u2  field
