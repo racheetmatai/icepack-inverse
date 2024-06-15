@@ -96,20 +96,25 @@ class Invert:
         """Initialize the Invert instance."""
         self.outline = fetch_outline(outline)
         if not read_mesh:
+            print('Creating mesh')
             create_mesh(outline = self.outline, name= mesh_name, lcar = lcar)
+        print('Reading mesh')
         self.mesh = firedrake.Mesh(mesh_name+'.msh')
         self.area = Constant(assemble(Constant(1.0) * dx(self.mesh)))
+        print('Reading bedmachine data')
         thickness_filename = icepack.datasets.fetch_bedmachine_antarctica()
         thickness_data = xarray.open_dataset(thickness_filename)
         self.thickness = thickness_data["thickness"]
         self.surface = thickness_data["surface"]
         self.bed = thickness_data["bed"]
+        print('Initializing function spaces')
         self.Q = firedrake.FunctionSpace(self.mesh, family="CG", degree=2)
+        self.V = firedrake.VectorFunctionSpace(self.mesh, "CG", 2)
+        print('Initializing fields')
         self.h = icepack.interpolate(self.thickness, self.Q)
         self.h0 = self.h.copy(deepcopy=True)
         self.s = icepack.interpolate(self.surface, self.Q)
         self.b = icepack.interpolate(self.bed, self.Q)
-        self.V = firedrake.VectorFunctionSpace(self.mesh, "CG", 2)
         self.δ = δ
         T = Constant(temperature)
         self.A0 = icepack.rate_factor(T)
@@ -122,9 +127,11 @@ class Invert:
         self.opts = opts
         self.drichlet_ids = drichlet_ids
         self.side_ids = side_ids
+        print('Defining friction law')
         self.create_model_weertman()
 
         if accumulation_rate_vs_elevation_file is not None:
+            print('Setting accumulation rate')
             self.set_accumulation_rate(accumulation_rate_vs_elevation_file)
             
     def create_model_weertman(self):
@@ -139,6 +146,7 @@ class Invert:
                     "ksp_type": "gmres",
                     "pc_type": "lu",
                     "pc_factor_mat_solver_type": "mumps",
+                    "snes_monitor": None,
                 },} 
         self.solver_weertman = icepack.solvers.FlowSolver(model_weertman, **opts)
     

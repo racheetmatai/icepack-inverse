@@ -66,6 +66,7 @@ def check_available_outlines():
     return icepack.datasets.get_glacier_names()
 
 # Example usage:
-outline_data = fetch_outline()
-if outline_data:
-    create_mesh(outline_data)
+if __name__ == "__main__":
+    outline_data = fetch_outline()
+    if outline_data:
+        create_mesh(outline_data)

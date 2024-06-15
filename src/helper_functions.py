@@ -34,7 +34,7 @@ def plot_bounded_antarctica(outline, δ=5e3, *args, **kwargs):
     :return: Tuple of (figure, axes).
     """
     xmin, xmax, ymin, ymax = get_min_max_coords(outline, δ)
-    image_filename = icepack.datasets.fetch_mosaic_of_antarctica()
+    image_filename =  icepack.datasets.fetch_mosaic_of_antarctica()
     with rasterio.open(image_filename, "r") as image_file:
         image_window = rasterio.windows.from_bounds(
             left=xmin,
