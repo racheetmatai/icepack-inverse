@@ -207,14 +207,11 @@ class Invert:
     def plot_grounding_line(self):
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
-        p_W = ρ_W * g * firedrake.max_value(0, self.h - self.s)
-        p_I = ρ_I * g * self.h
-        ϕ = 1 - p_W / p_I
+        ϕ = self.get_phi(self.h, self.s)
         line = firedrake.interpolate(ϕ, self.Q)
         colors = firedrake.tripcolor(
-            line, axes=axes #,vmax = 1, vmin= -1
-        )
-        fig.colorbar(colors) #, ticks=[-1,0,1])
+            line, axes=axes)
+        fig.colorbar(colors, ticks=[-1,0,1])
         plt.title('Grounding Line')
 
     def plot_u_error(self, u, vmin=0, vmax=50):
@@ -321,8 +318,7 @@ class Invert:
 
     def plot_C_total(self, vmin=None, vmax=None):
         """Plot C0*exp(C)"""
-        expr = self.C0*firedrake.exp(self.C)
-        total_C = firedrake.interpolate(expr, self.Q)
+        total_C = firedrake.interpolate(self.get_friction_coefficient_with_ramp(self.C, self.h, self.s),self.Q)
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
@@ -688,6 +684,13 @@ class Invert:
         self.σy = icepack.interpolate(self.stdy_file, self.Q)
         self.σ = firedrake.interpolate(firedrake.sqrt(self.σx**2 + self.σy**2), self.Q)
 
+    def get_phi(self, h, s):
+        p_W = ρ_W * g * firedrake.max_value(0, h - s)
+        p_I = ρ_I * g * h
+        if p_I == 0:
+            return 0
+        return firedrake.max_value((1 - p_W / p_I), 0)
+
     def get_friction_coefficient_with_ramp(self, C, h, s):
         """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
 
@@ -699,9 +702,7 @@ class Invert:
         Returns:
             firedrake.Function: Friction term.
         """
-        p_W = ρ_W * g * firedrake.max_value(0, h - s)
-        p_I = ρ_I * g * h
-        ϕ = 1 - p_W / p_I
+        ϕ = self.get_phi(h, s)
         friction = self.C0 * ϕ * firedrake.exp(C)
         return friction
     
