@@ -204,14 +204,14 @@ class Invert:
         firedrake.triplot(self.get_mesh(), axes=axes, **kwargs)
         axes.legend();
 
-    def plot_grounding_line(self):
+    def plot_grounding_line(self, ticks = [-1,0,1]):
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
         ϕ = self.get_phi(self.h, self.s)
         line = firedrake.interpolate(ϕ, self.Q)
         colors = firedrake.tripcolor(
             line, axes=axes)
-        fig.colorbar(colors, ticks=[-1,0,1])
+        fig.colorbar(colors, ticks=ticks)
         plt.title('Grounding Line')
 
     def plot_u_error(self, u, vmin=0, vmax=50):
@@ -452,14 +452,17 @@ class Invert:
         h_npy = self.h.dat.data[:]
         s_npy = self.s.dat.data[:]
         b_npy = self.b.dat.data[:]
+
+        C_npy = self.C.dat.data[:]
+        theta_npy = self.θ.dat.data[:]
         
-        y, x = firedrake.split(firedrake.interpolate(vel_mag_fcn.function_space().mesh().coordinates, self.V))
+        x, y = firedrake.split(firedrake.interpolate(vel_mag_fcn.function_space().mesh().coordinates, self.V))
         x_npy = firedrake.interpolate(x,self.Q).dat.data[:]
         y_npy = firedrake.interpolate(y,self.Q).dat.data[:]
         
         # Create a new DataFrame with the new data
-        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy]).T
-        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag'])
+        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy]).T
+        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
         # Calculate 'tu' columns with conditions to handle zero or negative 'vel_mag'
         cluster_df_full['tu1'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / cluster_df_full['vel_mag'], max_tu1_threshold)
@@ -485,7 +488,14 @@ class Invert:
         cluster_df_full['invariant1_pow3'] = np.abs(cluster_df_full['invariant1'])**(1/3)
         cluster_df_full['invariant2_pow2'] = np.abs(cluster_df_full['invariant2'])**(1/2)
         cluster_df_full['invariant2_pow3'] = np.abs(cluster_df_full['invariant2'])**(1/3)
-        cluster_df_full['phi'] = 1 - (ρ_W*np.max((cluster_df_full['h'] - cluster_df_full['s']), 0)/(ρ_I*cluster_df_full['h']))
+        def get_phi(h, s):
+            p_W = ρ_W * g * np.maximum(0, h - s)
+            p_I = ρ_I * g * h
+            if p_I == 0:
+                return 0
+            return np.maximum((1 - p_W / p_I), 0)
+        cluster_df_full['phi'] = cluster_df_full.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
+        cluster_df_full['C_total'] = self.C0_constant_val*np.exp(cluster_df_full['C'])*cluster_df_full['phi']
         self.cluster_df_full = cluster_df_full
 
     def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
@@ -529,6 +539,10 @@ class Invert:
         self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
         self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds)
+    
+    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111] ):
+        self.compute_features(u=u)
+        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
 
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
@@ -671,6 +685,7 @@ class Invert:
         self.u_exp_x = icepack.interpolate(self.vx_file, self.Q)
         self.u_exp_y = icepack.interpolate(self.vy_file, self.Q)
         self.u_exp_mag = firedrake.interpolate(firedrake.sqrt(self.u_exp_x**2 + self.u_exp_y**2), self.Q)
+        self.C0_constant_val = constant_val
         if C == 'constant':
             print('C0 is constant:',constant_val)
             self.compute_C(constant_val = constant_val)
@@ -1175,10 +1190,10 @@ class Invert:
             pandas.DataFrame: Return DataFrame.
         """
         u1, u2 = firedrake.split(u)
-        C_exp = firedrake.interpolate(self.get_friction_coefficient_with_ramp(self.C, self.h, self.s),self.Q)
+        C_exp = firedrake.interpolate(self.get_friction_coefficient_with_ramp(self.C, self.h, self.s), self.Q)
         u1_initial, u2_initial = firedrake.split(self.u_initial)
-        grad_u_1 = firedrake.grad(u1)  # Gradient of u1  field
-        grad_u_2 = firedrake.grad(u2)  # Gradient of u2  field
+        grad_u_1 = firedrake.grad(u1)  # Gradient of u1 field
+        grad_u_2 = firedrake.grad(u2)  # Gradient of u2 field
         grad_h = firedrake.grad(self.h)  # Gradient of ice thickness
         grad_s = firedrake.grad(self.s)  # Gradient of surface
         grad_b = firedrake.grad(self.b)  # Gradient of bed
@@ -1255,15 +1270,15 @@ class Invert:
         
         theta_npy = θ_1.dat.data[:]
         C_npy = C_1.dat.data[:]
-        C_total_npy = C_delta.dat.data[:]
+        C_total_npy = np.clip(C_delta.dat.data[:], 0, None)  # Clip the values to ensure a minimum of 0
         x = θ_1.function_space().mesh().coordinates.dat.data_ro[:,1]
         y = θ_1.function_space().mesh().coordinates.dat.data_ro[:,0]
-        u1 =  icepack.interpolate(u1, self.Δ)
-        u2 =  icepack.interpolate(u2, self.Δ)
+        u1 = icepack.interpolate(u1, self.Δ)
+        u2 = icepack.interpolate(u2, self.Δ)
         u1_npy = u1.dat.data[:]
         u2_npy = u2.dat.data[:]
-        u1_initial =  icepack.interpolate(u1_initial, self.Δ)
-        u2_initial =  icepack.interpolate(u2_initial, self.Δ)
+        u1_initial = icepack.interpolate(u1_initial, self.Δ)
+        u2_initial = icepack.interpolate(u2_initial, self.Δ)
         u1_initial_npy = u1_initial.dat.data[:]
         u2_initial_npy = u2_initial.dat.data[:]
         h_npy = icepack.interpolate(self.h, self.Δ).dat.data[:]
@@ -1274,23 +1289,22 @@ class Invert:
         err_x_npy = err_x.dat.data[:]
         err_y_npy = err_y.dat.data[:]
 
-        
         df = pandas.DataFrame({
             'theta': theta_npy,
-            'C':C_npy,
-            'C_total':C_total_npy,
+            'C': C_npy,
+            'C_total': C_total_npy,
             'x': x,
             'y': y,
             's11': gu1_npy,
             's12': gu2_npy,
             's21': gv1_npy,
             's22': gv2_npy,
-            'grad_h_1':gh1_npy,
-            'grad_h_2':gh2_npy,
-            'grad_s_1':gs1_npy,
-            'grad_s_2':gs2_npy,
-            'grad_b_1':gb1_npy,
-            'grad_b_2':gb2_npy,
+            'grad_h_1': gh1_npy,
+            'grad_h_2': gh2_npy,
+            'grad_s_1': gs1_npy,
+            'grad_s_2': gs2_npy,
+            'grad_b_1': gb1_npy,
+            'grad_b_2': gb2_npy,
             'x_velocity': u1_npy,
             'y_velocity': u2_npy,
             'x_velocity_initial': u1_initial_npy,
@@ -1302,14 +1316,10 @@ class Invert:
             'b': b_npy, 
         })
         df['invariant1'] = df['s11'] + df['s22']
-        # Calculate the second invariant
         df['invariant2'] = 0.5 * (df['s11']**2 + df['s22']**2 - df['s11']*df['s22'] + df['s12']*df['s21'])
         df['mag_h'] = np.sqrt(df['grad_h_1']**2 + df['grad_h_2']**2)
         df['mag_s'] = np.sqrt(df['grad_s_1']**2 + df['grad_s_2']**2)
         df['mag_b'] = np.sqrt(df['grad_b_1']**2 + df['grad_b_2']**2)
         df['total_u_error'] = np.sqrt((((df['x_velocity'] -df['x_velocity_initial'])/df['err_x'])**2) + (((df['y_velocity'] -df['y_velocity_initial'])/df['err_y'])**2))
+        df['vel_mag'] = np.sqrt(df['x_velocity_initial']**2 + df['y_velocity_initial']**2)
         return df
-
-
-    
-
