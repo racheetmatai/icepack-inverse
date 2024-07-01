@@ -124,6 +124,9 @@ class Invert:
         self.reg_C_theta = Constant(reg_constant_simultaneous)
         self.θ = firedrake.Function(self.Q)
         self.C = firedrake.Function(self.Q)
+        self.default_u = None
+        self.inverse_u = None
+        self.ML_u = None
         self.opts = opts
         self.drichlet_ids = drichlet_ids
         self.side_ids = side_ids
@@ -183,6 +186,9 @@ class Invert:
 
     def get_norm(self, field):
         return firedrake.norm(field)
+    
+    def get_magnitude(self, field):
+        return firedrake.sqrt(firedrake.inner(field, field))
 
     def plot_bounded_antarctica(self):
         """Plot Antarctica with bounding box.
@@ -213,9 +219,25 @@ class Invert:
             line, axes=axes)
         fig.colorbar(colors, ticks=ticks)
         plt.title('Grounding Line')
+    
+    def plot_percent_accounted(self, vmin = None, vmax = None):
+        u_inv_norm = self.get_magnitude(self.inverse_u)
+        u_default_norm = self.get_magnitude(self.default_u)
+        u_ML_norm = self.get_magnitude(self.ML_u)
+        ml_difference = firedrake.sqrt((u_inv_norm - u_ML_norm)**2)
+        default_difference = firedrake.sqrt((u_inv_norm - u_default_norm)**2) 
+        percent_difference = 100*(default_difference - ml_difference)/default_difference
+        percent_difference_fcn = firedrake.interpolate(percent_difference, self.Q)
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(percent_difference_fcn, axes=axes, vmax = vmax, vmin = vmin)
+        fig.colorbar(colors)
+        plt.title('Percent Difference Accounted for by ML')
+        plt.show()
 
     def plot_u_error(self, u, vmin=0, vmax=50):
         """Plot error in u compared to u_initial."""
+        print("------Don't use this function!!!!------")
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
         δu = firedrake.interpolate(firedrake.sqrt((u - self.u_initial)**2)/ firedrake.sqrt(self.u_initial**2), self.Q)
@@ -1271,8 +1293,8 @@ class Invert:
         theta_npy = θ_1.dat.data[:]
         C_npy = C_1.dat.data[:]
         C_total_npy = np.clip(C_delta.dat.data[:], 0, None)  # Clip the values to ensure a minimum of 0
-        x = θ_1.function_space().mesh().coordinates.dat.data_ro[:,1]
-        y = θ_1.function_space().mesh().coordinates.dat.data_ro[:,0]
+        x = θ_1.function_space().mesh().coordinates.dat.data_ro[:,0]
+        y = θ_1.function_space().mesh().coordinates.dat.data_ro[:,1]
         u1 = icepack.interpolate(u1, self.Δ)
         u2 = icepack.interpolate(u2, self.Δ)
         u1_npy = u1.dat.data[:]
