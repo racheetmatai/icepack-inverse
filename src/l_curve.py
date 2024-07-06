@@ -9,7 +9,7 @@ import firedrake
 from firedrake import *
 
 def compute_J1_J2(args):
-    name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn = args
+    name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val = args
     print('\n function started for '+variable+' '+str(reg_const))
     if variable == 'theta':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_theta = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
@@ -29,17 +29,13 @@ def compute_J1_J2(args):
         J2 = assemble(invert_pig.regularization_C_grad(C_optimized))*reg_const*reg_const
     elif variable == 'simultaneous':
         invert_pig = Invert(outline = outline, mesh_name = mesh, reg_constant_simultaneous = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)       
-        invert_pig.import_velocity_data(name, modified_exists = modified_exists)
-        invert_pig.invert_C_theta_simultaneously(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, nosigma_lossfcn = nosigma_lossfcn)
+        invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists)
+        invert_pig.invert_C_theta_simultaneously(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = nosigma_lossfcn)
         C_optimized = invert_pig.get_C()
         theta_optimized = invert_pig.get_theta()
         u_optimized = invert_pig.simulation()
-        if nosigma_lossfcn:
-            print("Using nosigma loss function")
-            J1 = assemble(invert_pig.loss_functional_nosigma(u_optimized))
-        else:
-            J1 = assemble(invert_pig.loss_functional(u_optimized))
-        
+        print("Using nosigma loss function")
+        J1 = assemble(invert_pig.loss_functional_nosigma(u_optimized))       
         L = firedrake.Constant(7.5e3)
         J2 = assemble(0.5 / invert_pig.area * (L)**2 * (  firedrake.inner(firedrake.grad(theta_optimized),firedrake.grad(theta_optimized))+  firedrake.inner(firedrake.grad(C_optimized),firedrake.grad(C_optimized)) ) * firedrake.dx(invert_pig.mesh))
 
@@ -50,15 +46,22 @@ def compute_J1_J2(args):
     theta_optimized = None
     return [J1, J2]
 
-def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_exists=True, invert_iter=10, gradient_tolerance=1e-100, step_tolerance=1e-100, workers = 5, lcar=3.5e3, nosigma_lossfcn = False, drichlet_ids = [2,3,4], regularization_grad_fcn= True):
-    reg_const_list =  [100, 1000] #[0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000]
+def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_exists=True, invert_iter=150, gradient_tolerance=1e-100, step_tolerance=1e-100, workers = 5, lcar=9e3, nosigma_lossfcn ='nosigma', drichlet_ids = [2,3,4], regularization_grad_fcn= True, constant_val = 0.01):
+    reg_const_list = [1, 100]  #[0.01, 0.1, 1, 10, 100]
     J_list = []
 
-    with futures.ProcessPoolExecutor(max_workers=workers) as pool:
-        args_list = [(name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn) for reg_const in reg_const_list]
-        for J in pool.map(compute_J1_J2, args_list):
-            print("IN POOL:", J)
-            J_list.append(J)
+    ## for parallel execution uncomment the following lines
+    # with futures.ProcessPoolExecutor(max_workers=workers) as pool:
+    #     args_list = [(name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val) for reg_const in reg_const_list]
+    #     for J in pool.map(compute_J1_J2, args_list):
+    #         print("IN POOL:", J)
+    #         J_list.append(J)
+
+    for reg_const in reg_const_list:
+        print('reg_const: ',reg_const)
+        J = compute_J1_J2((name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val))
+        print('reg_const: ',reg_const, '  J: ',J)
+        J_list.append(J)
 
     J_npy = np.array(J_list).T
     df = pd.DataFrame()

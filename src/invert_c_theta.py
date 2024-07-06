@@ -92,7 +92,8 @@ class Invert:
                  drichlet_ids=[1,2,3,4],
                  side_ids=[],
                  accumulation_rate_vs_elevation_file=None,
-                 opts=None):
+                 opts=None,
+                 ramp_power = 1):
         """Initialize the Invert instance."""
         self.outline = fetch_outline(outline)
         if not read_mesh:
@@ -131,11 +132,60 @@ class Invert:
         self.drichlet_ids = drichlet_ids
         self.side_ids = side_ids
         print('Defining friction law')
-        self.create_model_weertman()
+        self.create_model_weertman() 
+        self.set_ramp_power(ramp_power)    
 
         if accumulation_rate_vs_elevation_file is not None:
             print('Setting accumulation rate')
             self.set_accumulation_rate(accumulation_rate_vs_elevation_file)
+
+    def set_ramp_power(self, ramp_power):
+        self.ramp_power = ramp_power
+        print("Setting ramp power to : ", ramp_power)
+
+    def get_phi(self, h, s):
+        p_W = ρ_W * g * firedrake.max_value(0, h - s)
+        p_I = ρ_I * g * h
+        if p_I == 0:
+            return 0
+        return firedrake.max_value((1 - (p_W / p_I)**self.ramp_power), 0)
+
+    def get_friction_coefficient_with_ramp(self, C, h, s):
+        """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
+
+        Args:
+            C (firedrake.Function): Friction coefficient field.
+            h (firedrake.Function): Thickness field.
+            s (firedrake.Function): Surface field.
+
+        Returns:
+            firedrake.Function: Friction term.
+        """
+        ϕ = self.get_phi(h, s)
+        friction = self.C0 * ϕ * firedrake.exp(C)
+        return friction
+    
+    def weertman_friction_with_ramp(self, **kwargs):
+        """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
+
+        Args:
+            **kwargs: Keyword arguments including velocity, thickness, surface, and friction.
+
+        Returns:
+            firedrake.Function: Friction term.
+        """
+        u = kwargs["velocity"]
+        h = kwargs["thickness"]
+        s = kwargs["surface"]
+        C = kwargs["log_friction"]
+    
+        friction = self.get_friction_coefficient_with_ramp(C, h, s)
+
+        return icepack.models.friction.bed_friction(
+            velocity=u,
+            friction=friction,
+        ) 
+        
             
     def create_model_weertman(self):
         model_weertman = icepack.models.IceStream(friction=self.weertman_friction_with_ramp, viscosity = self.viscosity)
@@ -721,49 +771,6 @@ class Invert:
         self.σy = icepack.interpolate(self.stdy_file, self.Q)
         self.σ = firedrake.interpolate(firedrake.sqrt(self.σx**2 + self.σy**2), self.Q)
 
-    def get_phi(self, h, s):
-        p_W = ρ_W * g * firedrake.max_value(0, h - s)
-        p_I = ρ_I * g * h
-        if p_I == 0:
-            return 0
-        return firedrake.max_value((1 - p_W / p_I), 0)
-
-    def get_friction_coefficient_with_ramp(self, C, h, s):
-        """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
-
-        Args:
-            C (firedrake.Function): Friction coefficient field.
-            h (firedrake.Function): Thickness field.
-            s (firedrake.Function): Surface field.
-
-        Returns:
-            firedrake.Function: Friction term.
-        """
-        ϕ = self.get_phi(h, s)
-        friction = self.C0 * ϕ * firedrake.exp(C)
-        return friction
-    
-    def weertman_friction_with_ramp(self, **kwargs):
-        """Weertman friction model with a ramp. The ramp ensures a smooth transition of C from hard bed to over water.
-
-        Args:
-            **kwargs: Keyword arguments including velocity, thickness, surface, and friction.
-
-        Returns:
-            firedrake.Function: Friction term.
-        """
-        u = kwargs["velocity"]
-        h = kwargs["thickness"]
-        s = kwargs["surface"]
-        C = kwargs["log_friction"]
-    
-        friction = self.get_friction_coefficient_with_ramp(C, h, s)
-
-        return icepack.models.friction.bed_friction(
-            velocity=u,
-            friction=friction,
-        ) 
-        
     def viscosity(self, **kwargs):
         """Depth-averaged viscosity model.
 
