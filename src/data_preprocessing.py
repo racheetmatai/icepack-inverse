@@ -219,6 +219,15 @@ def clean_imported_data(name):
     with rasterio.open(stdy_filename.replace('.tif', '_nan.tif'), 'w', **metadata_std) as dst:
         dst.write(stdy_data, 1)
 
+def read_raster_file(filename):
+    """
+    Read raster file using rasterio.
+
+    :param filename: Name of the file.
+    :return: Raster data.
+    """
+    file = rasterio.open(filename, 'r')
+    return file
 
 def get_windowed_velocity_file(name, outline, δ, modified_exists=False):
     """

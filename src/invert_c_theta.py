@@ -7,7 +7,7 @@ import numpy as np
 
 from src.create_mesh import fetch_outline, create_mesh
 from src.helper_functions import get_min_max_coords, plot_bounded_antarctica
-from src.data_preprocessing import clean_imported_data, get_windowed_velocity_file, create_vertex_only_mesh_for_sparse_data, interpolate_data_onto_vertex_only_mesh
+from src.data_preprocessing import clean_imported_data, get_windowed_velocity_file, create_vertex_only_mesh_for_sparse_data, interpolate_data_onto_vertex_only_mesh, read_raster_file
 from firedrake import assemble, Constant, inner, grad, dx
 import icepack.models.friction
 from icepack.constants import ice_density as ρ_I, water_density as ρ_W, gravity as g
@@ -185,7 +185,6 @@ class Invert:
             velocity=u,
             friction=friction,
         ) 
-        
             
     def create_model_weertman(self):
         model_weertman = icepack.models.IceStream(friction=self.weertman_friction_with_ramp, viscosity = self.viscosity)
@@ -527,14 +526,18 @@ class Invert:
 
         C_npy = self.C.dat.data[:]
         theta_npy = self.θ.dat.data[:]
+
+        mag_anomaly_npy = self.mag_anomaly.dat.data[:]
+        boug_anomaly_npy = self.boug_anomaly.dat.data[:]
+        heatflux_npy = self.heatflux.dat.data[:]
         
         x, y = firedrake.split(firedrake.interpolate(vel_mag_fcn.function_space().mesh().coordinates, self.V))
         x_npy = firedrake.interpolate(x,self.Q).dat.data[:]
         y_npy = firedrake.interpolate(y,self.Q).dat.data[:]
         
         # Create a new DataFrame with the new data
-        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy]).T
-        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta'])
+        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy, mag_anomaly_npy, boug_anomaly_npy, heatflux_npy]).T
+        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta', 'mag_anomaly', 'boug_anomaly', 'heatflux'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
         # Calculate 'tu' columns with conditions to handle zero or negative 'vel_mag'
         cluster_df_full['tu1'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / cluster_df_full['vel_mag'], max_tu1_threshold)
@@ -736,6 +739,16 @@ class Invert:
         """
         self.θ.dat.data[:] = self.load_kMeans(filename, cluster_val, cluster_values, verbose)
         
+    def import_geophysics_data(self, name_list):
+        """
+        Import geophysics data
+        Args:
+            name_list (list): List of names of the geophysics data in order [magnetic anomaly, bouguer anomaly, geothermal heatflux].
+        """
+        self.mag_anomaly = icepack.interpolate(read_raster_file(name_list[0]), self.Q)
+        self.boug_anomaly = icepack.interpolate(read_raster_file(name_list[1]), self.Q)
+        self.heatflux = icepack.interpolate(read_raster_file(name_list[2]), self.Q)
+
     def import_velocity_data(self, name = None, modified_exists = True, C = 'constant', constant_val = 1e-3):
         """Import velocity data and preprocess.
 
@@ -1310,6 +1323,9 @@ class Invert:
         u2_initial = icepack.interpolate(u2_initial, self.Δ)
         u1_initial_npy = u1_initial.dat.data[:]
         u2_initial_npy = u2_initial.dat.data[:]
+        mag_anomaly_npy = icepack.interpolate(self.mag_anomaly, self.Δ).dat.data[:]
+        boug_anomaly_npy = icepack.interpolate(self.boug_anomaly, self.Δ).dat.data[:]
+        heatflux_npy = icepack.interpolate(self.heatflux, self.Δ).dat.data[:]
         h_npy = icepack.interpolate(self.h, self.Δ).dat.data[:]
         s_npy = icepack.interpolate(self.s, self.Δ).dat.data[:]
         b_npy = icepack.interpolate(self.b, self.Δ).dat.data[:]
@@ -1342,7 +1358,10 @@ class Invert:
             'err_y': err_y_npy,
             'h': h_npy,
             's': s_npy,
-            'b': b_npy, 
+            'b': b_npy,
+            'mag_anomaly': mag_anomaly_npy,
+            'boug_anomaly': boug_anomaly_npy,
+            'heatflux': heatflux_npy
         })
         df['invariant1'] = df['s11'] + df['s22']
         df['invariant2'] = 0.5 * (df['s11']**2 + df['s22']**2 - df['s11']*df['s22'] + df['s12']*df['s21'])
@@ -1350,5 +1369,6 @@ class Invert:
         df['mag_s'] = np.sqrt(df['grad_s_1']**2 + df['grad_s_2']**2)
         df['mag_b'] = np.sqrt(df['grad_b_1']**2 + df['grad_b_2']**2)
         df['total_u_error'] = np.sqrt((((df['x_velocity'] -df['x_velocity_initial'])/df['err_x'])**2) + (((df['y_velocity'] -df['y_velocity_initial'])/df['err_y'])**2))
-        df['vel_mag'] = np.sqrt(df['x_velocity_initial']**2 + df['y_velocity_initial']**2)
+        df['vel_mag'] = np.sqrt(df['x_velocity']**2 + df['y_velocity']**2)
+        df['driving_stress'] = df['h'] * 9.8 * df['mag_s']
         return df
