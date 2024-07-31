@@ -573,7 +573,15 @@ class Invert:
         cluster_df_full['C_total'] = self.C0_constant_val*np.exp(cluster_df_full['C'])*cluster_df_full['phi']
         self.cluster_df_full = cluster_df_full
 
-    def regress(self, filename = 'model.pkl', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
+    def regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0], folder = 'model_ensemble/', number_of_models = 10):
+        prediction_list = []
+        for i in range(number_of_models):
+            prediction_list.append(self.regress_single(folder+filename+'_'+str(i), half = half, flip = flip, use_driving_stress = use_driving_stress, const_val = const_val, bounds = bounds))
+        prediction_np = np.array(prediction_list)
+        prediction = np.mean(prediction_np, axis = 0)
+        return prediction
+
+    def regress_single(self, filename = 'model', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
         # To load everything back from the file
         with open(filename+'.pkl', "rb") as f:
             loaded_model_bundle = pickle.load(f)
@@ -609,15 +617,15 @@ class Invert:
         prediction = np.clip(prediction, bounds[0], bounds[1])
         return prediction
     
-    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111] ):
+    def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111], folder = 'model_ensemble/', number_of_models = 10 ):
         self.compute_features(u=u)
-        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
+        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds, folder = folder, number_of_models = number_of_models)
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
-        self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds)
+        self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds, folder = folder, number_of_models = number_of_models)
     
-    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111] ):
+    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111], folder = 'model_ensemble/', number_of_models = 10 ):
         self.compute_features(u=u)
-        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds)
+        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds, folder = folder, number_of_models = number_of_models)
 
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
