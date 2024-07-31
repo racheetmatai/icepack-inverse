@@ -578,8 +578,9 @@ class Invert:
         for i in range(number_of_models):
             prediction_list.append(self.regress_single(folder+filename+'_'+str(i), half = half, flip = flip, use_driving_stress = use_driving_stress, const_val = const_val, bounds = bounds))
         prediction_np = np.array(prediction_list)
-        prediction = np.mean(prediction_np, axis = 0)
-        return prediction
+        percentile_50 = np.percentile(prediction_np, 50, axis=0)
+        prediction_mean = np.mean(prediction_np, axis = 0)
+        return percentile_50
 
     def regress_single(self, filename = 'model', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0]):
         # To load everything back from the file
