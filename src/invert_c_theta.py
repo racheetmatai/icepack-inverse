@@ -757,6 +757,9 @@ class Invert:
         self.mag_anomaly = icepack.interpolate(read_raster_file(name_list[0]), self.Q)
         self.boug_anomaly = icepack.interpolate(read_raster_file(name_list[1]), self.Q)
         self.heatflux = icepack.interpolate(read_raster_file(name_list[2]), self.Q)
+        self.surface_air_temp = icepack.interpolate(read_raster_file(name_list[3]), self.Q)
+        self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
+        self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
 
     def import_velocity_data(self, name = None, modified_exists = True, C = 'constant', constant_val = 1e-3):
         """Import velocity data and preprocess.
@@ -1334,6 +1337,9 @@ class Invert:
         u2_initial_npy = u2_initial.dat.data[:]
         mag_anomaly_npy = icepack.interpolate(self.mag_anomaly, self.Δ).dat.data[:]
         boug_anomaly_npy = icepack.interpolate(self.boug_anomaly, self.Δ).dat.data[:]
+        surface_air_temp_npy = icepack.interpolate(self.surface_air_temp, self.Δ).dat.data[:]
+        gravity_disturbance_npy = icepack.interpolate(self.gravity_disturbance, self.Δ).dat.data[:]
+        snow_accumulation_npy = icepack.interpolate(self.snow_accumulation, self.Δ).dat.data[:]
         heatflux_npy = icepack.interpolate(self.heatflux, self.Δ).dat.data[:]
         h_npy = icepack.interpolate(self.h, self.Δ).dat.data[:]
         s_npy = icepack.interpolate(self.s, self.Δ).dat.data[:]
@@ -1370,7 +1376,10 @@ class Invert:
             'b': b_npy,
             'mag_anomaly': mag_anomaly_npy,
             'boug_anomaly': boug_anomaly_npy,
-            'heatflux': heatflux_npy
+            'heatflux': heatflux_npy,
+            'snow_accumulation': snow_accumulation_npy,
+            'surface_air_temp': surface_air_temp_npy,
+            'gravity_disturbance': gravity_disturbance_npy,
         })
         df['invariant1'] = df['s11'] + df['s22']
         df['invariant2'] = 0.5 * (df['s11']**2 + df['s22']**2 - df['s11']*df['s22'] + df['s12']*df['s21'])
