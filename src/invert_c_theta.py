@@ -530,14 +530,18 @@ class Invert:
         mag_anomaly_npy = self.mag_anomaly.dat.data[:]
         boug_anomaly_npy = self.boug_anomaly.dat.data[:]
         heatflux_npy = self.heatflux.dat.data[:]
+        gravity_disturbance_npy = self.gravity_disturbance.dat.data[:]
+        surface_air_temp_npy = self.surface_air_temp.dat.data[:]
+        snow_accumulation_npy = self.snow_accumulation.dat.data[:]
+
         
         x, y = firedrake.split(firedrake.interpolate(vel_mag_fcn.function_space().mesh().coordinates, self.V))
         x_npy = firedrake.interpolate(x,self.Q).dat.data[:]
         y_npy = firedrake.interpolate(y,self.Q).dat.data[:]
         
         # Create a new DataFrame with the new data
-        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy, mag_anomaly_npy, boug_anomaly_npy, heatflux_npy]).T
-        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta', 'mag_anomaly', 'boug_anomaly', 'heatflux'])
+        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy, mag_anomaly_npy, boug_anomaly_npy, heatflux_npy, gravity_disturbance_npy, surface_air_temp_npy, snow_accumulation_npy]).T
+        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta', 'mag_anomaly', 'boug_anomaly', 'heatflux', 'gravity_disturbance', 'surface_air_temp', 'snow_accumulation'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
         # Calculate 'tu' columns with conditions to handle zero or negative 'vel_mag'
         cluster_df_full['tu1'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / cluster_df_full['vel_mag'], max_tu1_threshold)
