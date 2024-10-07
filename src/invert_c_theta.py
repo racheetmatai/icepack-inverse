@@ -18,6 +18,9 @@ from scipy.ndimage import gaussian_filter
 from firedrake import *
 from scipy.interpolate import interp1d
 from sklearn.preprocessing import MinMaxScaler
+from icepack.models.hybrid import horizontal_strain_rate, vertical_strain_rate, stresses
+from icepack.models.friction import friction_stress
+from icepack.utilities import depth_average
 import pickle
 from keras.models import model_from_json
 from sklearn.preprocessing import MinMaxScaler
@@ -93,7 +96,8 @@ class Invert:
                  side_ids=[],
                  accumulation_rate_vs_elevation_file=None,
                  opts=None,
-                 ramp_power = 1):
+                 ramp_power = 1,
+                 degree = 2):
         """Initialize the Invert instance."""
         self.outline = fetch_outline(outline)
         if not read_mesh:
@@ -101,6 +105,7 @@ class Invert:
             create_mesh(outline = self.outline, name= mesh_name, lcar = lcar)
         print('Reading mesh')
         self.mesh = firedrake.Mesh(mesh_name+'.msh')
+        self.mesh3d = firedrake.ExtrudedMesh(self.mesh, layers=1)
         self.area = Constant(assemble(Constant(1.0) * dx(self.mesh)))
         print('Reading bedmachine data')
         thickness_filename = icepack.datasets.fetch_bedmachine_antarctica()
@@ -108,9 +113,13 @@ class Invert:
         self.thickness = thickness_data["thickness"]
         self.surface = thickness_data["surface"]
         self.bed = thickness_data["bed"]
+        self.degree = degree
         print('Initializing function spaces')
-        self.Q = firedrake.FunctionSpace(self.mesh, family="CG", degree=2)
-        self.V = firedrake.VectorFunctionSpace(self.mesh, "CG", 2)
+        self.Q = firedrake.FunctionSpace(self.mesh, family="CG", degree = self.degree)
+        self.V = firedrake.VectorFunctionSpace(self.mesh, "CG", degree = self.degree)
+        print('Initializing 3d function spaces')
+        self.Q0 = firedrake.FunctionSpace(self.mesh3d, family='CG', degree=self.degree, vfamily='DG', vdegree=0)
+        self.V0 = firedrake.VectorFunctionSpace(self.mesh3d, dim=2, family='CG', degree=self.degree, vfamily='GL', vdegree=0)
         print('Initializing fields')
         self.h = icepack.interpolate(self.thickness, self.Q)
         self.h0 = self.h.copy(deepcopy=True)
@@ -133,7 +142,18 @@ class Invert:
         self.side_ids = side_ids
         print('Defining friction law')
         self.create_model_weertman() 
-        self.set_ramp_power(ramp_power)    
+        self.set_ramp_power(ramp_power)
+        print('Initializing heat transport')
+        self.heat_transport = icepack.models.HeatTransport3D()
+
+        # Initialize 3d fields
+        self.u_3d = firedrake.Function(self.V0)
+        self.s_3d = firedrake.Function(self.Q0)
+        self.h_3d = firedrake.Function(self.Q0)
+        self.C_3d = firedrake.Function(self.Q0)
+        self.C0_3d = firedrake.Function(self.Q0)
+        self.surface_air_temp_3d = firedrake.Function(self.Q0)
+        self.heatflux_3d = firedrake.Function(self.Q0)   
 
         if accumulation_rate_vs_elevation_file is not None:
             print('Setting accumulation rate')
@@ -238,6 +258,115 @@ class Invert:
     
     def get_magnitude(self, field):
         return firedrake.sqrt(firedrake.inner(field, field))
+    
+    def iterate_C_temperature(self, outer_iterations = 2, inverse_iterations = 50, regularization_grad_fcn= True, loss_fcn_type = 'nosigma', **kwargs):
+        for i in range(outer_iterations):
+            self.invert_C(max_iterations=inverse_iterations, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = loss_fcn_type)
+            u =  self.simulation()
+            self.initialize_3d(u, self.C)
+            temperature = self.solve_temperature(self.u_3d, self.C_3d)
+            self.A0 = icepack.rate_factor(temperature)
+            self.create_model_weertman() # needed with the prefactor because its not passed to the model like the exponent. So the previously created instance keeps on using the old prefactor.
+
+    def solve_temperature(self, u, C):
+        self.initialize_3d(u, C)
+        E_init = self.compute_energy(self.surface_air_temp_3d)
+        self.solve_energy_equation(u, E_init, E_init)
+        return self.get_2D_temperature(self.E)
+
+    def initialize_3d_s_h_temp_heat_C0(self):
+        s_temp = self.s.dat.data_ro[:]
+        h_temp = self.h.dat.data_ro[:]
+        surface_air_temp_temp = self.surface_air_temp.dat.data_ro[:]
+        heatflux_temp = self.heatflux.dat.data_ro[:]
+        C0_temp = self.C0.dat.data_ro[:]
+
+        # Assign values to 3d fields
+        self.s_3d.dat.data[:] = s_temp
+        self.h_3d.dat.data[:] = h_temp
+        self.surface_air_temp_3d.dat.data[:] = surface_air_temp_temp
+        self.heatflux_3d.dat.data[:] = heatflux_temp
+        self.C0_3d.dat.data[:] = C0_temp
+
+    def initialize_3d_u(self, u):
+        u_temp = u.dat.data_ro[:]
+        self.u_3d.dat.data[:] = u_temp
+
+    def initialize_3d_C(self, C):
+        C_temp = C.dat.data_ro[:]
+        self.C_3d.dat.data[:] = C_temp
+    
+    def initialize_3d(self, u, C):
+        self.initialize_3d_u(u)
+        self.initialize_3d_C(C)
+        
+    def compute_energy(self, temperature, melt_fraction = 0):
+        self.Q_3d = firedrake.FunctionSpace(self.mesh3d, family='CG', degree=2, vfamily='GL', vdegree=4)
+
+        E_expr = self.heat_transport.energy_density(temperature, firedrake.Constant(melt_fraction)) # quantatrtic surface temp , constant melt fraction (make sure this is being used)
+        E_init =  firedrake.interpolate(E_expr, self.Q_3d)
+        return E_init
+    
+    def compute_vertical_velocity(self, u):
+        """
+        Compute vertical velocity using divergence of horizontal velocity
+        """
+        self.W = firedrake.FunctionSpace(self.mesh3d, family='DG', degree=self.degree - 1, vfamily='GL', vdegree=1)
+        x, y, ζ = firedrake.SpatialCoordinate(self.mesh3d)
+        ω_expr = -(u[0].dx(0) + u[1].dx(1)) / self.h_3d * ζ
+        self.ω = firedrake.project(ω_expr, self.W)
+        self.w = firedrake.interpolate(self.h_3d * self.ω, self.W)
+
+    def compute_strain_heating(self, u, E):
+        T = self.heat_transport.temperature(E)
+        A = icepack.rate_factor(T)
+        ε_x, ε_z = horizontal_strain_rate( velocity = u, surface = self.s_3d , thickness = self.h_3d), vertical_strain_rate(velocity = u , thickness = self.h_3d)
+        τ_x, τ_z = stresses(strain_rate_x = ε_x, strain_rate_z = ε_z, fluidity = A)
+        self.q = inner(τ_x, ε_x) + inner(τ_z, ε_z)  # strain heating
+
+    def compute_friction_heating(self, u):
+        phi = self.get_phi(self.h_3d, self.s_3d)
+        C_b = self.C0_3d* phi* firedrake.exp(self.C_3d)
+        τ_b = friction_stress(u, C_b)
+        self.q_friction = -inner(τ_b, u)
+
+    def compute_heatflux_bed(self, u):
+        self.compute_friction_heating(u)
+        self.q_bed = self.heatflux_3d + self.q_friction
+
+    def solve_energy_equation(self, u, E, E_init):
+        self.compute_vertical_velocity(u)
+        self.compute_strain_heating(u, E)
+        self.compute_heatflux_bed(u)
+
+        δt = 1.0/12
+        final_time = 100e3 / icepack.norm(u, norm_type='Linfty')
+        num_steps = int(final_time / δt) + 1
+        print('Number of time steps: {}'.format(num_steps))
+        heat_solver = icepack.solvers.HeatTransportSolver(self.heat_transport)
+        for step in range(num_steps):
+            qm = firedrake.interpolate(firedrake.max_value(self.q, 50),self.Q_3d)
+            qm_bed = firedrake.interpolate(firedrake.max_value(self.q_bed, 500),self.Q_3d)
+            E = heat_solver.solve(
+                    δt,
+                    energy=E,
+                    velocity=u,
+                    vertical_velocity=self.w,
+                    thickness=self.h_3d,
+                    surface=self.s_3d,
+                    heat=qm,
+                    heat_bed=qm_bed,
+                    energy_inflow=E_init, 
+                    energy_surface=E_init,
+                )
+            print('.' if step % 12 == 0 else '', end='')
+        self.E = E
+
+    def get_2D_temperature(self, E):
+        """E is a 3D Energy field, return the 2D temperature field"""
+        E2d = depth_average(E)
+        T2d = self.heat_transport.temperature(E2d)
+        return firedrake.interpolate(T2d, self.Q)
 
     def plot_bounded_antarctica(self):
         """Plot Antarctica with bounding box.
@@ -764,6 +893,7 @@ class Invert:
         self.surface_air_temp = icepack.interpolate(read_raster_file(name_list[3]), self.Q)
         self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
         self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
+        self.initialize_3d_s_h_temp_heat_C0()
 
     def import_velocity_data(self, name = None, modified_exists = True, C = 'constant', constant_val = 1e-3):
         """Import velocity data and preprocess.
