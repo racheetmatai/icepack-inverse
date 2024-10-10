@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 import rasterio
 import icepack
 import geojson
@@ -78,3 +79,24 @@ def interpolate_2d_array(array):
     # Replace NaN values with interpolated values
     array[np.isnan(array)] = interpolated_values[np.isnan(array)]
     return array
+
+def convert_to_xarray(dataset):
+    """
+    Convert rasterio dataset to xarray.DataArray with coordinates.
+    
+    :param dataset: A rasterio.DatasetReader object.
+    :return: An xarray.DataArray object.
+    """
+    # Read the first band of the raster
+    band_data = dataset.read(1)
+    
+    # Get the affine transformation from the dataset
+    transform = dataset.transform
+    
+    # Calculate the x and y coordinates using the transform
+    ny, nx = band_data.shape
+    x_coords = np.arange(nx) * transform[0] + transform[2]  # Apply affine transform for x coordinates
+    y_coords = np.arange(ny) * transform[4] + transform[5]  # Apply affine transform for y coordinates
+    
+    # Return xarray.DataArray with coordinates
+    return xr.DataArray(band_data, coords={'y': y_coords, 'x': x_coords}, dims=['y', 'x'])

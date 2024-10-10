@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from src.create_mesh import fetch_outline, create_mesh
-from src.helper_functions import get_min_max_coords, plot_bounded_antarctica
+from src.helper_functions import get_min_max_coords, plot_bounded_antarctica, convert_to_xarray
 from src.data_preprocessing import clean_imported_data, get_windowed_velocity_file, create_vertex_only_mesh_for_sparse_data, interpolate_data_onto_vertex_only_mesh, read_raster_file
 from firedrake import assemble, Constant, inner, grad, dx
 import icepack.models.friction
@@ -120,6 +120,8 @@ class Invert:
         print('Initializing 3d function spaces')
         self.Q0 = firedrake.FunctionSpace(self.mesh3d, family='CG', degree=self.degree, vfamily='DG', vdegree=0)
         self.V0 = firedrake.VectorFunctionSpace(self.mesh3d, dim=2, family='CG', degree=self.degree, vfamily='GL', vdegree=0)
+        self.Q_3d = firedrake.FunctionSpace(self.mesh3d, family='CG', degree=2, vfamily='GL', vdegree=4)
+        self.W = firedrake.FunctionSpace(self.mesh3d, family='DG', degree=self.degree - 1, vfamily='GL', vdegree=1)
         print('Initializing fields')
         self.h = icepack.interpolate(self.thickness, self.Q)
         self.h0 = self.h.copy(deepcopy=True)
@@ -158,6 +160,30 @@ class Invert:
         if accumulation_rate_vs_elevation_file is not None:
             print('Setting accumulation rate')
             self.set_accumulation_rate(accumulation_rate_vs_elevation_file)
+
+    def import_geophysics_data(self, name_list):
+        """
+        Import geophysics data
+        Args:
+            name_list (list): List of names of the geophysics data in order [magnetic anomaly, bouguer anomaly, geothermal heatflux].
+        """
+        self.mag_anomaly = icepack.interpolate(read_raster_file(name_list[0]), self.Q)
+        self.boug_anomaly = icepack.interpolate(read_raster_file(name_list[1]), self.Q)
+        self.heatflux = icepack.interpolate(read_raster_file(name_list[2]), self.Q)
+
+        surface_air_temp_celsius = read_raster_file(name_list[3])
+
+        # Convert the raster data to xarray.DataArray
+        surface_air_temp_da = convert_to_xarray(surface_air_temp_celsius)
+
+        # Convert the temperature from Celsius to Kelvin
+        surface_air_temp_da_kelvin = surface_air_temp_da + 273.15
+
+        # Interpolate the temperature in Kelvin
+        self.surface_air_temp = icepack.interpolate(surface_air_temp_da_kelvin, self.Q)
+        self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
+        self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
+        self.initialize_3d_s_h_temp_heat_C0()
 
     def set_ramp_power(self, ramp_power):
         self.ramp_power = ramp_power
@@ -265,7 +291,7 @@ class Invert:
             u =  self.simulation()
             self.initialize_3d(u, self.C)
             temperature = self.solve_temperature(self.u_3d, self.C_3d)
-            self.A0 = icepack.rate_factor(temperature)
+            self.A0 = icepack.interpolate(icepack.rate_factor(temperature), self.Q)
             self.create_model_weertman() # needed with the prefactor because its not passed to the model like the exponent. So the previously created instance keeps on using the old prefactor.
 
     def solve_temperature(self, u, C):
@@ -301,8 +327,6 @@ class Invert:
         self.initialize_3d_C(C)
         
     def compute_energy(self, temperature, melt_fraction = 0):
-        self.Q_3d = firedrake.FunctionSpace(self.mesh3d, family='CG', degree=2, vfamily='GL', vdegree=4)
-
         E_expr = self.heat_transport.energy_density(temperature, firedrake.Constant(melt_fraction)) # quantatrtic surface temp , constant melt fraction (make sure this is being used)
         E_init =  firedrake.interpolate(E_expr, self.Q_3d)
         return E_init
@@ -311,7 +335,6 @@ class Invert:
         """
         Compute vertical velocity using divergence of horizontal velocity
         """
-        self.W = firedrake.FunctionSpace(self.mesh3d, family='DG', degree=self.degree - 1, vfamily='GL', vdegree=1)
         x, y, ζ = firedrake.SpatialCoordinate(self.mesh3d)
         ω_expr = -(u[0].dx(0) + u[1].dx(1)) / self.h_3d * ζ
         self.ω = firedrake.project(ω_expr, self.W)
@@ -880,20 +903,6 @@ class Invert:
             verbose (bool, optional): If True, print additional information during execution. Default is False.
         """
         self.θ.dat.data[:] = self.load_kMeans(filename, cluster_val, cluster_values, verbose)
-        
-    def import_geophysics_data(self, name_list):
-        """
-        Import geophysics data
-        Args:
-            name_list (list): List of names of the geophysics data in order [magnetic anomaly, bouguer anomaly, geothermal heatflux].
-        """
-        self.mag_anomaly = icepack.interpolate(read_raster_file(name_list[0]), self.Q)
-        self.boug_anomaly = icepack.interpolate(read_raster_file(name_list[1]), self.Q)
-        self.heatflux = icepack.interpolate(read_raster_file(name_list[2]), self.Q)
-        self.surface_air_temp = icepack.interpolate(read_raster_file(name_list[3]), self.Q)
-        self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
-        self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
-        self.initialize_3d_s_h_temp_heat_C0()
 
     def import_velocity_data(self, name = None, modified_exists = True, C = 'constant', constant_val = 1e-3):
         """Import velocity data and preprocess.
