@@ -385,9 +385,14 @@ class Invert:
             print('.' if step % 12 == 0 else '', end='')
         self.E = E
 
+    def vertical_weight_3d(self, mesh3d):
+        z = firedrake.SpatialCoordinate(mesh3d)[2]  # Assuming 2 is the vertical direction in the extruded 3D mesh
+        return z  # Weight proportional to height (z)
+
     def get_2D_temperature(self, E):
         """E is a 3D Energy field, return the 2D temperature field"""
-        E2d = depth_average(E)
+        weights = self.vertical_weight_3d(self.mesh3d)
+        E2d = depth_average(E, weight=weights)
         T2d = self.heat_transport.temperature(E2d)
         return firedrake.interpolate(T2d, self.Q)
 
