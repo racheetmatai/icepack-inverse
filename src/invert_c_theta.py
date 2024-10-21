@@ -415,6 +415,7 @@ class Invert:
         }
         firedrake.triplot(self.get_mesh(), axes=axes, **kwargs)
         axes.legend();
+        return fig, axes
 
     def plot_grounding_line(self, ticks = [-1,0,1]):
         fig, axes = self.plot_bounded_antarctica()
@@ -424,7 +425,8 @@ class Invert:
         colors = firedrake.tripcolor(
             line, axes=axes)
         fig.colorbar(colors, ticks=ticks)
-        plt.title('Grounding Line')
+        axes.set_title('Grounding Line')
+        return fig, axes
     
     def plot_percent_accounted(self, vmin = None, vmax = None):
         u_inv_norm = self.get_magnitude(self.inverse_u)
@@ -438,8 +440,8 @@ class Invert:
         axes.set_xlabel("meters")
         colors = firedrake.tripcolor(percent_difference_fcn, axes=axes, vmax = vmax, vmin = vmin)
         fig.colorbar(colors)
-        plt.title('Percent Difference Accounted for by ML')
-        plt.show()
+        axes.set_title('Percent Difference Accounted for by ML')
+        return fig, axes
 
     def plot_u_error(self, u, vmin=0, vmax=50):
         """Plot error in u compared to u_initial."""
@@ -451,8 +453,8 @@ class Invert:
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
         fig.colorbar(colors);
-        plt.title("Error in U")
-        plt.show()
+        axes.set_title("Error in U")
+        return fig, axes
 
     def plot_u_error_percentage(self, u, vmin=0, vmax=10):
         """Plot % error in u compared to u_initial."""
@@ -463,8 +465,8 @@ class Invert:
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
         fig.colorbar(colors);
-        plt.title("% Error in U")
-        plt.show()     
+        axes.set_title("% Error in U")
+        return fig, axes   
     
     def plot_u_error_no_sigma(self, u, vmin=None, vmax=None):
         """Plot error in u compared to u_initial."""
@@ -475,8 +477,8 @@ class Invert:
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
         fig.colorbar(colors);
-        plt.title("Error in U")
-        plt.show()
+        axes.set_title("Error in U")
+        return fig, axes
 
     def plot_theta(self, vmin=None, vmax=None):
         """Plot theta"""
@@ -486,8 +488,8 @@ class Invert:
             self.θ, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors)
-        plt.title("θ")
-        plt.show()
+        axes.set_title("θ")
+        return fig, axes
 
     def plot_accumulation(self, vmin=None, vmax=None):
         """Plot accumulation"""
@@ -497,8 +499,8 @@ class Invert:
             self.a, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors,)
-        plt.title("Accumulation")
-        plt.show()
+        axes.set_title("Accumulation")
+        return fig, axes
 
     def plot_thickness(self, vmin=None, vmax=None):
         """Plot thickness"""
@@ -508,8 +510,8 @@ class Invert:
             self.h, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors, label="meters")
-        plt.title("Thickness")
-        plt.show()
+        axes.set_title("Thickness")
+        return fig, axes
 
     def plot_surface(self, vmin=None, vmax=None):
         """Plot surface elevation"""
@@ -519,8 +521,8 @@ class Invert:
             self.s, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors, label="meters")
-        plt.title("surface elevation")
-        plt.show()
+        axes.set_title("Surface elevation")
+        return fig, axes
 
     def plot_C(self, vmin=None, vmax=None):
         """Plot C"""
@@ -530,8 +532,8 @@ class Invert:
             self.C, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors);
-        plt.title("C")
-        plt.show()
+        axes.set_title("C")
+        return fig, axes
 
     def plot_C0(self, vmin=None, vmax=None):
         """Plot C0"""
@@ -541,8 +543,8 @@ class Invert:
             self.C0, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors);
-        plt.title("C")
-        plt.show()
+        axes.set_title("C0")
+        return fig, axes
 
     def plot_C_total(self, vmin=None, vmax=None):
         """Plot C0*exp(C)"""
@@ -552,9 +554,9 @@ class Invert:
         colors = firedrake.tripcolor(
             total_C, axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("$C_{b}$")
         fig.colorbar(colors);
-        plt.show()
+        axes.set_title("$C_{b}$")
+        return fig, axes
 
     def plot_A(self, vmin=None, vmax=None):
         """Plot A0*exp(θ)"""
@@ -565,9 +567,9 @@ class Invert:
         colors = firedrake.tripcolor(
             A, axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("$A$")
+        axes.set_title("$A$")
         fig.colorbar(colors);
-        plt.show()
+        return fig, axes
 
     def plot_streamline_u(self, u, resolution = 2500):
         """Plot u streamlines"""
@@ -576,7 +578,8 @@ class Invert:
         kwargs = {"resolution": resolution}
         streamlines = firedrake.streamplot(u, axes=axes, **kwargs)
         fig.colorbar(streamlines, label="meters/year");
-        plt.title("Surface velocity streamlines")
+        axes.set_title("Surface velocity streamlines")
+        return fig, axes
 
     def plot_u_initial_mag(self, vmin=None, vmax=None):
         """Plot magnitude of velocity dataset"""
@@ -585,9 +588,9 @@ class Invert:
         colors = firedrake.tripcolor(
             self.u_exp_mag, axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("$||V||$ experimental")
+        axes.set_title("$||V||$ experimental")
         fig.colorbar(colors);
-        plt.show()
+        return fig, axes
 
     def plot_u_mag(self, u, vmin=None, vmax=None):
         """Plot magnitude of velocity """
@@ -596,9 +599,9 @@ class Invert:
         colors = firedrake.tripcolor(
             u, axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("$||V||$")
+        axes.set_title("$||V||$")
         fig.colorbar(colors);
-        plt.show()
+        return fig, axes
 
     def plot_u_sigma_mag(self, vmin=None, vmax=None):
         """Plot magnitude of σ  dataset"""
@@ -607,9 +610,9 @@ class Invert:
         colors = firedrake.tripcolor(
             self.σ , axes=axes, vmin=vmin, vmax=vmax
         )
-        plt.title("$||σ||$ experimental")
+        axes.set_title("$||σ||$ experimental")
         fig.colorbar(colors);
-        plt.show()
+        return fig, axes
 
     def compute_C_old(self):
         """Compute the friction coefficient field (C)."""
