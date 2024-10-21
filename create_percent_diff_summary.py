@@ -14,22 +14,27 @@ name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif',
                                                 'data/geophysics/EIGEN-6C4_GravityDisturbance_10km.tif',
                                                 'data/geophysics/ALBMAP_SnowAccumulation_Arthern_5km.tif',]
 
-def invert_pig():
+def invert_dotson_fcn():
     drichlet_ids = [1,2,5,6,7,8,9,10,11]
     side_ids = []
     invert_dotson = Invert(outline = 'data/geojson/dotson-crosson.geojson', mesh_name = 'dotson', reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
     invert_dotson.import_velocity_data(constant_val=0.01)
-    invert_dotson.import_geophysics_data(name_list=name_list)
+    invert_dotson.import_geophysics_data(name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
+                                                'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
+                                                'data/geophysics/GeothermalHeatFlux_5km.tif',
+                                                'data/geophysics/ALBMAP_SurfaceAirTemperature_5km.tif',
+                                                'data/geophysics/EIGEN-6C4_GravityDisturbance_10km.tif',
+                                                'data/geophysics/ALBMAP_SnowAccumulation_Arthern_5km.tif',])
     u =  invert_dotson.simulation()
     invert_dotson.default_u = u
-    invert_dotson.invert_C_theta_simultaneously(max_iterations=300, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_dotson.invert_C_theta_simultaneously(max_iterations=3, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_dotson.simulation()
     invert_dotson.inverse_u = u_optimized
     theta = invert_dotson.θ
     C = invert_dotson.C
     return invert_dotson, theta, C
 
-def invert_thwaites():
+def invert_thwaites_fcn():
     drichlet_ids = [1,2,5,6]
     side_ids = []
     invert_thwaites = Invert(outline = 'data/geojson/thwaites.geojson', mesh_name = 'thwaites', reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
@@ -37,14 +42,14 @@ def invert_thwaites():
     invert_thwaites.import_geophysics_data(name_list=name_list)
     u =  invert_thwaites.simulation()
     invert_thwaites.default_u = u
-    invert_thwaites.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_thwaites.invert_C_theta_simultaneously(max_iterations=1, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_thwaites.simulation()
     invert_thwaites.inverse_u = u_optimized
     theta = invert_thwaites.θ
     C = invert_thwaites.C
     return invert_thwaites, theta, C
 
-def invert_pig():
+def invert_pig_fcn():
     drichlet_ids = [2,3,4]
     side_ids = []
     invert_pig = Invert(outline = 'pine-island', mesh_name = 'pig', reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
@@ -52,7 +57,7 @@ def invert_pig():
     invert_pig.import_geophysics_data(name_list=name_list)
     u =  invert_pig.simulation()
     invert_pig.default_u = u
-    invert_pig.invert_C_theta_simultaneously(max_iterations=300, regularization_grad_fcn= True, loss_fcn_type = 'regular')
+    invert_pig.invert_C_theta_simultaneously(max_iterations=3, regularization_grad_fcn= True, loss_fcn_type = 'regular')
     u_optimized =  invert_pig.simulation()
     invert_pig.inverse_u = u_optimized
     theta = invert_pig.θ
@@ -207,14 +212,14 @@ def eval_models(select_dataset, invert_obj):
     
 def eval_pig_dotson_thwaites(select_dataset):
     # Get the evaluated objects and results for Dotson, PIG, and Thwaites
-    invert_dotson, theta_dotson, C_dotson = invert_dotson()
-    temp_objects_dotson, summary_list_dotson, columns_list_dotson, u_optimized_list_dotson, loss_function_list_dotson = eval_models(select_dataset, invert_dotson)
+    inv_dotson, theta_dotson, C_dotson = invert_dotson_fcn()
+    temp_objects_dotson, summary_list_dotson, columns_list_dotson, u_optimized_list_dotson, loss_function_list_dotson = eval_models(select_dataset, inv_dotson)
     
-    invert_pig, theta_pig, C_pig = invert_pig()
-    temp_objects_pig, summary_list_pig, columns_list_pig, u_optimized_list_pig, loss_function_list_pig = eval_models(select_dataset, invert_pig)
+    inv_pig, theta_pig, C_pig = invert_pig_fcn()
+    temp_objects_pig, summary_list_pig, columns_list_pig, u_optimized_list_pig, loss_function_list_pig = eval_models(select_dataset, inv_pig)
     
-    invert_thwaites, theta_thwaites, C_thwaites = invert_thwaites()
-    temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites = eval_models(select_dataset, invert_thwaites)
+    inv_thwaites, theta_thwaites, C_thwaites = invert_thwaites_fcn()
+    temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites = eval_models(select_dataset, inv_thwaites)
     
     # Since the lists have an equal number of objects, determine the number of rows
     n_rows = len(temp_objects_dotson)
