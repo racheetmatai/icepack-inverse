@@ -24,11 +24,11 @@ def invert_dotson_fcn():
     invert_dotson.import_geophysics_data(name_list=name_list)
     u =  invert_dotson.simulation()
     invert_dotson.default_u = u
-    invert_dotson.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_dotson.invert_C_theta_simultaneously(max_iterations=200, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_dotson.simulation()
     invert_dotson.inverse_u = u_optimized
-    theta = invert_dotson.θ
-    C = invert_dotson.C
+    theta = invert_dotson.θ.copy(deepcopy=True)
+    C = invert_dotson.C.copy(deepcopy=True)
     return invert_dotson, theta, C
 
 def invert_thwaites_fcn():
@@ -42,8 +42,8 @@ def invert_thwaites_fcn():
     invert_thwaites.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_thwaites.simulation()
     invert_thwaites.inverse_u = u_optimized
-    theta = invert_thwaites.θ
-    C = invert_thwaites.C
+    theta = invert_thwaites.θ.copy(deepcopy=True)
+    C = invert_thwaites.C.copy(deepcopy=True)
     return invert_thwaites, theta, C
 
 def invert_pig_fcn():
@@ -54,11 +54,11 @@ def invert_pig_fcn():
     invert_pig.import_geophysics_data(name_list=name_list)
     u =  invert_pig.simulation()
     invert_pig.default_u = u
-    invert_pig.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'regular')
+    invert_pig.invert_C_theta_simultaneously(max_iterations=200, regularization_grad_fcn= True, loss_fcn_type = 'regular')
     u_optimized =  invert_pig.simulation()
     invert_pig.inverse_u = u_optimized
-    theta = invert_pig.θ
-    C = invert_pig.C
+    theta = invert_pig.θ.copy(deepcopy=True)
+    C = invert_pig.C.copy(deepcopy=True)
     return invert_pig, theta, C
 
 def process_csv(filename):
@@ -101,12 +101,6 @@ def compute_u_avg(invert_obj, C_mean):
     invert_obj.default_u = u_avg
 
 def eval_models(select_dataset, invert_obj):
-    invert_obj.opts = {"dirichlet_ids": invert_obj.drichlet_ids,
-                    "side_wall_ids": invert_obj.side_ids,
-                   "diagnostic_solver_type": "icepack",
-                "diagnostic_solver_parameters": {
-                    "max_iterations":50,},}
-    invert_obj.create_model_weertman()
     C_mean = compute_C_mean(select_dataset)
     compute_u_avg(invert_obj, C_mean)
     if select_dataset == 0:
@@ -192,6 +186,7 @@ def eval_models(select_dataset, invert_obj):
         
         # Ensure the model_name is properly constructed
         model_file_path = os.path.join(base_folder, folder, model_name)
+        temp_object.C = firedrake.Function(temp_object.Q)
         temp_object.compute_C_ML_regress(
             filename=model_file_path, 
             half=False, 
@@ -203,7 +198,19 @@ def eval_models(select_dataset, invert_obj):
             number_of_models=10
         )
         
-        u_optimized = temp_object.simulation()
+        try:
+            u_optimized = temp_object.simulation()
+        except:
+            print('Error in simulation')
+            temp_object.opts = {"dirichlet_ids": temp_object.drichlet_ids,
+                            "side_wall_ids": temp_object.side_ids,
+                           "diagnostic_solver_type": "icepack",
+                        "diagnostic_solver_parameters": {
+                            "max_iterations":50,},}
+            temp_object.create_model_weertman()
+            u_optimized = temp_object.simulation()
+            
+
         # Store or process `u_optimized` as needed
         u_optimized_list.append(u_optimized)
         loss_val = firedrake.assemble(temp_object.loss_functional_nosigma(u_optimized))
@@ -252,7 +259,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # Dotson column (column 1)
         ax_dotson = fig.add_subplot(gs[row, 1])
-        _, ax_dotson = plot_percent_accounted(temp_objects_dotson[row], vmin=0, axes=ax_dotson)
+        _, ax_dotson = temp_objects_dotson.plot_percent_accounted(temp_objects_dotson[row], vmin=0, axes=ax_dotson)
         if row == 0:
             ax_dotson.set_title("Dotson")
         else:
@@ -260,7 +267,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # PIG column (column 2)
         ax_pig = fig.add_subplot(gs[row, 2])
-        _, ax_pig = plot_percent_accounted(temp_objects_pig[row], vmin=0, axes=ax_pig)
+        _, ax_pig = temp_objects_pig.plot_percent_accounted(temp_objects_pig[row], vmin=0, axes=ax_pig)
         if row == 0:
             ax_pig.set_title("PIG")
         else:
@@ -268,7 +275,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # Thwaites column (column 3)
         ax_thwaites = fig.add_subplot(gs[row, 3])
-        _, ax_thwaites = plot_percent_accounted(temp_objects_thwaites[row], vmin=0, axes=ax_thwaites)
+        _, ax_thwaites = temp_objects_thwaites.plot_percent_accounted(temp_objects_thwaites[row], vmin=0, axes=ax_thwaites)
         if row == 0:
             ax_thwaites.set_title("Thwaites")
         else:

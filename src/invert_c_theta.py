@@ -179,8 +179,10 @@ class Invert:
         # Convert the temperature from Celsius to Kelvin
         surface_air_temp_da_kelvin = surface_air_temp_da + 273.15
 
+        self.surface_air_temp = icepack.interpolate(surface_air_temp_celsius, self.Q)
+
         # Interpolate the temperature in Kelvin
-        self.surface_air_temp = icepack.interpolate(surface_air_temp_da_kelvin, self.Q)
+        self.surface_air_temp_kelvin = icepack.interpolate(surface_air_temp_da_kelvin, self.Q)
         self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
         self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
         self.initialize_3d_s_h_temp_heat_C0()
@@ -303,7 +305,7 @@ class Invert:
     def initialize_3d_s_h_temp_heat_C0(self):
         s_temp = self.s.dat.data_ro[:]
         h_temp = self.h.dat.data_ro[:]
-        surface_air_temp_temp = self.surface_air_temp.dat.data_ro[:]
+        surface_air_temp_temp = self.surface_air_temp_kelvin.dat.data_ro[:]
         heatflux_temp = self.heatflux.dat.data_ro[:]
         C0_temp = self.C0.dat.data_ro[:]
 
