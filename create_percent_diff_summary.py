@@ -6,6 +6,8 @@ import os
 import copy
 import pickle
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import matplotlib.colorbar as colorbar
 
 name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
                                                 'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
@@ -19,15 +21,10 @@ def invert_dotson_fcn():
     side_ids = []
     invert_dotson = Invert(outline = 'data/geojson/dotson-crosson.geojson', mesh_name = 'dotson', reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
     invert_dotson.import_velocity_data(constant_val=0.01)
-    invert_dotson.import_geophysics_data(name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
-                                                'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
-                                                'data/geophysics/GeothermalHeatFlux_5km.tif',
-                                                'data/geophysics/ALBMAP_SurfaceAirTemperature_5km.tif',
-                                                'data/geophysics/EIGEN-6C4_GravityDisturbance_10km.tif',
-                                                'data/geophysics/ALBMAP_SnowAccumulation_Arthern_5km.tif',])
+    invert_dotson.import_geophysics_data(name_list=name_list)
     u =  invert_dotson.simulation()
     invert_dotson.default_u = u
-    invert_dotson.invert_C_theta_simultaneously(max_iterations=3, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_dotson.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_dotson.simulation()
     invert_dotson.inverse_u = u_optimized
     theta = invert_dotson.θ
@@ -42,7 +39,7 @@ def invert_thwaites_fcn():
     invert_thwaites.import_geophysics_data(name_list=name_list)
     u =  invert_thwaites.simulation()
     invert_thwaites.default_u = u
-    invert_thwaites.invert_C_theta_simultaneously(max_iterations=1, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_thwaites.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
     u_optimized =  invert_thwaites.simulation()
     invert_thwaites.inverse_u = u_optimized
     theta = invert_thwaites.θ
@@ -57,7 +54,7 @@ def invert_pig_fcn():
     invert_pig.import_geophysics_data(name_list=name_list)
     u =  invert_pig.simulation()
     invert_pig.default_u = u
-    invert_pig.invert_C_theta_simultaneously(max_iterations=3, regularization_grad_fcn= True, loss_fcn_type = 'regular')
+    invert_pig.invert_C_theta_simultaneously(max_iterations=170, regularization_grad_fcn= True, loss_fcn_type = 'regular')
     u_optimized =  invert_pig.simulation()
     invert_pig.inverse_u = u_optimized
     theta = invert_pig.θ
@@ -98,14 +95,20 @@ def compute_C_mean(select_dataset = 0):
     C_mean = df['C'].mean()
     return C_mean
 
-def compute_u_avg(invert_obj, C, theta, C_mean):
+def compute_u_avg(invert_obj, C_mean):
     invert_obj.C.dat.data[:] = np.ones(invert_obj.C.dat.data[:].shape) * C_mean
     u_avg=  invert_obj.simulation()
     invert_obj.default_u = u_avg
 
 def eval_models(select_dataset, invert_obj):
+    invert_obj.opts = {"dirichlet_ids": invert_obj.drichlet_ids,
+                    "side_wall_ids": invert_obj.side_ids,
+                   "diagnostic_solver_type": "icepack",
+                "diagnostic_solver_parameters": {
+                    "max_iterations":50,},}
+    invert_obj.create_model_weertman()
     C_mean = compute_C_mean(select_dataset)
-    compute_u_avg(invert_obj, invert_obj.C, invert_obj.theta, C_mean)
+    compute_u_avg(invert_obj, C_mean)
     if select_dataset == 0:
         base_folder = 'mlp_ensemble_0' 
     elif select_dataset == 1:
@@ -223,13 +226,20 @@ def eval_pig_dotson_thwaites(select_dataset):
     
     # Since the lists have an equal number of objects, determine the number of rows
     n_rows = len(temp_objects_dotson)
-    
-    # Create subplots with 4 columns (1st column for summary, then 3 columns for plots) and n_rows rows
-    fig, axes = plt.subplots(n_rows, 4, figsize=(20, 5 * n_rows))
-    
-    # Loop over the objects and plot summary in column 1 and images in columns 2-4
+
+    # Create a figure with 4 columns, where the last column is reserved for the color bar
+    fig = plt.figure(figsize=(20, 5 * n_rows))
+
+    # Set a supertitle for the entire figure
+    fig.suptitle("Percent Difference Accounted for by ML", fontsize=16, weight='bold')
+
+    # Use gridspec to specify a layout with 4 columns (including one for the color bar)
+    gs = gridspec.GridSpec(n_rows, 5, width_ratios=[4, 4, 4, 4, 0.2], wspace=0.4)
+
+    # Loop over the objects and plot in the corresponding grid positions
     for row in range(n_rows):
         # Summary column (column 0)
+        ax_summary = fig.add_subplot(gs[row, 0])
         summary_text = (
             f"{columns_list_dotson[row]}\n"
             f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
@@ -237,24 +247,40 @@ def eval_pig_dotson_thwaites(select_dataset):
             f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
             f"Loss function value: {loss_function_list_dotson[row]:.4f}"
         )
-        axes[row, 0].text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left", wrap=True)
-        axes[row, 0].axis('off')  # Turn off the axis for the text column
+        ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
+        ax_summary.axis('off')  # Turn off the axis for the text column
         
         # Dotson column (column 1)
-        temp_objects_dotson[row].plot_percent_accounted(vmin=0, show_plot=False)
-        axes[row, 1].set_title(f"Dotson {columns_list_dotson[row]}")
+        ax_dotson = fig.add_subplot(gs[row, 1])
+        _, ax_dotson = plot_percent_accounted(temp_objects_dotson[row], vmin=0, axes=ax_dotson)
+        if row == 0:
+            ax_dotson.set_title("Dotson")
+        else:
+            ax_dotson.set_title("")
         
         # PIG column (column 2)
-        temp_objects_pig[row].plot_percent_accounted(vmin=0, show_plot=False)
-        axes[row, 2].set_title(f"PIG {columns_list_pig[row]}")
+        ax_pig = fig.add_subplot(gs[row, 2])
+        _, ax_pig = plot_percent_accounted(temp_objects_pig[row], vmin=0, axes=ax_pig)
+        if row == 0:
+            ax_pig.set_title("PIG")
+        else:
+            ax_pig.set_title("")
         
         # Thwaites column (column 3)
-        temp_objects_thwaites[row].plot_percent_accounted(vmin=0, show_plot=False)
-        axes[row, 3].set_title(f"Thwaites {columns_list_thwaites[row]}")
-    
+        ax_thwaites = fig.add_subplot(gs[row, 3])
+        _, ax_thwaites = plot_percent_accounted(temp_objects_thwaites[row], vmin=0, axes=ax_thwaites)
+        if row == 0:
+            ax_thwaites.set_title("Thwaites")
+        else:
+            ax_thwaites.set_title("")
+
+        # Create a color bar at the end of the row (column 4)
+        cax = fig.add_subplot(gs[row, 4])
+        fig.colorbar(ax_dotson.collections[0], cax=cax)
+
     # Adjust layout for better spacing
     plt.tight_layout()
-    
+
+
     # Show the final figure
     plt.show()
-
