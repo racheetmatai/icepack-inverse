@@ -231,63 +231,71 @@ def eval_pig_dotson_thwaites(select_dataset):
     inv_thwaites, theta_thwaites, C_thwaites = invert_thwaites_fcn()
     temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites = eval_models(select_dataset, inv_thwaites)
     
-    # Since the lists have an equal number of objects, determine the number of rows
-    n_rows = len(temp_objects_dotson)
+    # Determine the dataset used based on select_dataset
+if select_dataset == 0:
+    dataset_used = "[df_dotson, df_dotson, df_thwaites]"
+elif select_dataset == 1:
+    dataset_used = "[df_pig, df_pig, df_thwaites]"
+elif select_dataset == 2:
+    dataset_used = "[df_dotson, df_pig]"
+elif select_dataset == 3:
+    dataset_used = "[df_dotson]"
+elif select_dataset == 4:
+    dataset_used = "[df_pig]"
+elif select_dataset == 5:
+    dataset_used = "[df_thwaites]"
 
-    # Create a figure with 4 columns, where the last column is reserved for the color bar
-    fig = plt.figure(figsize=(20, 5 * n_rows))
+# Since the lists have an equal number of objects, determine the number of rows
+n_rows = len(temp_objects_dotson)
 
-    # Set a supertitle for the entire figure
-    fig.suptitle("Percent Difference Accounted for by ML", fontsize=16, weight='bold')
+# Increase figure size to make the rows larger
+fig = plt.figure(figsize=(22, 6 * n_rows))
 
-    # Use gridspec to specify a layout with 4 columns (including one for the color bar)
-    gs = gridspec.GridSpec(n_rows, 5, width_ratios=[4, 4, 4, 4, 0.2], wspace=0.4)
+# Create a gridspec layout with an extra row for the title
+# Reduce hspace to decrease vertical gaps between rows
+gs = gridspec.GridSpec(n_rows + 1, 5, width_ratios=[4, 4, 4, 4, 0.2], wspace=0.4, hspace=0.2)
 
-    # Loop over the objects and plot in the corresponding grid positions
-    for row in range(n_rows):
-        # Summary column (column 0)
-        ax_summary = fig.add_subplot(gs[row, 0])
-        summary_text = (
-            f"{columns_list_dotson[row]}\n"
-            f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
-            f"R2_adjusted test: {summary_list_dotson[row]['r2_adjusted_mean']:.4f}\n"
-            f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
-            f"Loss function value: {loss_function_list_dotson[row]:.4f}"
-        )
-        ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
-        ax_summary.axis('off')  # Turn off the axis for the text column
-        
-        # Dotson column (column 1)
-        ax_dotson = fig.add_subplot(gs[row, 1])
-        _, ax_dotson = temp_objects_dotson[row].plot_percent_accounted(vmin=0, axes=ax_dotson)
-        if row == 0:
-            ax_dotson.set_title("Dotson")
-        else:
-            ax_dotson.set_title("")
-        
-        # PIG column (column 2)
-        ax_pig = fig.add_subplot(gs[row, 2])
-        _, ax_pig = temp_objects_pig[row].plot_percent_accounted(vmin=0, axes=ax_pig)
-        if row == 0:
-            ax_pig.set_title("PIG")
-        else:
-            ax_pig.set_title("")
-        
-        # Thwaites column (column 3)
-        ax_thwaites = fig.add_subplot(gs[row, 3])
-        _, ax_thwaites = temp_objects_thwaites[row].plot_percent_accounted(vmin=0, axes=ax_thwaites)
-        if row == 0:
-            ax_thwaites.set_title("Thwaites")
-        else:
-            ax_thwaites.set_title("")
+# Add a new axes for the title with the dynamic dataset info
+ax_title = fig.add_subplot(gs[0, :])
+title_text = f"Percent Difference Accounted for by ML\nDataset used for training: {dataset_used}"
+ax_title.text(0.5, 0.5, title_text, fontsize=16, weight='bold', ha='center', va='center')
+ax_title.axis('off')  # Turn off the axis for the title
 
-        # Create a color bar at the end of the row (column 4)
-        cax = fig.add_subplot(gs[row, 4])
-        fig.colorbar(ax_dotson.collections[0], cax=cax)
+# Loop over the objects and plot in the corresponding grid positions
+for row in range(n_rows):
+    # Summary column (column 0)
+    ax_summary = fig.add_subplot(gs[row + 1, 0])
+    summary_text = (
+        f"{columns_list_dotson[row]}\n"
+        f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
+        f"R2_adjusted test: {summary_list_dotson[row]['r2_adjusted_mean']:.4f}\n"
+        f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
+        f"Loss function value: {loss_function_list_dotson[row]:.4f}"
+    )
+    ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
+    ax_summary.axis('off')  # Turn off the axis for the text column
+    
+    # Dotson column (column 1)
+    ax_dotson = fig.add_subplot(gs[row + 1, 1])
+    _, ax_dotson = temp_objects_dotson[row].plot_percent_accounted(vmin=0, axes=ax_dotson)
+    if row == 0:
+        ax_dotson.set_title("Dotson")
+    
+    # PIG column (column 2)
+    ax_pig = fig.add_subplot(gs[row + 1, 2])
+    _, ax_pig = temp_objects_pig[row].plot_percent_accounted(vmin=0, axes=ax_pig)
+    if row == 0:
+        ax_pig.set_title("PIG")
+    
+    # Thwaites column (column 3)
+    ax_thwaites = fig.add_subplot(gs[row + 1, 3])
+    _, ax_thwaites = temp_objects_thwaites[row].plot_percent_accounted(vmin=0, axes=ax_thwaites)
+    if row == 0:
+        ax_thwaites.set_title("Thwaites")
 
-    # Adjust layout for better spacing
-    plt.tight_layout()
+    # Create a color bar at the end of the row (column 4)
+    cax = fig.add_subplot(gs[row + 1, 4])
+    fig.colorbar(ax_dotson.collections[0], cax=cax)
 
-
-    # Show the final figure
-    plt.show()
+# Show the final figure
+plt.show()
