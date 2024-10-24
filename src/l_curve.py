@@ -11,6 +11,7 @@ from firedrake import *
 def compute_J1_J2(args):
     name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val = args
     print('\n function started for '+variable+' '+str(reg_const))
+    
     if variable == 'theta':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_theta = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
         invert_pig.import_velocity_data(name, modified_exists = modified_exists,  C = 'driving-stress')
@@ -19,14 +20,17 @@ def compute_J1_J2(args):
         u_optimized = invert_pig.simulation_theta(theta_optimized)
         J1 = assemble(invert_pig.loss_functional(u_optimized))
         J2 = assemble(invert_pig.regularization_theta_grad(theta_optimized))*reg_const*reg_const
+
     elif variable == 'C':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_c = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
         invert_pig.import_velocity_data(name, modified_exists = modified_exists)
-        invert_pig.invert_C(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn)
+        invert_pig.invert_C(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = nosigma_lossfcn)
         C_optimized = invert_pig.get_C()
         u_optimized = invert_pig.simulation_C(C_optimized)
-        J1 = assemble(invert_pig.loss_functional(u_optimized))
-        J2 = assemble(invert_pig.regularization_C_grad(C_optimized))*reg_const*reg_const
+        J1 = assemble(invert_pig.loss_functional_nosigma(u_optimized))
+        L = firedrake.Constant(7.5e3)
+        J2 = assemble(0.5 / invert_pig.area * (L)**2 * (  firedrake.inner(firedrake.grad(C_optimized),firedrake.grad(C_optimized)) ) * firedrake.dx(invert_pig.mesh))
+
     elif variable == 'simultaneous':
         invert_pig = Invert(outline = outline, mesh_name = mesh, reg_constant_simultaneous = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)       
         invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists)
