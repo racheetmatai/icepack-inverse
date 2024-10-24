@@ -100,6 +100,19 @@ def compute_u_avg(invert_obj, C_mean):
     u_avg=  invert_obj.simulation()
     invert_obj.default_u = u_avg
 
+def regression(temp_object, model_file_path, C_bounds = [-50, 55]):
+    temp_object.compute_C_ML_regress(
+            filename=model_file_path, 
+            half=False, 
+            flip=False, 
+            use_driving_stress=False, 
+            C_bounds=C_bounds, 
+            θ_bounds=[-102, 200],
+            folder = '', 
+            number_of_models=10
+        )
+    return temp_object
+
 def eval_models(select_dataset, invert_obj):
     C_mean = compute_C_mean(select_dataset)
     compute_u_avg(invert_obj, C_mean)
@@ -187,28 +200,44 @@ def eval_models(select_dataset, invert_obj):
         # Ensure the model_name is properly constructed
         model_file_path = os.path.join(base_folder, folder, model_name)
         temp_object.C = firedrake.Function(temp_object.Q)
-        temp_object.compute_C_ML_regress(
-            filename=model_file_path, 
-            half=False, 
-            flip=False, 
-            use_driving_stress=False, 
-            C_bounds=[-50, 55], 
-            θ_bounds=[-102, 200],
-            folder = '', 
-            number_of_models=10
-        )
+        temp_object = regression(temp_object, model_file_path, C_bounds = [-50, 55])
         
         try:
             u_optimized = temp_object.simulation()
         except:
             print('Error in simulation')
-            temp_object.opts = {"dirichlet_ids": temp_object.drichlet_ids,
-                            "side_wall_ids": temp_object.side_ids,
-                           "diagnostic_solver_type": "icepack",
-                        "diagnostic_solver_parameters": {
-                            "max_iterations":50,},}
-            temp_object.create_model_weertman()
-            u_optimized = temp_object.simulation()
+            try:
+                temp_object.opts = {"dirichlet_ids": temp_object.drichlet_ids,
+                                "side_wall_ids": temp_object.side_ids,
+                            "diagnostic_solver_type": "icepack",
+                            "diagnostic_solver_parameters": {
+                                "max_iterations":50,},}
+                temp_object.create_model_weertman()
+                u_optimized = temp_object.simulation()
+            except:
+                print('Error in simulation again reducing C bounds')
+                try:
+                    temp_object = regression(temp_object, model_file_path, C_bounds = [-24, 45])
+                    u_optimized = temp_object.simulation()
+                except:
+                    print('Error in simulation again reducing C bounds 2nd time')
+                    try:
+                        temp_object = regression(temp_object, model_file_path, C_bounds = [-11, 2])
+                        u_optimized = temp_object.simulation()
+                    except:
+                        print('Error in simulation assigning u_optimized')
+                        temp_object.C = firedrake.Function(temp_object.Q)
+                        u_optimized =  temp_object.simulation()
+
+        temp_object.opts = {"dirichlet_ids": temp_object.drichlet_ids,
+                    "side_wall_ids": temp_object.side_ids,
+                   "diagnostic_solver_type": "petsc",
+                "diagnostic_solver_parameters": {
+                    "snes_type": "newtontr",
+                    "ksp_type": "gmres",
+                    "pc_type": "lu",
+                    "pc_factor_mat_solver_type": "mumps",},}
+
             
 
         # Store or process `u_optimized` as needed
@@ -230,72 +259,75 @@ def eval_pig_dotson_thwaites(select_dataset):
     
     inv_thwaites, theta_thwaites, C_thwaites = invert_thwaites_fcn()
     temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites = eval_models(select_dataset, inv_thwaites)
-    
+
+    return temp_objects_dotson, summary_list_dotson, columns_list_dotson, u_optimized_list_dotson, loss_function_list_dotson, temp_objects_pig, summary_list_pig, columns_list_pig, u_optimized_list_pig, loss_function_list_pig, temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites
+
+def plot_percent_diff(select_dataset, temp_objects_dotson, summary_list_dotson, columns_list_dotson, u_optimized_list_dotson, loss_function_list_dotson, temp_objects_pig, summary_list_pig, columns_list_pig, u_optimized_list_pig, loss_function_list_pig, temp_objects_thwaites, summary_list_thwaites, columns_list_thwaites, u_optimized_list_thwaites, loss_function_list_thwaites ):   
     # Determine the dataset used based on select_dataset
-if select_dataset == 0:
-    dataset_used = "[df_dotson, df_dotson, df_thwaites]"
-elif select_dataset == 1:
-    dataset_used = "[df_pig, df_pig, df_thwaites]"
-elif select_dataset == 2:
-    dataset_used = "[df_dotson, df_pig]"
-elif select_dataset == 3:
-    dataset_used = "[df_dotson]"
-elif select_dataset == 4:
-    dataset_used = "[df_pig]"
-elif select_dataset == 5:
-    dataset_used = "[df_thwaites]"
+    if select_dataset == 0:
+        dataset_used = "[df_dotson, df_dotson, df_thwaites]"
+    elif select_dataset == 1:
+        dataset_used = "[df_pig, df_pig, df_thwaites]"
+    elif select_dataset == 2:
+        dataset_used = "[df_dotson, df_pig]"
+    elif select_dataset == 3:
+        dataset_used = "[df_dotson]"
+    elif select_dataset == 4:
+        dataset_used = "[df_pig]"
+    elif select_dataset == 5:
+        dataset_used = "[df_thwaites]"
 
-# Since the lists have an equal number of objects, determine the number of rows
-n_rows = len(temp_objects_dotson)
+    # Since the lists have an equal number of objects, determine the number of rows
+    n_rows = len(temp_objects_dotson)
 
-# Increase figure size to make the rows larger
-fig = plt.figure(figsize=(22, 6 * n_rows))
+    # Increase figure size to make the rows larger
+    fig = plt.figure(figsize=(22, 6 * n_rows))
 
-# Create a gridspec layout with an extra row for the title
-# Reduce hspace to decrease vertical gaps between rows
-gs = gridspec.GridSpec(n_rows + 1, 5, width_ratios=[4, 4, 4, 4, 0.2], wspace=0.4, hspace=0.2)
+    # Create a gridspec layout with an extra row for the title
+    # Reduce hspace to decrease vertical gaps between rows
+    gs = gridspec.GridSpec(n_rows + 1, 5, width_ratios=[4, 4, 4, 4, 0.2], wspace=0.4, hspace=0.2)
 
-# Add a new axes for the title with the dynamic dataset info
-ax_title = fig.add_subplot(gs[0, :])
-title_text = f"Percent Difference Accounted for by ML\nDataset used for training: {dataset_used}"
-ax_title.text(0.5, 0.5, title_text, fontsize=16, weight='bold', ha='center', va='center')
-ax_title.axis('off')  # Turn off the axis for the title
+    # Add a new axes for the title with the dynamic dataset info
+    ax_title = fig.add_subplot(gs[0, :])
+    title_text = f"Percent Difference Accounted for by ML\nDataset used for training: {dataset_used}"
+    ax_title.text(0.5, 0.5, title_text, fontsize=16, weight='bold', ha='center', va='center')
+    ax_title.axis('off')  # Turn off the axis for the title
 
-# Loop over the objects and plot in the corresponding grid positions
-for row in range(n_rows):
-    # Summary column (column 0)
-    ax_summary = fig.add_subplot(gs[row + 1, 0])
-    summary_text = (
-        f"{columns_list_dotson[row]}\n"
-        f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
-        f"R2_adjusted test: {summary_list_dotson[row]['r2_adjusted_mean']:.4f}\n"
-        f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
-        f"Loss function value: {loss_function_list_dotson[row]:.4f}"
-    )
-    ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
-    ax_summary.axis('off')  # Turn off the axis for the text column
-    
-    # Dotson column (column 1)
-    ax_dotson = fig.add_subplot(gs[row + 1, 1])
-    _, ax_dotson = temp_objects_dotson[row].plot_percent_accounted(vmin=0, axes=ax_dotson)
-    if row == 0:
-        ax_dotson.set_title("Dotson")
-    
-    # PIG column (column 2)
-    ax_pig = fig.add_subplot(gs[row + 1, 2])
-    _, ax_pig = temp_objects_pig[row].plot_percent_accounted(vmin=0, axes=ax_pig)
-    if row == 0:
-        ax_pig.set_title("PIG")
-    
-    # Thwaites column (column 3)
-    ax_thwaites = fig.add_subplot(gs[row + 1, 3])
-    _, ax_thwaites = temp_objects_thwaites[row].plot_percent_accounted(vmin=0, axes=ax_thwaites)
-    if row == 0:
-        ax_thwaites.set_title("Thwaites")
+    # Loop over the objects and plot in the corresponding grid positions
+    for row in range(n_rows):
+        # Summary column (column 0)
+        ax_summary = fig.add_subplot(gs[row + 1, 0])
+        summary_text = (
+            f"{columns_list_dotson[row]}\n"
+            f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
+            f"R2_adjusted test: {summary_list_dotson[row]['r2_adjusted_mean']:.4f}\n"
+            f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
+            f"Loss function value: {loss_function_list_dotson[row]:.4f}"
+        )
+        ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
+        ax_summary.axis('off')  # Turn off the axis for the text column
+        
+        # Dotson column (column 1)
+        ax_dotson = fig.add_subplot(gs[row + 1, 1])
+        _, ax_dotson = temp_objects_dotson[row].plot_percent_accounted(vmin=0, axes=ax_dotson)
+        if row == 0:
+            ax_dotson.set_title("Dotson")
+        
+        # PIG column (column 2)
+        ax_pig = fig.add_subplot(gs[row + 1, 2])
+        _, ax_pig = temp_objects_pig[row].plot_percent_accounted(vmin=0, axes=ax_pig)
+        if row == 0:
+            ax_pig.set_title("PIG")
+        
+        # Thwaites column (column 3)
+        ax_thwaites = fig.add_subplot(gs[row + 1, 3])
+        _, ax_thwaites = temp_objects_thwaites[row].plot_percent_accounted(vmin=0, axes=ax_thwaites)
+        if row == 0:
+            ax_thwaites.set_title("Thwaites")
 
-    # Create a color bar at the end of the row (column 4)
-    cax = fig.add_subplot(gs[row + 1, 4])
-    fig.colorbar(ax_dotson.collections[0], cax=cax)
+        # Create a color bar at the end of the row (column 4)
+        cax = fig.add_subplot(gs[row + 1, 4])
+        fig.colorbar(ax_dotson.collections[0], cax=cax)
 
-# Show the final figure
-plt.show()
+    # Show the final figure
+    plt.show()
