@@ -259,7 +259,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # Dotson column (column 1)
         ax_dotson = fig.add_subplot(gs[row, 1])
-        _, ax_dotson = temp_objects_dotson.plot_percent_accounted(temp_objects_dotson[row], vmin=0, axes=ax_dotson)
+        _, ax_dotson = temp_objects_dotson[row].plot_percent_accounted(vmin=0, axes=ax_dotson)
         if row == 0:
             ax_dotson.set_title("Dotson")
         else:
@@ -267,7 +267,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # PIG column (column 2)
         ax_pig = fig.add_subplot(gs[row, 2])
-        _, ax_pig = temp_objects_pig.plot_percent_accounted(temp_objects_pig[row], vmin=0, axes=ax_pig)
+        _, ax_pig = temp_objects_pig[row].plot_percent_accounted(vmin=0, axes=ax_pig)
         if row == 0:
             ax_pig.set_title("PIG")
         else:
@@ -275,7 +275,7 @@ def eval_pig_dotson_thwaites(select_dataset):
         
         # Thwaites column (column 3)
         ax_thwaites = fig.add_subplot(gs[row, 3])
-        _, ax_thwaites = temp_objects_thwaites.plot_percent_accounted(temp_objects_thwaites[row], vmin=0, axes=ax_thwaites)
+        _, ax_thwaites = temp_objects_thwaites[row].plot_percent_accounted(vmin=0, axes=ax_thwaites)
         if row == 0:
             ax_thwaites.set_title("Thwaites")
         else:
