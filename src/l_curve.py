@@ -14,7 +14,7 @@ def compute_J1_J2(args):
     
     if variable == 'theta':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_theta = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
-        invert_pig.import_velocity_data(name, modified_exists = modified_exists,  C = 'driving-stress')
+        invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists,  C = 'driving-stress')
         invert_pig.invert_theta(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn)
         theta_optimized = invert_pig.get_theta()
         u_optimized = invert_pig.simulation_theta(theta_optimized)
@@ -23,7 +23,7 @@ def compute_J1_J2(args):
 
     elif variable == 'C':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_c = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
-        invert_pig.import_velocity_data(name, modified_exists = modified_exists)
+        invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists)
         invert_pig.invert_C(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = nosigma_lossfcn)
         C_optimized = invert_pig.get_C()
         u_optimized = invert_pig.simulation_C(C_optimized)
@@ -51,7 +51,7 @@ def compute_J1_J2(args):
     return [J1, J2]
 
 def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_exists=True, invert_iter=150, gradient_tolerance=1e-100, step_tolerance=1e-100, workers = 5, lcar=9e3, nosigma_lossfcn ='nosigma', drichlet_ids = [2,3,4], regularization_grad_fcn= True, constant_val = 0.01):
-    reg_const_list = [1, 100]  #[0.01, 0.1, 1, 10, 100]
+    reg_const_list = [0.01, 0.1, 1, 10, 100]
     J_list = []
 
     ## for parallel execution uncomment the following lines
