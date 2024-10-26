@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from src.invert_c_theta import Invert
 import pandas as pd
 import numpy as np
@@ -54,18 +54,19 @@ def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_e
     reg_const_list = [0.01, 0.1, 1, 10, 100]
     J_list = []
 
-    ## for parallel execution uncomment the following lines
-    # with futures.ProcessPoolExecutor(max_workers=workers) as pool:
-    #     args_list = [(name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val) for reg_const in reg_const_list]
-    #     for J in pool.map(compute_J1_J2, args_list):
-    #         print("IN POOL:", J)
-    #         J_list.append(J)
+    # for parallel execution uncomment the following lines
+    with futures.ProcessPoolExecutor(max_workers=workers) as pool:
+        args_list = [(name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val) for reg_const in reg_const_list]
+        for J in pool.map(compute_J1_J2, args_list):
+            print("IN POOL:", J)
+            J_list.append(J)
 
-    for reg_const in reg_const_list:
-        print('reg_const: ',reg_const)
-        J = compute_J1_J2((name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val))
-        print('reg_const: ',reg_const, '  J: ',J)
-        J_list.append(J)
+    ## for serial execution uncomment the following lines
+    # for reg_const in reg_const_list:
+    #     print('reg_const: ',reg_const)
+    #     J = compute_J1_J2((name, variable, reg_const, outline, mesh, modified_exists, invert_iter, gradient_tolerance, step_tolerance, lcar, nosigma_lossfcn, drichlet_ids, regularization_grad_fcn, constant_val))
+    #     print('reg_const: ',reg_const, '  J: ',J)
+    #     J_list.append(J)
 
     J_npy = np.array(J_list).T
     df = pd.DataFrame()
@@ -73,10 +74,3 @@ def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_e
     df['J1'] = J_npy[0, :]
     df['J2'] = J_npy[1, :]
     return df
-
-if __name__ == '__main__':
-    name = None
-    variable = 'theta'
-    l_curve_4 = create_L_curve(name, variable, invert_iter = 100)
-    plt.scatter(l_curve['J1'], l_curve['J2'])
-    plt.savefig('C_22.png')
