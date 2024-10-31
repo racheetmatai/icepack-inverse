@@ -142,7 +142,6 @@ class Invert:
         self.opts = opts
         self.drichlet_ids = drichlet_ids
         self.side_ids = side_ids
-        print('Defining friction law')
         self.create_model_weertman() 
         self.set_ramp_power(ramp_power)
         print('Initializing heat transport')
@@ -165,7 +164,7 @@ class Invert:
         """
         Import geophysics data
         Args:
-            name_list (list): List of names of the geophysics data in order [magnetic anomaly, bouguer anomaly, geothermal heatflux].
+            name_list (list): List of names of the geophysics data in order [magnetic anomaly, bouguer anomaly, geothermal heatflux, surface air temperature, gravity disturbance, snow accumulation, englacial temperature].
         """
         self.mag_anomaly = icepack.interpolate(read_raster_file(name_list[0]), self.Q)
         self.boug_anomaly = icepack.interpolate(read_raster_file(name_list[1]), self.Q)
@@ -185,6 +184,11 @@ class Invert:
         self.surface_air_temp_kelvin = icepack.interpolate(surface_air_temp_da_kelvin, self.Q)
         self.gravity_disturbance = icepack.interpolate(read_raster_file(name_list[4]), self.Q)
         self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
+
+        self.englacial_temp = icepack.interpolate(read_raster_file(name_list[6]), self.Q)
+        self.A0 = icepack.rate_factor(self.englacial_temp)
+        self.create_model_weertman()
+
         self.initialize_3d_s_h_temp_heat_C0()
 
     def set_ramp_power(self, ramp_power):
@@ -235,6 +239,7 @@ class Invert:
         ) 
             
     def create_model_weertman(self):
+        print('Defining friction law')
         model_weertman = icepack.models.IceStream(friction=self.weertman_friction_with_ramp, viscosity = self.viscosity)
         opts = self.opts
         if opts is None:
@@ -465,6 +470,28 @@ class Invert:
         )
         fig.colorbar(colors);
         axes.set_title("Error in U")
+        return fig, axes
+    
+    def plot_englacial_temp(self, vmin=None, vmax=None):
+        """Plot englacial temperature."""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            self.englacial_temp, vmin=vmin, vmax=vmax, axes=axes
+        )
+        fig.colorbar(colors);
+        axes.set_title("Englacial Temperature")
+        return fig, axes
+    
+    def plot_scalar_field(self, field, vmin=None, vmax=None):
+        """Plot englacial temperature."""
+        fig, axes = self.plot_bounded_antarctica()
+        axes.set_xlabel("meters")
+        colors = firedrake.tripcolor(
+            field, vmin=vmin, vmax=vmax, axes=axes
+        )
+        fig.colorbar(colors);
+        axes.set_title("Englacial Temperature")
         return fig, axes
 
     def plot_u_error_percentage(self, u, vmin=0, vmax=10):
