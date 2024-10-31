@@ -22,7 +22,7 @@ def compute_J1_J2(args):
         J2 = assemble(invert_pig.regularization_theta_grad(theta_optimized))*reg_const*reg_const
 
     elif variable == 'C':
-        invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_c = reg_const, read_mesh = False, drichlet_ids = drichlet_ids, lcar = lcar)
+        invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_c = reg_const, read_mesh = False, opts = None , drichlet_ids = drichlet_ids, lcar = lcar)
         invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists)
         invert_pig.invert_C(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = nosigma_lossfcn)
         C_optimized = invert_pig.get_C()
@@ -48,10 +48,10 @@ def compute_J1_J2(args):
     u_optimized = None
     C_optimized = None
     theta_optimized = None
-    return [J1, J2]
+    return [J1, J2] 
 
-def create_L_curve(name, variable, outline='pine-island', mesh='pig', modified_exists=True, invert_iter=150, gradient_tolerance=1e-100, step_tolerance=1e-100, workers = 5, lcar=9e3, nosigma_lossfcn ='nosigma', drichlet_ids = [2,3,4], regularization_grad_fcn= True, constant_val = 0.01):
-    reg_const_list = [0.01, 0.1, 1, 10, 100]
+def create_L_curve(name, variable,reg_const_list = [0.01, 0.1, 1, 10, 100],  outline='pine-island', mesh='pig', modified_exists=True, invert_iter=150, gradient_tolerance=1e-100, step_tolerance=1e-100, workers = 5, lcar=9e3, nosigma_lossfcn ='nosigma', drichlet_ids = [2,3,4], regularization_grad_fcn= True, constant_val = 0.01):
+    
     J_list = []
 
     # for parallel execution uncomment the following lines

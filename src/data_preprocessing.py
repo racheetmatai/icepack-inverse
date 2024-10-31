@@ -241,7 +241,7 @@ def get_windowed_velocity_file(name, outline, δ, modified_exists=False):
     """
     if name is None:
         print("Reading velocity from measures database")
-        velocity_filename = icepack.datasets.fetch_measures_antarctica()
+        velocity_filename = icepack.datasets.fetch_measures_antarctica() #name = "Antarctica_ice_velocity_2018_2019_1km_v01.1.nc")
         vx_file = rasterio.open(f"netcdf:{velocity_filename}:VX", "r")
         vy_file = rasterio.open(f"netcdf:{velocity_filename}:VY", "r")
         stdx_file = rasterio.open(f"netcdf:{velocity_filename}:ERRX", "r")
