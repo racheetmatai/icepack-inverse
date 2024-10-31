@@ -24,6 +24,13 @@ def compute_J1_J2(args):
     elif variable == 'C':
         invert_pig = Invert(outline = outline, mesh_name =mesh,  reg_constant_c = reg_const, read_mesh = False, opts = None , drichlet_ids = drichlet_ids, lcar = lcar)
         invert_pig.import_velocity_data(name, constant_val=constant_val, modified_exists = modified_exists)
+        invert_pig.import_geophysics_data(name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
+                                                'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
+                                                'data/geophysics/GeothermalHeatFlux_5km.tif',
+                                                'data/geophysics/ALBMAP_SurfaceAirTemperature_5km.tif',
+                                                'data/geophysics/EIGEN-6C4_GravityDisturbance_10km.tif',
+                                                'data/geophysics/ALBMAP_SnowAccumulation_Arthern_5km.tif',
+                                                'data/geophysics/Englacial_temp_Pattyn_2013.tif'])
         invert_pig.invert_C(max_iterations=invert_iter, gradient_tolerance = gradient_tolerance, step_tolerance=step_tolerance, regularization_grad_fcn= regularization_grad_fcn, loss_fcn_type = nosigma_lossfcn)
         C_optimized = invert_pig.get_C()
         u_optimized = invert_pig.simulation_C(C_optimized)

@@ -483,7 +483,7 @@ class Invert:
         axes.set_title("Englacial Temperature")
         return fig, axes
     
-    def plot_scalar_field(self, field, vmin=None, vmax=None):
+    def plot_scalar_field(self, field, vmin=None, vmax=None, title_name = ''):
         """Plot englacial temperature."""
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
@@ -491,7 +491,7 @@ class Invert:
             field, vmin=vmin, vmax=vmax, axes=axes
         )
         fig.colorbar(colors);
-        axes.set_title("Englacial Temperature")
+        axes.set_title(title_name)
         return fig, axes
 
     def plot_u_error_percentage(self, u, vmin=0, vmax=10):
