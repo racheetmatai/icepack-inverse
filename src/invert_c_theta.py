@@ -188,6 +188,8 @@ class Invert:
         self.englacial_temp = icepack.interpolate(read_raster_file(name_list[6]), self.Q)
         self.A0 = icepack.rate_factor(self.englacial_temp)
         self.create_model_weertman()
+        print('using englacial temperature for rate factor')
+        print('Geophysics data imported')
 
         self.initialize_3d_s_h_temp_heat_C0()
 
