@@ -36,7 +36,7 @@ def invert_dotson_fcn():
 def invert_thwaites_fcn():
     drichlet_ids = [1,2,5,6]
     side_ids = []
-    invert_thwaites = Invert(outline = 'data/geojson/thwaites.geojson', mesh_name = 'thwaites', reg_constant_c  = 0.5, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
+    invert_thwaites = Invert(outline = 'data/geojson/thwaites.geojson', mesh_name = 'thwaites', reg_constant_c  = 0.05, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
     invert_thwaites.import_velocity_data(constant_val=0.01)
     invert_thwaites.import_geophysics_data(name_list=name_list)
     # u =  invert_thwaites.simulation()
@@ -52,7 +52,7 @@ def invert_thwaites_fcn():
 def invert_pig_fcn():
     drichlet_ids = [2,3,4]
     side_ids = []
-    invert_pig = Invert(outline = 'pine-island', mesh_name = 'pig', reg_constant_c  = 0.1, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
+    invert_pig = Invert(outline = 'pine-island', mesh_name = 'pig', reg_constant_c  = 0.05, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
     invert_pig.import_velocity_data(constant_val=0.01)
     invert_pig.import_geophysics_data(name_list=name_list)
     # u =  invert_pig.simulation()
@@ -77,9 +77,13 @@ def compute_C_mean(select_dataset = 0):
     # df_thwaites = process_csv('regularized_const_01C_simultaneous_thwaites_r1_geo_12.csv')
     # df_dotson = process_csv('regularized_const_01C_simultaneous_dotson_r1_geo_12.csv')
 
-    df_pig = process_csv('regularized_const_01C_C_only_englacial_temp_pig_r01_geo_12.csv')
-    df_thwaites = process_csv('regularized_const_01C_C_only_englacial_temp_thwaites_r01_geo_12.csv')
-    df_dotson = process_csv('regularized_const_01C_C_only_englacial_temp_dotson_r01_geo_12.csv')
+    # df_pig = process_csv('regularized_const_01C_C_only_englacial_temp_pig_r01_geo_12.csv')
+    # df_thwaites = process_csv('regularized_const_01C_C_only_englacial_temp_thwaites_r01_geo_12.csv')
+    # df_dotson = process_csv('regularized_const_01C_C_only_englacial_temp_dotson_r01_geo_12.csv')
+
+    df_pig = process_csv('regularized_const_01C_C_only_englacial_temp_pig_r005_geo_12.csv')
+    df_thwaites = process_csv('regularized_const_01C_C_only_englacial_temp_thwaites_r005_geo_12.csv')
+    df_dotson = process_csv('regularized_const_01C_C_only_englacial_temp_dotson_r005_geo_12.csv')
 
     if select_dataset == 0:
         df = pd.concat([df_dotson,df_dotson,df_thwaites], ignore_index=True)
