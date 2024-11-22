@@ -8,6 +8,7 @@ import pickle
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colorbar as colorbar
+import seaborn as sns
 
 name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
                                                 'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
@@ -123,6 +124,157 @@ def regression(temp_object, model_file_path, C_bounds = [-50, 55]):
             number_of_models=10
         )
     return temp_object
+
+
+def get_models_summary(select_dataset):
+    if select_dataset == 0:
+        base_folder = 'mlp_ensemble_englacial_0' 
+    elif select_dataset == 1:
+        base_folder = 'mlp_ensemble_englacial_1'
+    elif select_dataset == 2:
+        base_folder = 'mlp_ensemble_englacial_2' 
+    elif select_dataset == 3:
+        base_folder = 'mlp_ensemble_englacial_3'
+    elif select_dataset == 4:
+        base_folder = 'mlp_ensemble_englacial_4'
+    elif select_dataset == 5:
+        base_folder = 'mlp_ensemble_englacial_5'
+    summary_list = []
+
+
+    for folder in os.listdir(base_folder):
+        if not os.path.isdir(os.path.join(base_folder, folder)):
+            continue  # Skip if not a directory
+        
+        try:
+            # Skip folders that don't contain numeric names (if needed)
+            folder_num = int(folder)
+        except ValueError:
+            continue
+        
+        print('Processing folder:', folder)
+        path = os.path.join(base_folder, folder)
+        files = [f for f in os.listdir(path) if f.endswith('.pkl')]
+        
+        if not files:
+            print(f"No .pkl files found in folder {folder}. Skipping.")
+            continue
+        
+        
+        columns = None
+        r2_list, r2_adjusted_list, mse_list = [], [], []
+        
+        for file in files:
+            try:
+                with open(os.path.join(path, file), "rb") as f:
+                    model_bundle = pickle.load(f)
+                    r2_list.append(model_bundle['r2_test'])
+                    r2_adjusted_list.append(model_bundle['r2_adjusted_test'])
+                    mse_list.append(model_bundle['mse_test'])
+                    columns = model_bundle.get('input_columns', columns)
+            except Exception as e:
+                print(f"Error processing file {file} in folder {folder}: {e}")
+                continue
+        if r2_list and r2_adjusted_list and mse_list:
+            r2_stats = pd.DataFrame(r2_list).describe()
+            r2_adjusted_stats = pd.DataFrame(r2_adjusted_list).describe()
+            mse_stats = pd.DataFrame(mse_list).describe()
+            
+            summary_list.append({
+                'input_columns': columns,
+                'r2_mean': r2_stats.loc['mean'].values[0],
+                'r2_std': r2_stats.loc['std'].values[0],
+                'r2_median': r2_stats.loc['50%'].values[0],
+                'r2_adjusted_mean': r2_adjusted_stats.loc['mean'].values[0],
+                'r2_adjusted_std': r2_adjusted_stats.loc['std'].values[0],
+                'r2_adjusted_median': r2_adjusted_stats.loc['50%'].values[0],
+                'mse_mean': mse_stats.loc['mean'].values[0],
+                'mse_std': mse_stats.loc['std'].values[0],
+                'mse_median': mse_stats.loc['50%'].values[0]
+            })
+    return summary_list
+
+# Dataset labels
+DATASET_NAMES = [
+    "[dotson, thwaites]",
+    "[pig, thwaites]",
+    "[dotson, pig]",
+    "[dotson]",
+    "[pig]",
+    "[thwaites]",
+]
+
+# Feature symbol mapping
+FEATURE_SYMBOLS = {
+    "s": "s",
+    "b": "b",
+    "h": "h",
+    "mag_s": "∥∇s∥",
+    "mag_b": "∥∇b∥",
+    "mag_h": "∥∇h∥",
+    "driving_stress": "τd",
+    "gravity_disturbance": "gd",
+    "heatflux": "Qb",
+    "surface_air_temp": "Ts",
+    "snow_accumulation": "As",
+}
+
+
+# Collect R2 scores for all datasets
+def collect_r2_scores():
+    all_r2_scores = []  # To store scores for all datasets
+    feature_labels = []  # To store feature subset names
+
+    for select_dataset in range(6):  # Loop through all dataset combinations
+        summary_list = get_models_summary(select_dataset)
+
+        # Extract r2_mean and corresponding feature subsets
+        dataset_r2_scores = []
+        dataset_feature_labels = []
+        
+        for entry in summary_list:
+            dataset_r2_scores.append(entry['r2_mean'])
+            dataset_feature_labels.append(", ".join(entry['input_columns']))  # Combine feature names as labels
+
+        all_r2_scores.append(dataset_r2_scores)
+
+        # Save feature labels only once (assuming subsets are consistent across datasets)
+        if not feature_labels:
+            feature_labels = dataset_feature_labels
+
+    return all_r2_scores, feature_labels
+
+# Replace feature subset labels with symbols
+def replace_features_with_symbols(feature_labels):
+    symbol_labels = []
+    for label in feature_labels:
+        # Convert feature subsets to symbols, preserving order
+        symbols = [FEATURE_SYMBOLS.get(feature, feature) for feature in label.split(", ")]
+        symbol_labels.append(", ".join(symbols))
+    return symbol_labels
+
+# Visualize R2 scores using a heatmap with symbols and fixed cbar range
+def plot_r2_heatmap_with_symbols(r2_scores, feature_labels):
+    feature_symbols = replace_features_with_symbols(feature_labels)
+    r2_df = pd.DataFrame(r2_scores, index=DATASET_NAMES, columns=feature_symbols)
+
+    plt.figure(figsize=(14, 8))
+    sns.heatmap(
+        r2_df,
+        annot=True,
+        fmt=".3f",
+        cmap="YlGn",
+        cbar=True,
+        vmin=0,  # Minimum value of the color bar
+        vmax=1,  # Maximum value of the color bar
+    )
+    plt.title("Validation $R^2$ Scores for Feature Subsets and Datasets")
+    plt.xlabel("Feature Subsets")
+    plt.ylabel("Dataset Combinations")
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
 
 def eval_models(select_dataset, invert_obj):
     C_mean = compute_C_mean(select_dataset)
@@ -313,7 +465,9 @@ def plot_percent_diff(select_dataset, temp_objects_dotson, summary_list_dotson, 
             f"R2 test: {summary_list_dotson[row]['r2_mean']:.4f}\n"
             f"R2_adjusted test: {summary_list_dotson[row]['r2_adjusted_mean']:.4f}\n"
             f"MSE test: {summary_list_dotson[row]['mse_mean']:.4f}\n"
-            f"Loss function value: {loss_function_list_dotson[row]:.4f}"
+            f"Loss function value dotson: {loss_function_list_dotson[row]:.4f}\n"
+            f"Loss function value pig: {loss_function_list_pig[row]:.4f}\n"
+            f"Loss function value thwaites: {loss_function_list_thwaites[row]:.4f}\n"
         )
         ax_summary.text(0.1, 0.5, summary_text, fontsize=10, va="center", ha="left")
         ax_summary.axis('off')  # Turn off the axis for the text column

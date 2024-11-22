@@ -437,13 +437,17 @@ class Invert:
         axes.set_title('Grounding Line')
         return fig, axes
     
-    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None):
+    def calculate_percent_accounted(self):
         u_inv_norm = self.get_magnitude(self.inverse_u)
         u_default_norm = self.get_magnitude(self.default_u)
         u_ML_norm = self.get_magnitude(self.ML_u)
         ml_difference = firedrake.sqrt((u_inv_norm - u_ML_norm)**2)
         default_difference = firedrake.sqrt((u_inv_norm - u_default_norm)**2) 
         percent_difference = 100 * (default_difference - ml_difference) / default_difference
+        return percent_difference
+    
+    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None):
+        percent_difference = self.calculate_percent_accounted()
         percent_difference_fcn = firedrake.interpolate(percent_difference, self.Q)
 
         # Plot on provided axes or create new if None
