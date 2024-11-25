@@ -220,7 +220,6 @@ FEATURE_SYMBOLS = {
 }
 
 
-# Collect R2 scores for all datasets
 def collect_r2_scores():
     all_r2_scores = []  # To store scores for all datasets
     feature_labels = []  # To store feature subset names
@@ -231,18 +230,44 @@ def collect_r2_scores():
         # Extract r2_mean and corresponding feature subsets
         dataset_r2_scores = []
         dataset_feature_labels = []
-        
+
         for entry in summary_list:
             dataset_r2_scores.append(entry['r2_mean'])
             dataset_feature_labels.append(", ".join(entry['input_columns']))  # Combine feature names as labels
 
+        # Reorder the R² scores based on the feature labels of the first dataset
+        if select_dataset == 0:
+            # Initialize the feature_labels list with the first dataset's feature labels
+            feature_labels = dataset_feature_labels
+        else:
+            # Reorder the dataset's r2_mean values based on the feature labels from the first dataset
+            reordered_r2_scores = reorder_list(dataset_r2_scores, dataset_feature_labels, feature_labels)
+            all_r2_scores.append(reordered_r2_scores)
+            continue
+
+        # For the first dataset, directly add the R² scores
         all_r2_scores.append(dataset_r2_scores)
 
-        # Save feature labels only once (assuming subsets are consistent across datasets)
-        if not feature_labels:
-            feature_labels = dataset_feature_labels
-
     return all_r2_scores, feature_labels
+
+
+def reorder_list(r2_scores, current_labels, reference_labels):
+    """
+    Reorders the r2_scores based on the reference_labels order.
+    Assumes that current_labels and reference_labels are lists of the same length,
+    and that both lists contain the same set of feature names (just in different orders).
+    """
+    # Create a mapping of label to its index in reference_labels
+    label_index_map = {label: idx for idx, label in enumerate(reference_labels)}
+
+    # Reorder the r2_scores based on the reference_labels
+    reordered_scores = [None] * len(reference_labels)
+
+    for score, label in zip(r2_scores, current_labels):
+        index_in_reference = label_index_map[label]
+        reordered_scores[index_in_reference] = score
+
+    return reordered_scores
 
 # Replace feature subset labels with symbols
 def replace_features_with_symbols(feature_labels):
@@ -256,7 +281,7 @@ def replace_features_with_symbols(feature_labels):
 # Visualize R2 scores using a heatmap with symbols and fixed cbar range
 def plot_r2_heatmap_with_symbols(r2_scores, feature_labels):
     feature_symbols = replace_features_with_symbols(feature_labels)
-    r2_df = pd.DataFrame(r2_scores, index=DATASET_NAMES, columns=feature_symbols)
+    r2_df = pd.DataFrame(np.array(r2_scores).T, columns=DATASET_NAMES, index=feature_symbols)
 
     plt.figure(figsize=(14, 8))
     sns.heatmap(
@@ -270,7 +295,7 @@ def plot_r2_heatmap_with_symbols(r2_scores, feature_labels):
     )
     plt.title("Validation $R^2$ Scores for Feature Subsets and Datasets")
     plt.xlabel("Feature Subsets")
-    plt.ylabel("Dataset Combinations")
+    plt.ylabel("Training Dataset Combinations")
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.show()
