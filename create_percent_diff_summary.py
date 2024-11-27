@@ -220,9 +220,25 @@ FEATURE_SYMBOLS = {
 }
 
 
+feature_labels = [
+    's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, snow_accumulation, surface_air_temp, gravity_disturbance',
+    's, h, mag_h, mag_s, driving_stress, snow_accumulation, surface_air_temp',
+    's, h, mag_h, mag_s, driving_stress',
+    's, h, mag_h, mag_s, snow_accumulation',
+    's, h, mag_h, mag_s, surface_air_temp',
+    's, h, mag_h, mag_s',
+    'mag_h, mag_s',
+    's, h',
+    'driving_stress, snow_accumulation, surface_air_temp',
+    'b, mag_b, gravity_disturbance',
+    'b, mag_b, heatflux, gravity_disturbance',
+    'b, mag_b, heatflux',
+    'heatflux, gravity_disturbance',
+]
+
 def collect_r2_scores():
     all_r2_scores = []  # To store scores for all datasets
-    feature_labels = []  # To store feature subset names
+    #feature_labels = []  # To store feature subset names
 
     for select_dataset in range(6):  # Loop through all dataset combinations
         summary_list = get_models_summary(select_dataset)
@@ -235,18 +251,19 @@ def collect_r2_scores():
             dataset_r2_scores.append(entry['r2_mean'])
             dataset_feature_labels.append(", ".join(entry['input_columns']))  # Combine feature names as labels
 
-        # Reorder the R² scores based on the feature labels of the first dataset
-        if select_dataset == 0:
-            # Initialize the feature_labels list with the first dataset's feature labels
-            feature_labels = dataset_feature_labels
-        else:
+        # # Reorder the R² scores based on the feature labels of the first dataset
+        # if select_dataset == 0:
+        #     # Initialize the feature_labels list with the first dataset's feature labels
+        #     feature_labels = dataset_feature_labels
+        # else:
             # Reorder the dataset's r2_mean values based on the feature labels from the first dataset
-            reordered_r2_scores = reorder_list(dataset_r2_scores, dataset_feature_labels, feature_labels)
-            all_r2_scores.append(reordered_r2_scores)
-            continue
+        reordered_r2_scores = reorder_list(dataset_r2_scores, dataset_feature_labels, feature_labels)
+        all_r2_scores.append(reordered_r2_scores)
+        #     continue
+        # print(feature_labels)
 
-        # For the first dataset, directly add the R² scores
-        all_r2_scores.append(dataset_r2_scores)
+        # # For the first dataset, directly add the R² scores
+        # all_r2_scores.append(dataset_r2_scores)
 
     return all_r2_scores, feature_labels
 
