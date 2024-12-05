@@ -196,12 +196,12 @@ def get_models_summary(select_dataset):
 
 # Dataset labels
 DATASET_NAMES = [
-    "[dotson, thwaites]",
-    "[pig, thwaites]",
-    "[dotson, pig]",
-    "[dotson]",
-    "[pig]",
-    "[thwaites]",
+    "dotson, thwaites",
+    "pig, thwaites",
+    "dotson, pig",
+    "dotson",
+    "pig",
+    "thwaites",
 ]
 
 # Feature symbol mapping
@@ -234,6 +234,7 @@ feature_labels = [
     'b, mag_b, heatflux, gravity_disturbance',
     'b, mag_b, heatflux',
     'heatflux, gravity_disturbance',
+    's, h, mag_h, mag_s, surface_air_temp, heatflux, gravity_disturbance'
 ]
 
 def collect_r2_scores():
