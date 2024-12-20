@@ -162,7 +162,7 @@ def get_models_summary(select_dataset):
         
         
         columns = None
-        r2_list, r2_adjusted_list, mse_list = [], [], []
+        r2_list, r2_adjusted_list, mse_list, history_list = [], [], [], []
         
         for file in files:
             try:
@@ -172,6 +172,7 @@ def get_models_summary(select_dataset):
                     r2_adjusted_list.append(model_bundle['r2_adjusted_test'])
                     mse_list.append(model_bundle['mse_test'])
                     columns = model_bundle.get('input_columns', columns)
+                    history_list.append(model_bundle['history_list'])
             except Exception as e:
                 print(f"Error processing file {file} in folder {folder}: {e}")
                 continue
@@ -190,7 +191,8 @@ def get_models_summary(select_dataset):
                 'r2_adjusted_median': r2_adjusted_stats.loc['50%'].values[0],
                 'mse_mean': mse_stats.loc['mean'].values[0],
                 'mse_std': mse_stats.loc['std'].values[0],
-                'mse_median': mse_stats.loc['50%'].values[0]
+                'mse_median': mse_stats.loc['50%'].values[0],
+                'history_list': history_list
             })
     return summary_list
 
