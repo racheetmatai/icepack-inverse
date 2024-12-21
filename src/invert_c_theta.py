@@ -832,10 +832,20 @@ class Invert:
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
         self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds, folder = folder, number_of_models = number_of_models)
     
-    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], folder = 'model_ensemble/', number_of_models = 10 ):
+    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], folder = 'model_ensemble/', number_of_models = 10, phi_threshold = 0.1):
         self.compute_features(u=u)
-        self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds, folder = folder, number_of_models = number_of_models)
-
+        phi = self.get_phi(self.h, self.s)
+        # Check if any values in phi.dat.data[:] exceed the threshold
+        if np.any(phi.dat.data[:] > phi_threshold):
+            self.C.dat.data[:] = self.regress(
+                filename + '_C',
+                half=half,
+                flip=flip,
+                use_driving_stress=use_driving_stress,
+                bounds=C_bounds,
+                folder=folder,
+                number_of_models=number_of_models
+            )
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
     
