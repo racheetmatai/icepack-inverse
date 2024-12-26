@@ -834,7 +834,7 @@ class Invert:
     
     def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], folder = 'model_ensemble/', number_of_models = 10, phi_threshold = 0.1):
         self.compute_features(u=u)
-        phi = self.get_phi(self.h, self.s)
+        phi = firedrake.interpolate(self.get_phi(self.h, self.s),self.Q)
         # Check if any values in phi.dat.data[:] exceed the threshold
         if np.any(phi.dat.data[:] > phi_threshold):
             self.C.dat.data[:] = self.regress(
