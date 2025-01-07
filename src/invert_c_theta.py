@@ -404,6 +404,11 @@ class Invert:
         E2d = depth_average(E, weight=weights)
         T2d = self.heat_transport.temperature(E2d)
         return firedrake.interpolate(T2d, self.Q)
+    
+    def compute_phi(self):
+        ϕ = self.get_phi(self.h, self.s)
+        self.phi = firedrake.interpolate(ϕ, self.Q)
+        return self.phi
 
     def plot_bounded_antarctica(self):
         """Plot Antarctica with bounding box.
@@ -426,16 +431,44 @@ class Invert:
         axes.legend();
         return fig, axes
 
-    def plot_grounding_line(self, ticks = [-1,0,1]):
-        fig, axes = self.plot_bounded_antarctica()
+    def plot_grounding_line(self, ticks=[-1, 0, 1], threshold=0.1, buffer = 0.1, axes=None):
+        # Plot on provided axes or create new if None
+        if axes is None:
+            fig, axes = self.plot_bounded_antarctica()
+        else:
+            fig = None
+
         axes.set_xlabel("meters")
+        
         ϕ = self.get_phi(self.h, self.s)
-        line = firedrake.interpolate(ϕ, self.Q)
-        colors = firedrake.tripcolor(
-            line, axes=axes)
-        fig.colorbar(colors, ticks=ticks)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree = 1)
+        line = firedrake.interpolate(ϕ, Q_temp)
+        #colors = firedrake.tripcolor(line, axes=axes)
+        
+        # Add colorbar only if no external axes were provided
+        #if fig is not None:
+            #fig.colorbar(colors, ticks=ticks)
+        
+        # Extract coordinates where phi meets the threshold
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:,0]
+        y = line.function_space().mesh().coordinates.dat.data[:,1]
+
+        x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+
+        # x_coords = x[ (phi_values <= threshold + buffer)]
+        # y_coords = y[(phi_values <= threshold + buffer)]
+        
+        # Overlay red dots on the plot
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='red', s=2, label=f'phi = {threshold}')
+            axes.legend()
+
         axes.set_title('Grounding Line')
+
         return fig, axes
+
     
     def calculate_percent_accounted(self):
         u_inv_norm = self.get_magnitude(self.inverse_u)
@@ -446,7 +479,7 @@ class Invert:
         percent_difference = 100 * (default_difference - ml_difference) / default_difference
         return percent_difference
     
-    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None):
+    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None, threshold=0.1, buffer = 0.1):
         percent_difference = self.calculate_percent_accounted()
         percent_difference_fcn = firedrake.interpolate(percent_difference, self.Q)
 
@@ -461,6 +494,26 @@ class Invert:
         # Add colorbar only if no external axes were provided
         if fig is not None:
             fig.colorbar(colors)
+
+        ϕ = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree = 1)
+        line = firedrake.interpolate(ϕ, Q_temp)
+        
+        # Extract coordinates where phi meets the threshold
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:,0]
+        y = line.function_space().mesh().coordinates.dat.data[:,1]
+
+        x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+
+        # x_coords = x[ (phi_values <= threshold + buffer)]
+        # y_coords = y[(phi_values <= threshold + buffer)]
+        
+        # Overlay red dots on the plot
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='red', s=2, label=f'phi = {threshold}')
+            axes.legend()
 
         axes.set_title('Percent Difference Accounted for by ML')
         return fig, axes
@@ -832,12 +885,17 @@ class Invert:
         #self.create_model_weertman()  # uncomment if things are not working as expected, this functions is only needed when updating C0 not when updating C      
         self.θ.dat.data[:] = self.regress(filename+'_theta', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = θ_bounds, folder = folder, number_of_models = number_of_models)
     
-    def compute_C_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], folder = 'model_ensemble/', number_of_models = 10, phi_threshold = 0.1):
+    def compute_C_ML_regress(self, filename='model', half=False, flip=True, use_driving_stress=False, u=None, 
+                         C_bounds=[-28, 38], folder='model_ensemble/', number_of_models=10, phi_threshold=0.1):
         self.compute_features(u=u)
-        phi = firedrake.interpolate(self.get_phi(self.h, self.s),self.Q)
-        # Check if any values in phi.dat.data[:] exceed the threshold
-        if np.any(phi.dat.data[:] > phi_threshold):
-            self.C.dat.data[:] = self.regress(
+        phi = firedrake.interpolate(self.get_phi(self.h, self.s), self.Q)
+
+        # Create a mask where phi exceeds the threshold
+        mask = phi.dat.data[:] > phi_threshold
+
+        if np.any(mask):
+            # Initialize a temporary array to hold the regression results
+            temp_C = self.regress(
                 filename + '_C',
                 half=half,
                 flip=flip,
@@ -846,6 +904,13 @@ class Invert:
                 folder=folder,
                 number_of_models=number_of_models
             )
+
+            # Apply the regression results only to the masked locations
+            self.C.dat.data[mask] = temp_C[mask]
+        else:
+            print(f"No values in phi exceed the threshold of {phi_threshold}. Skipping regress computation.")
+
+
     def classify_regress(self, filename = 'C_6'):
         """Load pre-trained classification and regression models from files specified by the given filename, and use them to classify and regress on the data stored in the object.
     
