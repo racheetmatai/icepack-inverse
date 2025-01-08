@@ -431,7 +431,7 @@ class Invert:
         axes.legend();
         return fig, axes
 
-    def plot_grounding_line(self, ticks=[-1, 0, 1], threshold=0.1, buffer = 0.1, axes=None):
+    def plot_grounding_line(self, ticks=[-1, 0, 1], threshold=0.1, buffer = 0.01, axes=None):
         # Plot on provided axes or create new if None
         if axes is None:
             fig, axes = self.plot_bounded_antarctica()
@@ -454,15 +454,15 @@ class Invert:
         x = line.function_space().mesh().coordinates.dat.data[:,0]
         y = line.function_space().mesh().coordinates.dat.data[:,1]
 
-        x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
-        y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        # x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        # y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
 
-        # x_coords = x[ (phi_values <= threshold + buffer)]
-        # y_coords = y[(phi_values <= threshold + buffer)]
+        x_coords = x[ (phi_values <= threshold + buffer)]
+        y_coords = y[(phi_values <= threshold + buffer)]
         
         # Overlay red dots on the plot
         if len(x_coords) > 0:
-            axes.scatter(x_coords, y_coords, color='red', s=2, label=f'phi = {threshold}')
+            axes.scatter(x_coords, y_coords, color='red', s=2, label='floating ice')
             axes.legend()
 
         axes.set_title('Grounding Line')
@@ -479,7 +479,7 @@ class Invert:
         percent_difference = 100 * (default_difference - ml_difference) / default_difference
         return percent_difference
     
-    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None, threshold=0.1, buffer = 0.1):
+    def plot_percent_accounted(self, vmin=None, vmax=None, axes=None, threshold=0.1, buffer = 0.01):
         percent_difference = self.calculate_percent_accounted()
         percent_difference_fcn = firedrake.interpolate(percent_difference, self.Q)
 
@@ -504,15 +504,15 @@ class Invert:
         x = line.function_space().mesh().coordinates.dat.data[:,0]
         y = line.function_space().mesh().coordinates.dat.data[:,1]
 
-        x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
-        y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        # x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        # y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
 
-        # x_coords = x[ (phi_values <= threshold + buffer)]
-        # y_coords = y[(phi_values <= threshold + buffer)]
+        x_coords = x[ (phi_values <= threshold + buffer)]
+        y_coords = y[(phi_values <= threshold + buffer)]
         
         # Overlay red dots on the plot
         if len(x_coords) > 0:
-            axes.scatter(x_coords, y_coords, color='red', s=2, label=f'phi = {threshold}')
+            axes.scatter(x_coords, y_coords, color='red', s=2, label='floating ice')
             axes.legend()
 
         axes.set_title('Percent Difference Accounted for by ML')
@@ -565,7 +565,7 @@ class Invert:
         axes.set_title("% Error in U")
         return fig, axes   
     
-    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None):
+    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None, threshold=0.1, buffer = 0.01):
         """Plot error in u compared to u_initial."""
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
@@ -573,6 +573,26 @@ class Invert:
         colors = firedrake.tripcolor(
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
+
+        ϕ = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree = 1)
+        line = firedrake.interpolate(ϕ, Q_temp)
+        
+        # Extract coordinates where phi meets the threshold
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:,0]
+        y = line.function_space().mesh().coordinates.dat.data[:,1]
+
+        # x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+        # y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+
+        x_coords = x[ (phi_values <= threshold + buffer)]
+        y_coords = y[(phi_values <= threshold + buffer)]
+        
+        # Overlay red dots on the plot
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='blue', s=2, label='floating ice')
+            axes.legend()
         fig.colorbar(colors);
         axes.set_title("Error in U")
         return fig, axes
