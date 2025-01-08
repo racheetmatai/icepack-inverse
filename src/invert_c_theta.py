@@ -565,35 +565,41 @@ class Invert:
         axes.set_title("% Error in U")
         return fig, axes   
     
-    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None, threshold=0.1, buffer = 0.01):
+    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None, threshold=0.1, buffer=0.01, axes=None):
         """Plot error in u compared to u_initial."""
-        fig, axes = self.plot_bounded_antarctica()
+        # Plot on provided axes or create new if None
+        if axes is None:
+            fig, axes = self.plot_bounded_antarctica()
+        else:
+            fig = None
+
         axes.set_xlabel("meters")
         δu = firedrake.interpolate(firedrake.sqrt((u - self.u_initial)**2), self.Q)
         colors = firedrake.tripcolor(
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
         )
 
-        ϕ = self.get_phi(self.h, self.s)
-        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree = 1)
-        line = firedrake.interpolate(ϕ, Q_temp)
-        
+        φ = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree=1)
+        line = firedrake.interpolate(φ, Q_temp)
+
         # Extract coordinates where phi meets the threshold
         phi_values = line.dat.data[:]
-        x = line.function_space().mesh().coordinates.dat.data[:,0]
-        y = line.function_space().mesh().coordinates.dat.data[:,1]
+        x = line.function_space().mesh().coordinates.dat.data[:, 0]
+        y = line.function_space().mesh().coordinates.dat.data[:, 1]
 
-        # x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
-        # y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
-
-        x_coords = x[ (phi_values <= threshold + buffer)]
+        x_coords = x[(phi_values <= threshold + buffer)]
         y_coords = y[(phi_values <= threshold + buffer)]
-        
+
         # Overlay red dots on the plot
         if len(x_coords) > 0:
             axes.scatter(x_coords, y_coords, color='blue', s=2, label='floating ice')
             axes.legend()
-        fig.colorbar(colors);
+
+        # Add colorbar only if no external axes were provided
+        if fig is not None:
+            fig.colorbar(colors)
+
         axes.set_title("Error in U")
         return fig, axes
 
