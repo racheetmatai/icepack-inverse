@@ -619,7 +619,7 @@ class Invert:
         fig, axes = self.plot_bounded_antarctica()
         axes.set_xlabel("meters")
         colors = firedrake.tripcolor(
-            self.a, axes=axes, vmin=vmin, vmax=vmax
+            self.snow_accumulation, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors,)
         axes.set_title("Accumulation")

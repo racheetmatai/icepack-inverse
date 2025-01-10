@@ -108,8 +108,20 @@ def compute_C_mean(select_dataset = 0):
     C_mean = df['C'].mean()
     return C_mean
 
-def compute_u_avg(invert_obj, C_mean):
-    invert_obj.C.dat.data[:] = np.ones(invert_obj.C.dat.data[:].shape) * C_mean
+def compute_u_avg(invert_obj, C_mean, phi_threshold=0.1):
+    temp_C = np.ones(invert_obj.C.dat.data[:].shape) * C_mean
+    invert_obj.compute_features(u=u)
+    phi = firedrake.interpolate(invert_obj.get_phi(invert_obj.h, invert_obj.s), invert_obj.Q)
+
+    # Create a mask where phi exceeds the threshold
+    mask = phi.dat.data[:] > phi_threshold
+
+    if np.any(mask):
+        # Apply the regression results only to the masked locations
+        invert_obj.C.dat.data[mask] = temp_C[mask]
+    else:
+        print(f"No values in phi exceed the threshold of {phi_threshold}. Skipping regress computation.")
+
     u_avg=  invert_obj.simulation()
     invert_obj.default_u = u_avg
 
