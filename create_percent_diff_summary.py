@@ -110,7 +110,7 @@ def compute_C_mean(select_dataset = 0):
 
 def compute_u_avg(invert_obj, C_mean, phi_threshold=0.1):
     temp_C = np.ones(invert_obj.C.dat.data[:].shape) * C_mean
-    invert_obj.compute_features(u=u)
+    invert_obj.compute_features() #u=u)
     phi = firedrake.interpolate(invert_obj.get_phi(invert_obj.h, invert_obj.s), invert_obj.Q)
 
     # Create a mask where phi exceeds the threshold
