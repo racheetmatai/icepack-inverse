@@ -748,6 +748,18 @@ class Invert:
         area.interpolate(CellSize(self.mesh))
         return area
     
+    def compute_driving_stress(self):
+        expr = ρ_I * g * self.h * firedrake.sqrt(inner(grad(self.s), grad(self.s)))
+        self.driving_stress = icepack.interpolate(expr, self.Q)
+
+    def compute_mag_s(self):
+        expr = firedrake.sqrt(inner(grad(self.s), grad(self.s)))
+        self.mag_s = icepack.interpolate(expr, self.Q)
+    
+    def compute_mag_h(self):
+        expr = firedrake.sqrt(inner(grad(self.h), grad(self.h)))
+        self.mag_h = icepack.interpolate(expr, self.Q)
+    
     def compute_C_driving_stress(self):
         """Compute the friction coefficient field (C) using driving stress."""
         expr = (ρ_I * g * self.h * firedrake.sqrt(inner(grad(self.s), grad(self.s))) / (firedrake.sqrt(inner(self.u_initial, self.u_initial)) ** (1/self.m)))
