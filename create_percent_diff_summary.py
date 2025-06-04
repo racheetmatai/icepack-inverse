@@ -11,15 +11,158 @@ import matplotlib.colorbar as colorbar
 import seaborn as sns
 
 name_list=['data/geophysics/ADMAP_MagneticAnomaly_5km.tif', 
-                                                'data/geophysics/ANTGG_BouguerAnomaly_10km.tif', 
+                                                'data/geophysics/ANTGG_BouguerAnomaly_10km_MF_combined_2.tif', # interpolated using multifidelity modeling
                                                 'data/geophysics/GeothermalHeatFlux_5km.tif',
                                                 'data/geophysics/ALBMAP_SurfaceAirTemperature_5km.tif',
                                                 'data/geophysics/EIGEN-6C4_GravityDisturbance_10km.tif',
                                                 'data/geophysics/ALBMAP_SnowAccumulation_Arthern_5km.tif',
                                                 'data/geophysics/Englacial_temp_Pattyn_2013.tif',]
 
+# Dataset labels
+DATASET_NAMES = [
+    "dotson, thwaites",
+    "pig, thwaites",
+    "dotson, pig",
+    "dotson",
+    "pig",
+    "thwaites",
+]
+
+# Feature symbol mapping
+FEATURE_SYMBOLS = {
+    "s": "s",
+    "b": "b",
+    "h": "h",
+    "mag_s": "∥∇s∥",
+    "mag_b": "∥∇b∥",
+    "mag_h": "∥∇h∥",
+    "driving_stress": "τd",
+    "gravity_disturbance": "gd",
+    "heatflux": "Qb",
+    "surface_air_temp": "Ts",
+    "snow_accumulation": "As",
+    "mag_anomaly": "gb",
+}
+
+# Training dataset mapping
+CATCHMENT_NAMES = ["Dotson", "Pig", "Thwaites"]
+
+TRAINING_MAPPING = {
+    0: ["Dotson", "Dotson", "Thwaites"],
+    1: ["Pig", "Pig", "Thwaites"],
+    2: ["Dotson", "Pig"],
+    3: ["Dotson"],
+    4: ["Pig"],
+    5: ["Thwaites"]
+}
+
+# feature_labels = [
+#     's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, snow_accumulation, surface_air_temp, gravity_disturbance',
+#     's, h, mag_h, mag_s, driving_stress, snow_accumulation, surface_air_temp',
+#     's, h, mag_h, mag_s, driving_stress',
+#     's, h, mag_h, mag_s, snow_accumulation',
+#     's, h, mag_h, mag_s, surface_air_temp',
+#     's, h, mag_h, mag_s',
+#     'mag_h, mag_s',
+#     's, h',
+#     'driving_stress, snow_accumulation, surface_air_temp',
+#     'b, mag_b, gravity_disturbance',
+#     'b, mag_b, heatflux, gravity_disturbance',
+#     'b, mag_b, heatflux',
+#     'heatflux, gravity_disturbance',
+#     's, h, mag_h, mag_s, surface_air_temp, heatflux, gravity_disturbance'
+# ]
+
+# feature_labels = [
+#     's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, surface_air_temp, gravity_disturbance',
+#     's, h, mag_h, mag_s, driving_stress, surface_air_temp',
+#     's, h, mag_h, mag_s, driving_stress',
+#     's, h, mag_h, mag_s, surface_air_temp',
+#     's, h, mag_h, mag_s',
+#     'mag_h, mag_s',
+#     's, h',
+#     'b, mag_b, gravity_disturbance',
+#     'b, mag_b, heatflux, gravity_disturbance',
+#     'b, mag_b, heatflux',
+#     'heatflux, gravity_disturbance',
+#     'b, mag_b, heatflux, s, h, mag_h, mag_s, surface_air_temp',
+# ]
+
+feature_labels = [
+    's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, surface_air_temp, gravity_disturbance, mag_anomaly',
+    's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, surface_air_temp, gravity_disturbance',
+    's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, surface_air_temp, mag_anomaly',
+    's, b, h, mag_h, mag_s, mag_b, heatflux, surface_air_temp',
+    's, h, mag_h, mag_s, driving_stress, surface_air_temp',
+    's, h, mag_h, mag_s, driving_stress',
+    's, h, mag_h, mag_s, surface_air_temp',
+    's, h, mag_h, mag_s',
+    'mag_h, mag_s',
+    's, h',
+    'b, mag_b, gravity_disturbance',
+    'b, mag_b, heatflux, gravity_disturbance',
+    'b, mag_b, heatflux',
+    'heatflux, gravity_disturbance',
+    'b, mag_b, mag_anomaly',
+    'b, mag_b, heatflux, mag_anomaly',
+    'heatflux, mag_anomaly',
+]
+
+
+# mapping_features = {
+#     1: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'driving_stress', 'heatflux', 'snow_accumulation', 'surface_air_temp', 'gravity_disturbance'],
+#     2: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress', 'snow_accumulation', 'surface_air_temp'],
+#     3: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress'],
+#     4: ['s', 'h', 'mag_h', 'mag_s', 'snow_accumulation'],
+#     5: ['s', 'h', 'mag_h', 'mag_s', 'surface_air_temp'],
+#     6: ['s', 'h', 'mag_h', 'mag_s'],
+#     7: ['mag_h', 'mag_s'],
+#     8: ['s', 'h'],
+#     9: ['driving_stress', 'snow_accumulation', 'surface_air_temp'],
+#     10: ['b', 'mag_b', 'gravity_disturbance'],
+#     11: ['b', 'mag_b', 'heatflux', 'gravity_disturbance'],
+#     12: ['b', 'mag_b', 'heatflux'],
+#     13: ['heatflux', 'gravity_disturbance'],
+#     14: ['s',  'h', 'mag_h', 'mag_s', 'surface_air_temp', 'heatflux', 'gravity_disturbance'],
+# }
+
+# mapping_features = {
+#     1: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'driving_stress', 'heatflux', 'surface_air_temp', 'gravity_disturbance'],
+#     2: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress', 'surface_air_temp'],
+#     3: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress'],
+#     4: ['s', 'h', 'mag_h', 'mag_s', 'surface_air_temp'],
+#     5: ['s', 'h', 'mag_h', 'mag_s'],
+#     6: ['mag_h', 'mag_s'],
+#     7: ['s', 'h'],
+#     8: ['b', 'mag_b', 'gravity_disturbance'],
+#     9: ['b', 'mag_b', 'heatflux', 'gravity_disturbance'],
+#     10: ['b', 'mag_b', 'heatflux'],
+#     11: ['heatflux', 'gravity_disturbance'],
+#     12: ['b', 'mag_b', 'heatflux', 's', 'h', 'mag_h', 'mag_s', 'surface_air_temp']
+# }
+
+mapping_features = {
+    1: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'driving_stress', 'heatflux', 'surface_air_temp', 'gravity_disturbance', 'mag_anomaly'],
+    2: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'driving_stress', 'heatflux', 'surface_air_temp', 'gravity_disturbance'],
+    3: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'driving_stress', 'heatflux', 'surface_air_temp', 'mag_anomaly'],
+    4: ['s', 'b', 'h', 'mag_h', 'mag_s', 'mag_b', 'heatflux', 'surface_air_temp'],
+    5: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress', 'surface_air_temp'],
+    6: ['s', 'h', 'mag_h', 'mag_s', 'driving_stress'],
+    7: ['s', 'h', 'mag_h', 'mag_s', 'surface_air_temp'],
+    8: ['s', 'h', 'mag_h', 'mag_s'],
+    9: ['mag_h', 'mag_s'],
+    10: ['s', 'h'],
+    11: ['b', 'mag_b', 'gravity_disturbance'],
+    12: ['b', 'mag_b', 'heatflux', 'gravity_disturbance'],
+    13: ['b', 'mag_b', 'heatflux'],
+    14: ['heatflux', 'gravity_disturbance'],
+    15: ['b', 'mag_b', 'mag_anomaly'],
+    16: ['b', 'mag_b', 'heatflux', 'mag_anomaly'],
+    17: ['heatflux', 'mag_anomaly'],
+}
+
 def invert_dotson_fcn():
-    drichlet_ids = [1,2,5,6,7,8,9,10,11]
+    drichlet_ids = [1,2,4,6,7,8,9,10,11]
     side_ids = []
     invert_dotson = Invert(outline = 'data/geojson/dotson-crosson.geojson', mesh_name = 'dotson',reg_constant_c  = 0.05, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
     invert_dotson.import_velocity_data(constant_val=0.01)
@@ -208,49 +351,6 @@ def get_models_summary(select_dataset):
             })
     return summary_list
 
-# Dataset labels
-DATASET_NAMES = [
-    "dotson, thwaites",
-    "pig, thwaites",
-    "dotson, pig",
-    "dotson",
-    "pig",
-    "thwaites",
-]
-
-# Feature symbol mapping
-FEATURE_SYMBOLS = {
-    "s": "s",
-    "b": "b",
-    "h": "h",
-    "mag_s": "∥∇s∥",
-    "mag_b": "∥∇b∥",
-    "mag_h": "∥∇h∥",
-    "driving_stress": "τd",
-    "gravity_disturbance": "gd",
-    "heatflux": "Qb",
-    "surface_air_temp": "Ts",
-    "snow_accumulation": "As",
-}
-
-
-feature_labels = [
-    's, b, h, mag_h, mag_s, mag_b, driving_stress, heatflux, snow_accumulation, surface_air_temp, gravity_disturbance',
-    's, h, mag_h, mag_s, driving_stress, snow_accumulation, surface_air_temp',
-    's, h, mag_h, mag_s, driving_stress',
-    's, h, mag_h, mag_s, snow_accumulation',
-    's, h, mag_h, mag_s, surface_air_temp',
-    's, h, mag_h, mag_s',
-    'mag_h, mag_s',
-    's, h',
-    'driving_stress, snow_accumulation, surface_air_temp',
-    'b, mag_b, gravity_disturbance',
-    'b, mag_b, heatflux, gravity_disturbance',
-    'b, mag_b, heatflux',
-    'heatflux, gravity_disturbance',
-    's, h, mag_h, mag_s, surface_air_temp, heatflux, gravity_disturbance'
-]
-
 def collect_r2_scores():
     all_r2_scores = []  # To store scores for all datasets
     #feature_labels = []  # To store feature subset names
@@ -296,6 +396,8 @@ def reorder_list(r2_scores, current_labels, reference_labels):
     reordered_scores = [None] * len(reference_labels)
 
     for score, label in zip(r2_scores, current_labels):
+        if label == 'b, mag_b, heatflux, s, h, mag_h, mag_s, surface_air_temp':
+            label = 's, b, h, mag_h, mag_s, mag_b, heatflux, surface_air_temp'
         index_in_reference = label_index_map[label]
         reordered_scores[index_in_reference] = score
 
@@ -310,25 +412,34 @@ def replace_features_with_symbols(feature_labels):
         symbol_labels.append(", ".join(symbols))
     return symbol_labels
 
+def change_feature_label(feature_labels):
+    new_order = ['s', 'b', 'h', '∥∇h∥', '∥∇s∥', '∥∇b∥', 'Qb', 'Ts']
+    for idx, features in enumerate(feature_labels):
+        if set(features) == set(new_order):
+            break
+    #print(idx)
+    feature_labels[idx] = new_order
+
 # Visualize R2 scores using a heatmap with symbols and fixed cbar range
 def plot_r2_heatmap_with_symbols(r2_scores, feature_labels):
     feature_symbols = replace_features_with_symbols(feature_labels)
+    change_feature_label(feature_labels)
     r2_df = pd.DataFrame(np.array(r2_scores).T, columns=DATASET_NAMES, index=feature_symbols)
 
-    plt.figure(figsize=(14, 8))
+    plt.figure(figsize=(12, 8))
     sns.heatmap(
         r2_df,
         annot=True,
-        fmt=".3f",
-        cmap="YlGn",
+        fmt=".2f",
+        cmap="YlGn",  # Green for high values, red for low values
         cbar=True,
-        vmin=0,  # Minimum value of the color bar
-        vmax=1,  # Maximum value of the color bar
+        vmin=0, vmax=1  # Set bounds from 0 to 100%
     )
+    
     plt.title("Validation $R^2$ Scores for Feature Subsets and Datasets")
-    plt.xlabel("Feature Subsets")
-    plt.ylabel("Training Dataset Combinations")
-    plt.xticks(rotation=45, ha='right')
+    plt.xlabel("Training Dataset Combinations")
+    plt.ylabel("Feature Subsets")
+    #plt.xticks(ha='right')
     plt.tight_layout()
     plt.show()
 

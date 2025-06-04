@@ -565,7 +565,7 @@ class Invert:
         axes.set_title("% Error in U")
         return fig, axes   
     
-    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None, threshold=0.1, buffer=0.01, axes=None):
+    def plot_u_error_no_sigma(self, u, vmin=None, vmax=None, threshold=0.1, buffer=0.01, axes=None, title=False):
         """Plot error in u compared to u_initial."""
         # Plot on provided axes or create new if None
         if axes is None:
@@ -573,7 +573,11 @@ class Invert:
         else:
             fig = None
 
-        axes.set_xlabel("meters")
+        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
+        axes.set_ylabel("UPS y [m]", fontsize=18)  # Adjust font size for y-axis label
+        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
+        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
+
         δu = firedrake.interpolate(firedrake.sqrt((u - self.u_initial)**2), self.Q)
         colors = firedrake.tripcolor(
             δu, vmin=vmin, vmax=vmax, cmap="Reds", axes=axes
@@ -598,10 +602,15 @@ class Invert:
 
         # Add colorbar only if no external axes were provided
         if fig is not None:
-            fig.colorbar(colors)
+            cbar = fig.colorbar(colors)
+            cbar.set_label("m/yr", fontsize=18)  # Set color bar title with fontsize
+            cbar.ax.tick_params(labelsize=18)
 
-        axes.set_title("Error in U")
+        if title:
+            axes.set_title("Error in U")
+        
         return fig, axes
+
 
     def plot_theta(self, vmin=None, vmax=None):
         """Plot theta"""
@@ -647,15 +656,21 @@ class Invert:
         axes.set_title("Surface elevation")
         return fig, axes
 
-    def plot_C(self, vmin=None, vmax=None):
+    def plot_C(self, vmin=None, vmax=None, title = 'False'):
         """Plot C"""
         fig, axes = self.plot_bounded_antarctica()
-        axes.set_xlabel("meters")
+        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
+        #axes.set_ylabel("UPS y [m]", fontsize=18)  # Adjust font size for y-axis label
+        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
+        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
+        #axes.set_aspect('equal')  # Keep aspect ratio square
+        #axes.grid(True) 
         colors = firedrake.tripcolor(
             self.C, axes=axes, vmin=vmin, vmax=vmax
         )
         fig.colorbar(colors);
-        axes.set_title("C")
+        if title:
+            axes.set_title("C")
         return fig, axes
 
     def plot_C0(self, vmin=None, vmax=None):
@@ -707,7 +722,12 @@ class Invert:
     def plot_u_initial_mag(self, vmin=None, vmax=None):
         """Plot magnitude of velocity dataset"""
         fig, axes = self.plot_bounded_antarctica()
-        axes.set_xlabel("meters")
+        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
+        #axes.set_ylabel("UPS y [m]", fontsize=18)  # Adjust font size for y-axis label
+        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
+        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
+        #axes.set_aspect('equal')  # Keep aspect ratio square
+        #axes.grid(True) 
         colors = firedrake.tripcolor(
             self.u_exp_mag, axes=axes, vmin=vmin, vmax=vmax
         )
@@ -715,15 +735,24 @@ class Invert:
         fig.colorbar(colors);
         return fig, axes
 
-    def plot_u_mag(self, u, vmin=None, vmax=None):
-        """Plot magnitude of velocity """
+    def plot_u_mag(self, u, vmin=None, vmax=None, title=False):
+        """Plot magnitude of velocity"""
         fig, axes = self.plot_bounded_antarctica()
-        axes.set_xlabel("meters")
+        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
+        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
+        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
+
         colors = firedrake.tripcolor(
             u, axes=axes, vmin=vmin, vmax=vmax
         )
-        axes.set_title("$||V||$")
-        fig.colorbar(colors);
+
+        if title:
+            axes.set_title("$||V||$")
+
+        cbar = fig.colorbar(colors)
+        cbar.set_label("m/yr", fontsize=18)  # Set color bar title with fontsize
+        cbar.ax.tick_params(labelsize=18)
+
         return fig, axes
 
     def plot_u_sigma_mag(self, vmin=None, vmax=None):
