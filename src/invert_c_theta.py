@@ -788,6 +788,10 @@ class Invert:
     def compute_mag_h(self):
         expr = firedrake.sqrt(inner(grad(self.h), grad(self.h)))
         self.mag_h = icepack.interpolate(expr, self.Q)
+
+    def compute_mag_b(self):
+        expr = firedrake.sqrt(inner(grad(self.b), grad(self.b)))
+        self.mag_b = icepack.interpolate(expr, self.Q)
     
     def compute_C_driving_stress(self):
         """Compute the friction coefficient field (C) using driving stress."""
