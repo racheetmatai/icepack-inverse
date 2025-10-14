@@ -30,19 +30,20 @@ DATASET_NAMES = [
 
 # Feature symbol mapping
 FEATURE_SYMBOLS = {
-    "s": "s",
-    "b": "b",
-    "h": "h",
-    "mag_s": "∥∇s∥",
-    "mag_b": "∥∇b∥",
-    "mag_h": "∥∇h∥",
-    "driving_stress": "τd",
-    "gravity_disturbance": "gd",
-    "heatflux": "Qb",
-    "surface_air_temp": "Ts",
-    "snow_accumulation": "As",
-    "mag_anomaly": "gb",
+    "s": r"$s$",
+    "b": r"$b$",
+    "h": r"$h$",
+    "mag_s": r"$\|\nabla s\|$",
+    "mag_b": r"$\|\nabla b\|$",
+    "mag_h": r"$\|\nabla h\|$",
+    "driving_stress": r"$\tau_d$",
+    "gravity_disturbance": r"$g_d$",
+    "heatflux": r"$Q_b$",
+    "surface_air_temp": r"$T_s$",
+    "snow_accumulation": r"$A_s$",
+    "mag_anomaly": r"$g_b$",
 }
+
 
 # Training dataset mapping
 CATCHMENT_NAMES = ["Dotson", "Pig", "Thwaites"]
@@ -161,6 +162,22 @@ mapping_features = {
     17: ['heatflux', 'mag_anomaly'],
 }
 
+def invert_amundsen_fcn():
+    drichlet_ids = [1,2,4,6,7,8,9,10,11]
+    side_ids = []
+    invert_amundsen = Invert(outline = 'data/geojson/amundsen_v1.geojson', mesh_name = 'amundsen', reg_constant_c  = 0.05, reg_constant_simultaneous = 1, read_mesh = False,opts = None, drichlet_ids = drichlet_ids , lcar = 9e3)
+    invert_amundsen.import_velocity_data(constant_val=0.01)
+    invert_amundsen.import_geophysics_data(name_list=name_list)
+    # u =  invert_amundsen.simulation()
+    # invert_amundsen.default_u = u
+    # invert_amundsen.invert_C_theta_simultaneously(max_iterations=200, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    invert_amundsen.invert_C(max_iterations=300, regularization_grad_fcn= True, loss_fcn_type = 'nosigma')
+    u_optimized =  invert_amundsen.simulation()
+    invert_amundsen.inverse_u = u_optimized
+    # theta = invert_amundsen.θ.copy(deepcopy=True)
+    # C = invert_amundsen.C.copy(deepcopy=True)
+    return invert_amundsen
+
 def invert_dotson_fcn():
     drichlet_ids = [1,2,4,6,7,8,9,10,11]
     side_ids = []
@@ -209,14 +226,22 @@ def invert_pig_fcn():
     # C = invert_pig.C.copy(deepcopy=True)
     return invert_pig
 
+def get_phi(h, s, ramp_power=1, g=9769603575225600.0, ρ_W=1.0282341471330407e-18, ρ_I=9.207917118369125e-19):
+    p_W = ρ_W * g * np.maximum(0, h - s)
+    p_I = ρ_I * g * h
+    if p_I == 0:
+        return 0
+    return max((1 - (p_W / p_I)**ramp_power), 0)
+
 def process_csv(filename):
     df = pd.read_csv(filename, index_col=0)
     df = df.sample(frac=1).reset_index(drop=True)
     df['vel_mag'] = np.sqrt(df['x_velocity']**2 + df['y_velocity']**2)
     df['driving_stress'] = df['h'] * 9.8 * df['mag_s']
+    df['phi'] = df.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
     return df
 
-def compute_C_mean(select_dataset = 0):
+def compute_C_mean(select_dataset = 0, phi_threshold=0.1):
     # df_pig = process_csv('regularized_const_01C_simultaneous_pig_r1_geo_12.csv')
     # df_thwaites = process_csv('regularized_const_01C_simultaneous_thwaites_r1_geo_12.csv')
     # df_dotson = process_csv('regularized_const_01C_simultaneous_dotson_r1_geo_12.csv')
@@ -248,7 +273,9 @@ def compute_C_mean(select_dataset = 0):
         df = pd.concat([df_thwaites], ignore_index=True)
         print("dataset selected: [df_thwaites]")
     
-    C_mean = df['C'].mean()
+    df['phi'] = df.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
+    #C_mean = df['C'].mean()
+    C_mean = df.loc[df['phi'] > phi_threshold, 'C'].mean()
     return C_mean
 
 def compute_u_avg(invert_obj, C_mean, phi_threshold=0.1):
@@ -413,7 +440,7 @@ def replace_features_with_symbols(feature_labels):
     return symbol_labels
 
 def change_feature_label(feature_labels):
-    new_order = ['s', 'b', 'h', '∥∇h∥', '∥∇s∥', '∥∇b∥', 'Qb', 'Ts']
+    new_order = [r"$s$", r"$b$", r"$h$", r"$\|\nabla h\|$", r"$\|\nabla s\|$", r"$\|\nabla b\|$",    r"$Q_b$",    r"$T_s$"]
     for idx, features in enumerate(feature_labels):
         if set(features) == set(new_order):
             break

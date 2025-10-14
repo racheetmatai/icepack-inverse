@@ -428,7 +428,18 @@ class Invert:
             "boundary_kw": {"linewidth": 2},
         }
         firedrake.triplot(self.get_mesh(), axes=axes, **kwargs)
-        axes.legend();
+
+        # Overlay white dots over floating ice (no label)
+        phi = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree=1)
+        line = firedrake.interpolate(phi, Q_temp)
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:, 0]
+        y = line.function_space().mesh().coordinates.dat.data[:, 1]
+        x_coords = x[(phi_values <= 0.1 + 0.01)]
+        y_coords = y[(phi_values <= 0.1 + 0.01)]
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='white', s=5)
         return fig, axes
 
     def plot_grounding_line(self, ticks=[-1, 0, 1], threshold=0.1, buffer = 0.01, axes=None):
@@ -512,7 +523,7 @@ class Invert:
         
         # Overlay red dots on the plot
         if len(x_coords) > 0:
-            axes.scatter(x_coords, y_coords, color='red', s=2, label='floating ice')
+            axes.scatter(x_coords, y_coords, color='white', s=5, label='floating ice')
             axes.legend()
 
         axes.set_title('Percent Difference Accounted for by ML')
@@ -597,8 +608,8 @@ class Invert:
 
         # Overlay red dots on the plot
         if len(x_coords) > 0:
-            axes.scatter(x_coords, y_coords, color='blue', s=2, label='floating ice')
-            axes.legend()
+            axes.scatter(x_coords, y_coords, color='white', s=5)
+            #axes.legend()
 
         # Add colorbar only if no external axes were provided
         if fig is not None:
@@ -659,16 +670,24 @@ class Invert:
     def plot_C(self, vmin=None, vmax=None, title = 'False'):
         """Plot C"""
         fig, axes = self.plot_bounded_antarctica()
-        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
-        #axes.set_ylabel("UPS y [m]", fontsize=18)  # Adjust font size for y-axis label
-        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
-        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
-        #axes.set_aspect('equal')  # Keep aspect ratio square
-        #axes.grid(True) 
+        axes.set_xlabel("UPS x [m]", fontsize=18)
+        axes.tick_params(axis='x', labelsize=18)
+        axes.tick_params(axis='y', labelsize=18)
         colors = firedrake.tripcolor(
             self.C, axes=axes, vmin=vmin, vmax=vmax
         )
-        fig.colorbar(colors);
+        fig.colorbar(colors)
+        # Overlay white dots over floating ice (no label)
+        phi = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree=1)
+        line = firedrake.interpolate(phi, Q_temp)
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:, 0]
+        y = line.function_space().mesh().coordinates.dat.data[:, 1]
+        x_coords = x[(phi_values <= 0.1 + 0.01)]
+        y_coords = y[(phi_values <= 0.1 + 0.01)]
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='white', s=5)
         if title:
             axes.set_title("C")
         return fig, axes
@@ -738,19 +757,31 @@ class Invert:
     def plot_u_mag(self, u, vmin=None, vmax=None, title=False):
         """Plot magnitude of velocity"""
         fig, axes = self.plot_bounded_antarctica()
-        axes.set_xlabel("UPS x [m]", fontsize=18)  # Adjust font size for x-axis label
-        axes.tick_params(axis='x', labelsize=18)  # Adjust font size for x-axis ticks
-        axes.tick_params(axis='y', labelsize=18)  # Adjust font size for y-axis ticks
+        axes.set_xlabel("UPS x [m]", fontsize=18)
+        axes.tick_params(axis='x', labelsize=18)
+        axes.tick_params(axis='y', labelsize=18)
 
         colors = firedrake.tripcolor(
             u, axes=axes, vmin=vmin, vmax=vmax
         )
 
+        # Overlay white dots over floating ice (no label)
+        phi = self.get_phi(self.h, self.s)
+        Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree=1)
+        line = firedrake.interpolate(phi, Q_temp)
+        phi_values = line.dat.data[:]
+        x = line.function_space().mesh().coordinates.dat.data[:, 0]
+        y = line.function_space().mesh().coordinates.dat.data[:, 1]
+        x_coords = x[(phi_values <= 0.1 + 0.01)]
+        y_coords = y[(phi_values <= 0.1 + 0.01)]
+        if len(x_coords) > 0:
+            axes.scatter(x_coords, y_coords, color='white', s=5)
+
         if title:
             axes.set_title("$||V||$")
 
         cbar = fig.colorbar(colors)
-        cbar.set_label("m/yr", fontsize=18)  # Set color bar title with fontsize
+        cbar.set_label("m/yr", fontsize=18)
         cbar.ax.tick_params(labelsize=18)
 
         return fig, axes
