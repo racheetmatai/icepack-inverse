@@ -186,6 +186,11 @@ class Invert:
         self.snow_accumulation = icepack.interpolate(read_raster_file(name_list[5]), self.Q)
 
         self.englacial_temp = icepack.interpolate(read_raster_file(name_list[6]), self.Q)
+
+        
+        self.bed_class = icepack.interpolate(read_raster_file(name_list[7]), self.Q)
+
+
         self.A0 = icepack.rate_factor(self.englacial_temp)
         self.create_model_weertman()
         print('using englacial temperature for rate factor')
@@ -419,6 +424,44 @@ class Invert:
         """
         fig, axes = plot_bounded_antarctica(self.outline, self.δ)
         return fig, axes
+
+    def plot_grounding_line(self, variables=None, axes=None, vmin=None, vmax=None, threshold=0.1, buffer=0.01):
+        # Plot on provided axes or create new if None
+        if axes is None:
+            fig, axes = self.plot_bounded_antarctica()
+        else:
+            fig = None
+        axes.set_xlabel("meters")
+        if variables is not None:
+            colors = firedrake.tripcolor(variables, axes=axes, vmin=vmin, vmax=vmax)
+            # Add colorbar only if no external axes were provided
+            if fig is not None:
+                fig.colorbar(colors)
+            ϕ = self.get_phi(self.h, self.s)
+            Q_temp = firedrake.FunctionSpace(self.mesh, family="CG", degree = 1)
+            line = firedrake.interpolate(ϕ, Q_temp)
+            
+            # Extract coordinates where phi meets the threshold
+            phi_values = line.dat.data[:]
+            x = line.function_space().mesh().coordinates.dat.data[:,0]
+            y = line.function_space().mesh().coordinates.dat.data[:,1]
+
+            # x_coords = x[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+            # y_coords = y[(phi_values >= threshold - buffer) & (phi_values <= threshold + buffer)]
+
+            x_coords = x[ (phi_values <= threshold + buffer)]
+            y_coords = y[(phi_values <= threshold + buffer)]
+            
+            # Overlay red dots on the plot
+            if len(x_coords) > 0:
+                axes.scatter(x_coords, y_coords, color='white', s=5, label='floating ice')
+                axes.legend()
+
+            axes.set_title('Percent Difference Accounted for by ML')
+            return fig, axes 
+        else:
+            print("Please provide variables to plot.")
+
 
     def plot_mesh(self):
         fig, axes = self.plot_bounded_antarctica()
@@ -1639,6 +1682,7 @@ class Invert:
 
         C_1 = icepack.interpolate(self.C, self.Δ)
         θ_1 = icepack.interpolate(self.θ, self.Δ)
+        bed_class_1 = icepack.interpolate(self.bed_class, self.Δ)
         grad_u_1, grad_u_2 = firedrake.split(grad_u_1_func)
         grad_v_1, grad_v_2 = firedrake.split(grad_u_2_func)
         grad_h_1, grad_h_2 = firedrake.split(grad_h_func)
@@ -1655,6 +1699,7 @@ class Invert:
         grad_s_2_func = firedrake.Function(self.Q, name='grad_s_2')
         grad_b_1_func = firedrake.Function(self.Q, name='grad_b_1')
         grad_b_2_func = firedrake.Function(self.Q, name='grad_b_2')
+
         
         firedrake.interpolate(grad_u_1, grad_u_1_func)
         firedrake.interpolate(grad_u_2, grad_u_2_func)
@@ -1696,6 +1741,7 @@ class Invert:
         
         theta_npy = θ_1.dat.data[:]
         C_npy = C_1.dat.data[:]
+        bed_class_npy = bed_class_1.dat.data[:]
         C_total_npy = np.clip(C_delta.dat.data[:], 0, None)  # Clip the values to ensure a minimum of 0
         x = θ_1.function_space().mesh().coordinates.dat.data_ro[:,0]
         y = θ_1.function_space().mesh().coordinates.dat.data_ro[:,1]
@@ -1752,6 +1798,7 @@ class Invert:
             'snow_accumulation': snow_accumulation_npy,
             'surface_air_temp': surface_air_temp_npy,
             'gravity_disturbance': gravity_disturbance_npy,
+            'bed_class': bed_class_npy,
         })
         df['invariant1'] = df['s11'] + df['s22']
         df['invariant2'] = 0.5 * (df['s11']**2 + df['s22']**2 - df['s11']*df['s22'] + df['s12']*df['s21'])
