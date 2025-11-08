@@ -884,7 +884,7 @@ class Invert:
         self.C0 = firedrake.Constant(constant_val)
         self.create_model_weertman()
 
-    def compute_features(self, u=None, max_tu1_threshold=1998.30, max_tu2_threshold=555.53, max_tu3_threshold=593.56, max_tu4_threshold=859.16, max_tu5_threshold=1088.52):
+    def compute_features(self, u=None, max_tu1_threshold=1998.30, max_tu2_threshold=555.53, max_tu3_threshold=593.56, max_tu4_threshold=859.16, max_tu5_threshold=1088.52, tolerance_bed=0.3):
         if u is None:
             u = self.simulation()
         u1, u2 = firedrake.split(u)
@@ -925,6 +925,7 @@ class Invert:
         h_npy = self.h.dat.data[:]
         s_npy = self.s.dat.data[:]
         b_npy = self.b.dat.data[:]
+        bed_class_npy = self.bed_class.dat.data[:]
 
         C_npy = self.C.dat.data[:]
         theta_npy = self.θ.dat.data[:]
@@ -942,8 +943,8 @@ class Invert:
         y_npy = firedrake.interpolate(y,self.Q).dat.data[:]
         
         # Create a new DataFrame with the new data
-        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy, mag_anomaly_npy, boug_anomaly_npy, heatflux_npy, gravity_disturbance_npy, surface_air_temp_npy, snow_accumulation_npy]).T
-        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta', 'mag_anomaly', 'boug_anomaly', 'heatflux', 'gravity_disturbance', 'surface_air_temp', 'snow_accumulation'])
+        cluster = np.array([x_npy,y_npy,inv1_fcn_npy, inv2_fcn_npy, magh_fcn_npy, mags_fcn_npy, magb_fcn_npy, h_npy, s_npy, b_npy, vel_mag_fcn_npy, C_npy, theta_npy, mag_anomaly_npy, boug_anomaly_npy, heatflux_npy, gravity_disturbance_npy, surface_air_temp_npy, snow_accumulation_npy, bed_class_npy]).T
+        cluster_df_full = pandas.DataFrame(cluster, columns=['x', 'y', 'invariant1', 'invariant2', 'mag_h', 'mag_s', 'mag_b', 'h', 's', 'b', 'vel_mag', 'C', 'theta', 'mag_anomaly', 'boug_anomaly', 'heatflux', 'gravity_disturbance', 'surface_air_temp', 'snow_accumulation', 'bed_class'])
         cluster_df_full['driving_stress'] = cluster_df_full['h']*9.8*cluster_df_full['mag_s']
         # Calculate 'tu' columns with conditions to handle zero or negative 'vel_mag'
         cluster_df_full['tu1'] = np.where(cluster_df_full['vel_mag'] > 0, cluster_df_full['driving_stress'] / cluster_df_full['vel_mag'], max_tu1_threshold)
@@ -977,6 +978,15 @@ class Invert:
             return np.maximum((1 - p_W / p_I), 0)
         cluster_df_full['phi'] = cluster_df_full.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
         cluster_df_full['C_total'] = self.C0_constant_val*np.exp(cluster_df_full['C'])*cluster_df_full['phi']
+        def clean_bed_class(value):
+            if pandas.isna(value):
+                return 0
+            for target in [1, 2, 3]:
+                if abs(value - target) <= tolerance_bed:
+                    return target
+            return 0
+
+        cluster_df_full['bed_class'] = cluster_df_full['bed_class'].apply(clean_bed_class)
         self.cluster_df_full = cluster_df_full
 
     def regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0], folder = 'model_ensemble/', number_of_models = 10):
@@ -1003,9 +1013,33 @@ class Invert:
       
         loaded_model = keras.models.load_model(filename+'.h5')
 
-        df = self.cluster_df_full[loaded_input_columns].copy()
-        df_scaled = loaded_input_scaler.transform(df.to_numpy())
-        prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
+        if "bed_class_0" in loaded_input_columns:
+            loaded_input_columns = [col for col in loaded_input_columns if not col.startswith("bed_class")]
+            loaded_input_columns.append("bed_class")
+            df = self.cluster_df_full[loaded_input_columns].copy()
+            # Store continuous columns BEFORE one-hot encoding
+            continuous_columns = [col for col in loaded_input_columns if col != 'bed_class']
+            
+            # One-hot encode bed_class column
+            df = pandas.get_dummies(df, columns=['bed_class'], prefix='bed_class', drop_first=False, dtype=int)
+            
+            # Get the new one-hot encoded column names AFTER encoding
+            bed_class_cols = [col for col in df.columns if col.startswith('bed_class_')]
+
+            continuous_inputs = df[continuous_columns].to_numpy()
+            categorical_inputs = df[bed_class_cols].to_numpy()
+
+            continuous_scaled = loaded_input_scaler.transform(continuous_inputs)
+
+            inputs_scaled = np.concatenate([continuous_scaled, categorical_inputs], axis=1)
+            prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(inputs_scaled).reshape(-1,1)).reshape(-1,)
+
+
+
+        else:
+            df = self.cluster_df_full[loaded_input_columns].copy()
+            df_scaled = loaded_input_scaler.transform(df.to_numpy())
+            prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
         
         # use regressor to compute C only on one half of the domain
         if half:
