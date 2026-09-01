@@ -1,0 +1,110 @@
+{
+  "status": "final square locations selected; production row IDs pending",
+  "selection": {
+    "algorithm": "seeded random permutations of the fully eligible candidate pool; greedily accept candidates whose complete buffered footprints do not overlap; stop at the first permutation that reaches ten",
+    "seed": 20260811,
+    "successful_permutation_attempt": 1,
+    "candidate_count_before_support": 9409,
+    "candidate_count_after_approved_support": 4108,
+    "selected_count": 10,
+    "accepted_permutation_positions": [
+      1,
+      2,
+      4,
+      5,
+      6,
+      14,
+      21,
+      178,
+      232,
+      283
+    ]
+  },
+  "geometry": {
+    "test_square_side_km": 50.0,
+    "buffer_each_side_km": 40.0,
+    "excluded_footprint_side_km": 130.0
+  },
+  "approved_support": {
+    "per_feature_marginal_coverage_minimum": 0.95,
+    "training_marginal_interval": [
+      0.01,
+      0.99
+    ],
+    "joint_coverage_minimum": 0.95,
+    "joint_reference_quantile": 0.95,
+    "joint_distance_threshold": 1.5733833091912042
+  },
+  "selected_square_ids": [
+    "SQ01",
+    "SQ02",
+    "SQ03",
+    "SQ04",
+    "SQ05",
+    "SQ06",
+    "SQ07",
+    "SQ08",
+    "SQ09",
+    "SQ10"
+  ],
+  "selected_centers_m": [
+    [
+      -1590000.0,
+      -105000.0
+    ],
+    [
+      -1385000.0,
+      -225000.0
+    ],
+    [
+      -1380000.0,
+      -520000.0
+    ],
+    [
+      -1215000.0,
+      -310000.0
+    ],
+    [
+      -1540000.0,
+      -250000.0
+    ],
+    [
+      -1450000.0,
+      -390000.0
+    ],
+    [
+      -1235000.0,
+      -470000.0
+    ],
+    [
+      -1215000.0,
+      -600000.0
+    ],
+    [
+      -1435000.0,
+      -85000.0
+    ],
+    [
+      -1255000.0,
+      -160000.0
+    ]
+  ],
+  "validation": {
+    "selected_count": 10,
+    "minimum_pairwise_linf_center_separation_km": 130.0,
+    "full_footprint_nonoverlap": true,
+    "all_marginal_rules_pass": true,
+    "all_joint_rules_pass": true,
+    "failures": [],
+    "passed": true
+  },
+  "inputs": {
+    "candidate_csv": "/tmp/input_support_scan/candidate_support_50km.csv",
+    "candidate_csv_sha256": "c2b7b21dde13aee314bf96290c14c335131b45a131f6c79ddd3ac1823a437354",
+    "support_grid": "/tmp/amundsen_input_support_grid_5km.npz",
+    "support_grid_sha256": "d37e582128dc769a0b63fae29407483f569c8b233f040ccd3778193ddad75219"
+  },
+  "outcome_variables_used": [],
+  "velocity_values_used": [],
+  "production_row_ids": "pending revised production dataset export"
+}

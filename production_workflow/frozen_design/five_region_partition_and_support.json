@@ -1,0 +1,1615 @@
+{
+  "status": "candidate five-region partition pending author map approval",
+  "purpose": "Outcome-blind region definition and leave-one-catchment input-support screen",
+  "outcome_variables_read": [],
+  "grid": {
+    "path": "/tmp/amundsen_input_support_grid_5km.npz",
+    "sha256": "d37e582128dc769a0b63fae29407483f569c8b233f040ccd3778193ddad75219"
+  },
+  "meshes": {
+    "PIG": {
+      "path": "/home/firedrake/icepack/icepack-inverse/pig.msh",
+      "sha256": "ec1ed56b069f99e5c703f9ddaa035f79c827c6d5395a98df01ed1a4766e9e597"
+    },
+    "Thwaites": {
+      "path": "/home/firedrake/icepack/icepack-inverse/thwaites.msh",
+      "sha256": "69366389aa162272327f6d70a5246fddefac3e8d6a02031936e8b4d2febd6e37"
+    },
+    "Dotson": {
+      "path": "/home/firedrake/icepack/icepack-inverse/dotson.msh",
+      "sha256": "0baf56b468195f5d0462d89a27e55c5a01ff42c69577db2d0a27818ba645cffc"
+    }
+  },
+  "partition_rule": {
+    "catchments": "eligible support-cell center locates in the corresponding regional Firedrake mesh",
+    "overlap_policy": "assign narrow mesh-overlap cells to the containing mesh with greatest distance from its exterior boundary",
+    "intercatchment": "eligible cells outside all three catchment meshes",
+    "intercatchment_separator": "PIG-Thwaites when y >= -400000 m; Thwaites-Dotson otherwise",
+    "unlabeled_policy": "fail"
+  },
+  "audit": {
+    "eligible_cells": 11772,
+    "labeled_cells": 11772,
+    "unlabeled_cells": 0,
+    "overlap_cells": 8,
+    "overlap_resolution": [
+      {
+        "x_m": -1347500.0,
+        "y_m": -637500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 4704.121320376028,
+          "Dotson": 2748.7593941410573
+        },
+        "assigned_region": "Thwaites"
+      },
+      {
+        "x_m": -1347500.0,
+        "y_m": -632500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 3750.2794896928726,
+          "Dotson": 3805.8276084910426
+        },
+        "assigned_region": "Dotson"
+      },
+      {
+        "x_m": -1347500.0,
+        "y_m": -627500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 3204.1322834775356,
+          "Dotson": 4960.214070683394
+        },
+        "assigned_region": "Dotson"
+      },
+      {
+        "x_m": -1352500.0,
+        "y_m": -617500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 7081.920690190584,
+          "Dotson": 2575.187104991049
+        },
+        "assigned_region": "Thwaites"
+      },
+      {
+        "x_m": -1352500.0,
+        "y_m": -612500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 6535.77348397571,
+          "Dotson": 4408.982915335708
+        },
+        "assigned_region": "Thwaites"
+      },
+      {
+        "x_m": -1352500.0,
+        "y_m": -607500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 5857.074611689509,
+          "Dotson": 6242.7787256802385
+        },
+        "assigned_region": "Dotson"
+      },
+      {
+        "x_m": -1462500.0,
+        "y_m": -557500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 4054.398786755516,
+          "Dotson": 5093.35183398461
+        },
+        "assigned_region": "Dotson"
+      },
+      {
+        "x_m": -1457500.0,
+        "y_m": -557500.0,
+        "candidate_clearance_m": {
+          "Thwaites": 3577.8391704211554,
+          "Dotson": 5062.575538884247
+        },
+        "assigned_region": "Dotson"
+      }
+    ],
+    "partition_counts": {
+      "PIG": 1708,
+      "Thwaites": 6809,
+      "Dotson": 1072,
+      "PIG-Thwaites inter-catchment": 2038,
+      "Thwaites-Dotson inter-catchment": 145
+    },
+    "count_sum": 11772
+  },
+  "support_method": {
+    "features": [
+      "s",
+      "h",
+      "mag_s",
+      "mag_h",
+      "driving_stress",
+      "surface_air_temp",
+      "b",
+      "mag_b",
+      "heatflux",
+      "gravity_disturbance",
+      "mag_anomaly",
+      "cos_theta_bs"
+    ],
+    "marginal": "per-feature test fraction inside training q01-q99",
+    "marginal_required_each_feature": 0.95,
+    "joint_transform": "whole-sector rank-Gaussian then whitened PCA retaining >=99% variance",
+    "pca_components": 8,
+    "joint_cutoff": 1.5733833091912042,
+    "joint_required": 0.95,
+    "selection_uses_inputs_only": true
+  },
+  "leave_one_catchment_out": {
+    "holdout_pig": {
+      "heldout_region": "PIG",
+      "test_cells": 1708,
+      "training_cells": 10064,
+      "marginal_min_coverage": 0.6487119437939111,
+      "marginal_mean_coverage": 0.9627244340359096,
+      "marginal_limiting_feature": "heatflux",
+      "joint_coverage": 0.8998829039812647,
+      "combined_cell_coverage": 0.5790398126463701,
+      "passes_marginal_rule": false,
+      "passes_joint_rule": false,
+      "passes_both_frozen_rules": false,
+      "marginal_s": 0.9988290398126464,
+      "marginal_h": 1.0,
+      "marginal_mag_s": 0.9929742388758782,
+      "marginal_mag_h": 0.9800936768149883,
+      "marginal_driving_stress": 0.9759953161592506,
+      "marginal_surface_air_temp": 1.0,
+      "marginal_b": 1.0,
+      "marginal_mag_b": 0.9754098360655737,
+      "marginal_heatflux": 0.6487119437939111,
+      "marginal_gravity_disturbance": 0.9894613583138173,
+      "marginal_mag_anomaly": 0.9953161592505855,
+      "marginal_cos_theta_bs": 0.9959016393442623,
+      "training_regions": [
+        "Thwaites",
+        "Dotson",
+        "PIG-Thwaites inter-catchment",
+        "Thwaites-Dotson inter-catchment"
+      ],
+      "marginal_training_q01": {
+        "s": 221.03829926637198,
+        "h": 344.1372526148461,
+        "mag_s": 0.00048146978186120425,
+        "mag_h": 0.0031978088497815324,
+        "driving_stress": 0.011426251385057345,
+        "surface_air_temp": -31.033364824879428,
+        "b": -2025.7041031513907,
+        "mag_b": 0.0031329345813144007,
+        "heatflux": 62.385188175474816,
+        "gravity_disturbance": -102.51307151099694,
+        "mag_anomaly": -239.8247621340461,
+        "cos_theta_bs": -0.9896180569950229
+      },
+      "marginal_training_q99": {
+        "s": 2001.5236943560342,
+        "h": 3564.4363272717305,
+        "mag_s": 0.05083499664034414,
+        "mag_h": 0.24248630949902794,
+        "driving_stress": 0.3888080245635543,
+        "surface_air_temp": -13.301536213830536,
+        "b": 489.4714001382844,
+        "mag_b": 0.25669088692784475,
+        "heatflux": 73.69835148270583,
+        "gravity_disturbance": 31.2715653637923,
+        "mag_anomaly": 324.75209307442316,
+        "cos_theta_bs": 0.9946369592155496
+      },
+      "marginal_coverage": {
+        "s": 0.9988290398126464,
+        "h": 1.0,
+        "mag_s": 0.9929742388758782,
+        "mag_h": 0.9800936768149883,
+        "driving_stress": 0.9759953161592506,
+        "surface_air_temp": 1.0,
+        "b": 1.0,
+        "mag_b": 0.9754098360655737,
+        "heatflux": 0.6487119437939111,
+        "gravity_disturbance": 0.9894613583138173,
+        "mag_anomaly": 0.9953161592505855,
+        "cos_theta_bs": 0.9959016393442623
+      },
+      "joint_distance": {
+        "q1": 0.44036947310001723,
+        "q5": 0.6041315117141864,
+        "q50": 1.1146803434774881,
+        "q95": 1.777081299204614,
+        "q99": 2.302378993608466
+      },
+      "joint_distance_cutoff": 1.5733833091912042,
+      "cells_supported_by_all_marginals": 1006,
+      "cells_joint_supported": 1537,
+      "cells_supported_by_both": 989
+    },
+    "holdout_thwaites": {
+      "heldout_region": "Thwaites",
+      "test_cells": 6809,
+      "training_cells": 4963,
+      "marginal_min_coverage": 0.7394624761345279,
+      "marginal_mean_coverage": 0.9326014588534783,
+      "marginal_limiting_feature": "heatflux",
+      "joint_coverage": 0.5704215009546189,
+      "combined_cell_coverage": 0.3762667058305184,
+      "passes_marginal_rule": false,
+      "passes_joint_rule": false,
+      "passes_both_frozen_rules": false,
+      "marginal_s": 0.7927742693493905,
+      "marginal_h": 0.9964752533411662,
+      "marginal_mag_s": 0.9773828756058158,
+      "marginal_mag_h": 0.9823762667058306,
+      "marginal_driving_stress": 0.9847260978117198,
+      "marginal_surface_air_temp": 0.812160375972977,
+      "marginal_b": 0.9895726244676164,
+      "marginal_mag_b": 0.9861947422529006,
+      "marginal_heatflux": 0.7394624761345279,
+      "marginal_gravity_disturbance": 0.9747393156116904,
+      "marginal_mag_anomaly": 0.977676604494052,
+      "marginal_cos_theta_bs": 0.977676604494052,
+      "training_regions": [
+        "PIG",
+        "Dotson",
+        "PIG-Thwaites inter-catchment",
+        "Thwaites-Dotson inter-catchment"
+      ],
+      "marginal_training_q01": {
+        "s": 188.0710163590806,
+        "h": 246.1592243495095,
+        "mag_s": 0.000624806092968677,
+        "mag_h": 0.0027326589673414064,
+        "driving_stress": 0.01002063363435279,
+        "surface_air_temp": -28.507160820403552,
+        "b": -2072.283217237908,
+        "mag_b": 0.002447114562895736,
+        "heatflux": 57.47886265365794,
+        "gravity_disturbance": -100.41440656146756,
+        "mag_anomaly": -219.04348025041259,
+        "cos_theta_bs": -0.9861222554695406
+      },
+      "marginal_training_q99": {
+        "s": 1712.8642610723512,
+        "h": 3626.06582062889,
+        "mag_s": 0.06769151922348565,
+        "mag_h": 0.22734124686298307,
+        "driving_stress": 0.4032518437473786,
+        "surface_air_temp": -13.22240027479272,
+        "b": 507.7225927381193,
+        "mag_b": 0.2577987307245683,
+        "heatflux": 70.7446964124738,
+        "gravity_disturbance": 27.292370625808964,
+        "mag_anomaly": 335.6337263209144,
+        "cos_theta_bs": 0.9950100977026307
+      },
+      "marginal_coverage": {
+        "s": 0.7927742693493905,
+        "h": 0.9964752533411662,
+        "mag_s": 0.9773828756058158,
+        "mag_h": 0.9823762667058306,
+        "driving_stress": 0.9847260978117198,
+        "surface_air_temp": 0.812160375972977,
+        "b": 0.9895726244676164,
+        "mag_b": 0.9861947422529006,
+        "heatflux": 0.7394624761345279,
+        "gravity_disturbance": 0.9747393156116904,
+        "mag_anomaly": 0.977676604494052,
+        "cos_theta_bs": 0.977676604494052
+      },
+      "joint_distance": {
+        "q1": 0.6417978107189602,
+        "q5": 0.85110450635225,
+        "q50": 1.4948021574631227,
+        "q95": 2.217729219819321,
+        "q99": 2.716153299500732
+      },
+      "joint_distance_cutoff": 1.5733833091912042,
+      "cells_supported_by_all_marginals": 3362,
+      "cells_joint_supported": 3884,
+      "cells_supported_by_both": 2562
+    },
+    "holdout_dotson": {
+      "heldout_region": "Dotson",
+      "test_cells": 1072,
+      "training_cells": 10700,
+      "marginal_min_coverage": 0.8246268656716418,
+      "marginal_mean_coverage": 0.9305814676616914,
+      "marginal_limiting_feature": "mag_s",
+      "joint_coverage": 0.7807835820895522,
+      "combined_cell_coverage": 0.5792910447761194,
+      "passes_marginal_rule": false,
+      "passes_joint_rule": false,
+      "passes_both_frozen_rules": false,
+      "marginal_s": 0.9225746268656716,
+      "marginal_h": 0.8274253731343284,
+      "marginal_mag_s": 0.8246268656716418,
+      "marginal_mag_h": 0.9449626865671642,
+      "marginal_driving_stress": 0.9430970149253731,
+      "marginal_surface_air_temp": 0.933768656716418,
+      "marginal_b": 0.9552238805970149,
+      "marginal_mag_b": 0.9384328358208955,
+      "marginal_heatflux": 1.0,
+      "marginal_gravity_disturbance": 0.9776119402985075,
+      "marginal_mag_anomaly": 0.9552238805970149,
+      "marginal_cos_theta_bs": 0.9440298507462687,
+      "training_regions": [
+        "PIG",
+        "Thwaites",
+        "PIG-Thwaites inter-catchment",
+        "Thwaites-Dotson inter-catchment"
+      ],
+      "marginal_training_q01": {
+        "s": 299.54340320525824,
+        "h": 680.894957997295,
+        "mag_s": 0.0004753177543079871,
+        "mag_h": 0.0029248008045082074,
+        "driving_stress": 0.010193637766940055,
+        "surface_air_temp": -30.99248140847218,
+        "b": -2014.4942145388559,
+        "mag_b": 0.0026475408674171514,
+        "heatflux": 58.887363844744186,
+        "gravity_disturbance": -103.09148802458697,
+        "mag_anomaly": -222.52644579155455,
+        "cos_theta_bs": -0.9883118659708737
+      },
+      "marginal_training_q99": {
+        "s": 1998.8412044484235,
+        "h": 3559.149834421766,
+        "mag_s": 0.0282661679992594,
+        "mag_h": 0.2123960428278838,
+        "driving_stress": 0.3610181416851888,
+        "surface_air_temp": -13.599997067182798,
+        "b": 321.7564516573826,
+        "mag_b": 0.22239426413752503,
+        "heatflux": 73.65220053802872,
+        "gravity_disturbance": 25.64074115026653,
+        "mag_anomaly": 323.07964495888535,
+        "cos_theta_bs": 0.9927316542229091
+      },
+      "marginal_coverage": {
+        "s": 0.9225746268656716,
+        "h": 0.8274253731343284,
+        "mag_s": 0.8246268656716418,
+        "mag_h": 0.9449626865671642,
+        "driving_stress": 0.9430970149253731,
+        "surface_air_temp": 0.933768656716418,
+        "b": 0.9552238805970149,
+        "mag_b": 0.9384328358208955,
+        "heatflux": 1.0,
+        "gravity_disturbance": 0.9776119402985075,
+        "mag_anomaly": 0.9552238805970149,
+        "cos_theta_bs": 0.9440298507462687
+      },
+      "joint_distance": {
+        "q1": 0.5867715480871711,
+        "q5": 0.7549886028812969,
+        "q50": 1.2246053494943396,
+        "q95": 1.9719621518262715,
+        "q99": 2.366540358556465
+      },
+      "joint_distance_cutoff": 1.5733833091912042,
+      "cells_supported_by_all_marginals": 682,
+      "cells_joint_supported": 837,
+      "cells_supported_by_both": 621
+    }
+  },
+  "support_by_feature_configuration": {
+    "1_all_ice": {
+      "features": [
+        "s",
+        "h",
+        "mag_s",
+        "mag_h",
+        "driving_stress",
+        "surface_air_temp"
+      ],
+      "pca_components": 5,
+      "joint_q95_cutoff": 0.8730005224775709,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "1_all_ice",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.9759953161592506,
+          "marginal_mean_coverage": 0.9913153786104606,
+          "marginal_limiting_feature": "driving_stress",
+          "joint_coverage": 0.7634660421545667,
+          "passes_marginal_rule": true,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9988290398126464,
+            "h": 1.0,
+            "mag_s": 0.9929742388758782,
+            "mag_h": 0.9800936768149883,
+            "driving_stress": 0.9759953161592506,
+            "surface_air_temp": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.16615920856578723,
+            "q5": 0.2468938785435502,
+            "q50": 0.6308216530668405,
+            "q95": 1.1649522655978979,
+            "q99": 1.380149873283088
+          }
+        },
+        "Thwaites": {
+          "configuration": "1_all_ice",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.7927742693493905,
+          "marginal_mean_coverage": 0.9243158564644832,
+          "marginal_limiting_feature": "s",
+          "joint_coverage": 0.7399030694668821,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.7927742693493905,
+            "h": 0.9964752533411662,
+            "mag_s": 0.9773828756058158,
+            "mag_h": 0.9823762667058306,
+            "driving_stress": 0.9847260978117198,
+            "surface_air_temp": 0.812160375972977
+          },
+          "joint_distance": {
+            "q1": 0.20759001000566932,
+            "q5": 0.29385617145894855,
+            "q50": 0.6468064924595877,
+            "q95": 1.428051017013894,
+            "q99": 1.9326222593037425
+          }
+        },
+        "Dotson": {
+          "configuration": "1_all_ice",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.8246268656716418,
+          "marginal_mean_coverage": 0.8994092039800995,
+          "marginal_limiting_feature": "mag_s",
+          "joint_coverage": 0.7341417910447762,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9225746268656716,
+            "h": 0.8274253731343284,
+            "mag_s": 0.8246268656716418,
+            "mag_h": 0.9449626865671642,
+            "driving_stress": 0.9430970149253731,
+            "surface_air_temp": 0.933768656716418
+          },
+          "joint_distance": {
+            "q1": 0.18992646647107228,
+            "q5": 0.24211004851707615,
+            "q50": 0.6045668036697305,
+            "q95": 1.3378446041828387,
+            "q99": 2.2057582186241733
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "1_all_ice",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.9489695780176644,
+          "marginal_mean_coverage": 0.9805364736669938,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.9582924435721295,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9882237487733072,
+            "h": 0.9489695780176644,
+            "mag_s": 0.9901864573110893,
+            "mag_h": 0.9838076545632973,
+            "driving_stress": 0.9916584887144259,
+            "surface_air_temp": 0.9803729146221786
+          },
+          "joint_distance": {
+            "q1": 0.1423833714528212,
+            "q5": 0.2082409569666653,
+            "q50": 0.4007175773139021,
+            "q95": 0.8356999091644786,
+            "q99": 1.222367888350364
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "1_all_ice",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.903448275862069,
+          "marginal_mean_coverage": 0.9632183908045976,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.8344827586206897,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.993103448275862,
+            "h": 0.903448275862069,
+            "mag_s": 0.9310344827586207,
+            "mag_h": 0.9724137931034482,
+            "driving_stress": 0.9793103448275862,
+            "surface_air_temp": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.23578051313541348,
+            "q5": 0.3056105696531383,
+            "q50": 0.5764289278940692,
+            "q95": 1.3302372688923287,
+            "q99": 2.1456183211401396
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "1_all_ice",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 6,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.8730005224775709,
+          "marginal_min_coverage": 0.9459459459459459,
+          "marginal_mean_coverage": 0.9793861658268438,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.9500687127805771,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9885478699038021,
+            "h": 0.9459459459459459,
+            "mag_s": 0.9862574438845625,
+            "mag_h": 0.9830508474576272,
+            "driving_stress": 0.9908382959230417,
+            "surface_air_temp": 0.9816765918460834
+          },
+          "joint_distance": {
+            "q1": 0.14429314758538833,
+            "q5": 0.21326614512638803,
+            "q50": 0.40742033224666285,
+            "q95": 0.8719932119946623,
+            "q99": 1.3060501796760031
+          }
+        }
+      }
+    },
+    "2_best_ice": {
+      "features": [
+        "s",
+        "h",
+        "mag_s",
+        "mag_h",
+        "surface_air_temp"
+      ],
+      "pca_components": 4,
+      "joint_q95_cutoff": 0.5343713280776811,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "2_best_ice",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.9800936768149883,
+          "marginal_mean_coverage": 0.9943793911007026,
+          "marginal_limiting_feature": "mag_h",
+          "joint_coverage": 0.9338407494145199,
+          "passes_marginal_rule": true,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9988290398126464,
+            "h": 1.0,
+            "mag_s": 0.9929742388758782,
+            "mag_h": 0.9800936768149883,
+            "surface_air_temp": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.0745555865096691,
+            "q5": 0.11530604843940849,
+            "q50": 0.25593690035156336,
+            "q95": 0.565871158332317,
+            "q99": 0.8201275394877221
+          }
+        },
+        "Thwaites": {
+          "configuration": "2_best_ice",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.7927742693493905,
+          "marginal_mean_coverage": 0.9122338081950361,
+          "marginal_limiting_feature": "s",
+          "joint_coverage": 0.6874724629167278,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.7927742693493905,
+            "h": 0.9964752533411662,
+            "mag_s": 0.9773828756058158,
+            "mag_h": 0.9823762667058306,
+            "surface_air_temp": 0.812160375972977
+          },
+          "joint_distance": {
+            "q1": 0.09745872030126639,
+            "q5": 0.1530078430377374,
+            "q50": 0.39718638124245637,
+            "q95": 1.0451623312026304,
+            "q99": 1.465680065522979
+          }
+        },
+        "Dotson": {
+          "configuration": "2_best_ice",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.8246268656716418,
+          "marginal_mean_coverage": 0.8906716417910449,
+          "marginal_limiting_feature": "mag_s",
+          "joint_coverage": 0.7901119402985075,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9225746268656716,
+            "h": 0.8274253731343284,
+            "mag_s": 0.8246268656716418,
+            "mag_h": 0.9449626865671642,
+            "surface_air_temp": 0.933768656716418
+          },
+          "joint_distance": {
+            "q1": 0.07361641891130154,
+            "q5": 0.12896779210199216,
+            "q50": 0.3234243764631959,
+            "q95": 0.8446095637126223,
+            "q99": 1.2455290551277902
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "2_best_ice",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.9489695780176644,
+          "marginal_mean_coverage": 0.9783120706575075,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.9617271835132483,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9882237487733072,
+            "h": 0.9489695780176644,
+            "mag_s": 0.9901864573110893,
+            "mag_h": 0.9838076545632973,
+            "surface_air_temp": 0.9803729146221786
+          },
+          "joint_distance": {
+            "q1": 0.06927066441978784,
+            "q5": 0.10527409561711605,
+            "q50": 0.22286158699624775,
+            "q95": 0.4954040626017148,
+            "q99": 0.7621206358547826
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "2_best_ice",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.903448275862069,
+          "marginal_mean_coverage": 0.96,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.8758620689655172,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.993103448275862,
+            "h": 0.903448275862069,
+            "mag_s": 0.9310344827586207,
+            "mag_h": 0.9724137931034482,
+            "surface_air_temp": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.10056161969011979,
+            "q5": 0.13757864931995817,
+            "q50": 0.2709646730663182,
+            "q95": 0.7375558851916092,
+            "q99": 1.4318927361240146
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "2_best_ice",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 4,
+          "joint_q95_cutoff": 0.5343713280776811,
+          "marginal_min_coverage": 0.9459459459459459,
+          "marginal_mean_coverage": 0.9770957398076042,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.9560238204306001,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9885478699038021,
+            "h": 0.9459459459459459,
+            "mag_s": 0.9862574438845625,
+            "mag_h": 0.9830508474576272,
+            "surface_air_temp": 0.9816765918460834
+          },
+          "joint_distance": {
+            "q1": 0.06994457002580742,
+            "q5": 0.1056354744345057,
+            "q50": 0.22533827745503954,
+            "q95": 0.5092300168773012,
+            "q99": 0.7991882449029782
+          }
+        }
+      }
+    },
+    "3_all_geophysical": {
+      "features": [
+        "b",
+        "mag_b",
+        "heatflux",
+        "gravity_disturbance",
+        "mag_anomaly"
+      ],
+      "pca_components": 5,
+      "joint_q95_cutoff": 0.9219712909219336,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.6487119437939111,
+          "marginal_mean_coverage": 0.9217798594847775,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.8155737704918032,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 1.0,
+            "mag_b": 0.9754098360655737,
+            "heatflux": 0.6487119437939111,
+            "gravity_disturbance": 0.9894613583138173,
+            "mag_anomaly": 0.9953161592505855
+          },
+          "joint_distance": {
+            "q1": 0.11968190186531875,
+            "q5": 0.19895699227552047,
+            "q50": 0.5449770541589202,
+            "q95": 1.2139161470951267,
+            "q99": 1.6352041511830495
+          }
+        },
+        "Thwaites": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.7394624761345279,
+          "marginal_mean_coverage": 0.9335291525921574,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.5570568365398737,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9895726244676164,
+            "mag_b": 0.9861947422529006,
+            "heatflux": 0.7394624761345279,
+            "gravity_disturbance": 0.9747393156116904,
+            "mag_anomaly": 0.977676604494052
+          },
+          "joint_distance": {
+            "q1": 0.24569929116859843,
+            "q5": 0.35008218030322347,
+            "q50": 0.8559862676089193,
+            "q95": 1.7146736454384592,
+            "q99": 2.164317283983232
+          }
+        },
+        "Dotson": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.9384328358208955,
+          "marginal_mean_coverage": 0.9652985074626865,
+          "marginal_limiting_feature": "mag_b",
+          "joint_coverage": 0.8283582089552238,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9552238805970149,
+            "mag_b": 0.9384328358208955,
+            "heatflux": 1.0,
+            "gravity_disturbance": 0.9776119402985075,
+            "mag_anomaly": 0.9552238805970149
+          },
+          "joint_distance": {
+            "q1": 0.1802031703248835,
+            "q5": 0.26281966547174124,
+            "q50": 0.5339432700791418,
+            "q95": 1.3823611145720147,
+            "q99": 1.5650856428311268
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.9573110893032385,
+          "marginal_mean_coverage": 0.9811579980372915,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.8758586849852796,
+          "passes_marginal_rule": true,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9573110893032385,
+            "mag_b": 0.9892051030421982,
+            "heatflux": 1.0,
+            "gravity_disturbance": 0.9990186457311089,
+            "mag_anomaly": 0.9602551521099116
+          },
+          "joint_distance": {
+            "q1": 0.1177927285709814,
+            "q5": 0.20070334734120107,
+            "q50": 0.48514299766765245,
+            "q95": 1.1391964309373404,
+            "q99": 1.36873167225812
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.7241379310344828,
+          "marginal_mean_coverage": 0.903448275862069,
+          "marginal_limiting_feature": "gravity_disturbance",
+          "joint_coverage": 0.9793103448275862,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.8344827586206897,
+            "mag_b": 0.9586206896551724,
+            "heatflux": 1.0,
+            "gravity_disturbance": 0.7241379310344828,
+            "mag_anomaly": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.16846310148168306,
+            "q5": 0.2697559450076409,
+            "q50": 0.5153769861032106,
+            "q95": 0.8184043707556761,
+            "q99": 1.1338906315742556
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "3_all_geophysical",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 5,
+          "pca_components": 5,
+          "joint_q95_cutoff": 0.9219712909219336,
+          "marginal_min_coverage": 0.9491525423728814,
+          "marginal_mean_coverage": 0.9759963353183692,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.8827301878149336,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9491525423728814,
+            "mag_b": 0.9871736142922584,
+            "heatflux": 1.0,
+            "gravity_disturbance": 0.9807604214383875,
+            "mag_anomaly": 0.9628950984883188
+          },
+          "joint_distance": {
+            "q1": 0.11910539777209794,
+            "q5": 0.20190177804885331,
+            "q50": 0.4867664959173567,
+            "q95": 1.1289922911946102,
+            "q99": 1.3684205768641846
+          }
+        }
+      }
+    },
+    "4_best_geophysical": {
+      "features": [
+        "b",
+        "mag_b",
+        "heatflux"
+      ],
+      "pca_components": 3,
+      "joint_q95_cutoff": 0.31651144021297895,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.6487119437939111,
+          "marginal_mean_coverage": 0.8747072599531616,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.7019906323185011,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 1.0,
+            "mag_b": 0.9754098360655737,
+            "heatflux": 0.6487119437939111
+          },
+          "joint_distance": {
+            "q1": 0.02584162719556425,
+            "q5": 0.04590549629900332,
+            "q50": 0.14406690543861797,
+            "q95": 0.9959222269643572,
+            "q99": 1.4003921240185777
+          }
+        },
+        "Thwaites": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.7394624761345279,
+          "marginal_mean_coverage": 0.905076614285015,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.5417829343515935,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9895726244676164,
+            "mag_b": 0.9861947422529006,
+            "heatflux": 0.7394624761345279
+          },
+          "joint_distance": {
+            "q1": 0.040887131107010484,
+            "q5": 0.07027286961840963,
+            "q50": 0.28734242704778123,
+            "q95": 1.129502516521292,
+            "q99": 1.6273847990924502
+          }
+        },
+        "Dotson": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.9384328358208955,
+          "marginal_mean_coverage": 0.9645522388059701,
+          "marginal_limiting_feature": "mag_b",
+          "joint_coverage": 0.7453358208955224,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9552238805970149,
+            "mag_b": 0.9384328358208955,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.02905444733855797,
+            "q5": 0.042933575909283664,
+            "q50": 0.14739481359945042,
+            "q95": 0.7969617115522544,
+            "q99": 1.0626812657921585
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.9573110893032385,
+          "marginal_mean_coverage": 0.9821720641151456,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.9749754661432777,
+          "passes_marginal_rule": true,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": true,
+          "marginal_coverage": {
+            "b": 0.9573110893032385,
+            "mag_b": 0.9892051030421982,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.02374921298289851,
+            "q5": 0.04052351383811507,
+            "q50": 0.10165829039009507,
+            "q95": 0.24719057100922073,
+            "q99": 0.3937373185030518
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.8344827586206897,
+          "marginal_mean_coverage": 0.9310344827586207,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.9448275862068966,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.8344827586206897,
+            "mag_b": 0.9586206896551724,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.026866790135845062,
+            "q5": 0.03650202315965247,
+            "q50": 0.11527847744991693,
+            "q95": 0.3231772315967476,
+            "q99": 0.555028634892501
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "4_best_geophysical",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 3,
+          "pca_components": 3,
+          "joint_q95_cutoff": 0.31651144021297895,
+          "marginal_min_coverage": 0.9491525423728814,
+          "marginal_mean_coverage": 0.9787753855550466,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.972972972972973,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "b": 0.9491525423728814,
+            "mag_b": 0.9871736142922584,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.023514732675576883,
+            "q5": 0.03979178040958277,
+            "q50": 0.10215633223379919,
+            "q95": 0.2493842463952811,
+            "q99": 0.3969836977351317
+          }
+        }
+      }
+    },
+    "5_best_combined": {
+      "features": [
+        "s",
+        "h",
+        "mag_s",
+        "mag_h",
+        "surface_air_temp",
+        "b",
+        "mag_b",
+        "heatflux"
+      ],
+      "pca_components": 6,
+      "joint_q95_cutoff": 1.026004602389806,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "5_best_combined",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.6487119437939111,
+          "marginal_mean_coverage": 0.9495023419203747,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.7693208430913349,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9988290398126464,
+            "h": 1.0,
+            "mag_s": 0.9929742388758782,
+            "mag_h": 0.9800936768149883,
+            "surface_air_temp": 1.0,
+            "b": 1.0,
+            "mag_b": 0.9754098360655737,
+            "heatflux": 0.6487119437939111
+          },
+          "joint_distance": {
+            "q1": 0.3185039024877012,
+            "q5": 0.40951577669729106,
+            "q50": 0.8038950524217982,
+            "q95": 1.3819096821315195,
+            "q99": 1.8564300854841231
+          }
+        },
+        "Thwaites": {
+          "configuration": "5_best_combined",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.7394624761345279,
+          "marginal_mean_coverage": 0.9095498604787782,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.5125569099720958,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.7927742693493905,
+            "h": 0.9964752533411662,
+            "mag_s": 0.9773828756058158,
+            "mag_h": 0.9823762667058306,
+            "surface_air_temp": 0.812160375972977,
+            "b": 0.9895726244676164,
+            "mag_b": 0.9861947422529006,
+            "heatflux": 0.7394624761345279
+          },
+          "joint_distance": {
+            "q1": 0.31322287799881776,
+            "q5": 0.4529803325934563,
+            "q50": 1.01227442702402,
+            "q95": 1.8349305121099981,
+            "q99": 2.2372251888791546
+          }
+        },
+        "Dotson": {
+          "configuration": "5_best_combined",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.8246268656716418,
+          "marginal_mean_coverage": 0.9183768656716418,
+          "marginal_limiting_feature": "mag_s",
+          "joint_coverage": 0.7145522388059702,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9225746268656716,
+            "h": 0.8274253731343284,
+            "mag_s": 0.8246268656716418,
+            "mag_h": 0.9449626865671642,
+            "surface_air_temp": 0.933768656716418,
+            "b": 0.9552238805970149,
+            "mag_b": 0.9384328358208955,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.29044386194920085,
+            "q5": 0.39229991139228115,
+            "q50": 0.7750669990924464,
+            "q95": 1.5503291067415785,
+            "q99": 2.078856591686911
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "5_best_combined",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.9489695780176644,
+          "marginal_mean_coverage": 0.9797595682041217,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.9597644749754661,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9882237487733072,
+            "h": 0.9489695780176644,
+            "mag_s": 0.9901864573110893,
+            "mag_h": 0.9838076545632973,
+            "surface_air_temp": 0.9803729146221786,
+            "b": 0.9573110893032385,
+            "mag_b": 0.9892051030421982,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.2553971008059435,
+            "q5": 0.3392099083168759,
+            "q50": 0.5939063792833592,
+            "q95": 0.991926564636771,
+            "q99": 1.2982744141087834
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "5_best_combined",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.8344827586206897,
+          "marginal_mean_coverage": 0.9491379310344827,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.9103448275862069,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.993103448275862,
+            "h": 0.903448275862069,
+            "mag_s": 0.9310344827586207,
+            "mag_h": 0.9724137931034482,
+            "surface_air_temp": 1.0,
+            "b": 0.8344827586206897,
+            "mag_b": 0.9586206896551724,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.26940069146991213,
+            "q5": 0.3564314173284243,
+            "q50": 0.6057241782418089,
+            "q95": 1.2286342694052292,
+            "q99": 1.6072379927703295
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "5_best_combined",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 8,
+          "pca_components": 6,
+          "joint_q95_cutoff": 1.026004602389806,
+          "marginal_min_coverage": 0.9459459459459459,
+          "marginal_mean_coverage": 0.9777256069628951,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.956481905634448,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9885478699038021,
+            "h": 0.9459459459459459,
+            "mag_s": 0.9862574438845625,
+            "mag_h": 0.9830508474576272,
+            "surface_air_temp": 0.9816765918460834,
+            "b": 0.9491525423728814,
+            "mag_b": 0.9871736142922584,
+            "heatflux": 1.0
+          },
+          "joint_distance": {
+            "q1": 0.2558243003823842,
+            "q5": 0.33940460358168173,
+            "q50": 0.5947213340829319,
+            "q95": 0.9996615878069329,
+            "q99": 1.3205484848023659
+          }
+        }
+      }
+    },
+    "6_best_combined_direction": {
+      "features": [
+        "s",
+        "h",
+        "mag_s",
+        "mag_h",
+        "surface_air_temp",
+        "b",
+        "mag_b",
+        "heatflux",
+        "cos_theta_bs"
+      ],
+      "pca_components": 7,
+      "joint_q95_cutoff": 1.2734748248542873,
+      "separated_reference_fallbacks": 0,
+      "cases": {
+        "PIG": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "PIG",
+          "test_cells": 1708,
+          "training_cells": 10064,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.6487119437939111,
+          "marginal_mean_coverage": 0.9546578194119179,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.7207259953161592,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9988290398126464,
+            "h": 1.0,
+            "mag_s": 0.9929742388758782,
+            "mag_h": 0.9800936768149883,
+            "surface_air_temp": 1.0,
+            "b": 1.0,
+            "mag_b": 0.9754098360655737,
+            "heatflux": 0.6487119437939111,
+            "cos_theta_bs": 0.9959016393442623
+          },
+          "joint_distance": {
+            "q1": 0.43127767827029223,
+            "q5": 0.5581566893309422,
+            "q50": 1.0828864816396186,
+            "q95": 1.6351936948549521,
+            "q99": 2.0009937764012125
+          }
+        },
+        "Thwaites": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "Thwaites",
+          "test_cells": 6809,
+          "training_cells": 4963,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.7394624761345279,
+          "marginal_mean_coverage": 0.9171194987026975,
+          "marginal_limiting_feature": "heatflux",
+          "joint_coverage": 0.5360552210309883,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.7927742693493905,
+            "h": 0.9964752533411662,
+            "mag_s": 0.9773828756058158,
+            "mag_h": 0.9823762667058306,
+            "surface_air_temp": 0.812160375972977,
+            "b": 0.9895726244676164,
+            "mag_b": 0.9861947422529006,
+            "heatflux": 0.7394624761345279,
+            "cos_theta_bs": 0.977676604494052
+          },
+          "joint_distance": {
+            "q1": 0.4464843434577775,
+            "q5": 0.6221531364871099,
+            "q50": 1.2352632016020024,
+            "q95": 2.099513615944842,
+            "q99": 2.4522649824604876
+          }
+        },
+        "Dotson": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "Dotson",
+          "test_cells": 1072,
+          "training_cells": 10700,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.8246268656716418,
+          "marginal_mean_coverage": 0.9212271973466003,
+          "marginal_limiting_feature": "mag_s",
+          "joint_coverage": 0.6977611940298507,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9225746268656716,
+            "h": 0.8274253731343284,
+            "mag_s": 0.8246268656716418,
+            "mag_h": 0.9449626865671642,
+            "surface_air_temp": 0.933768656716418,
+            "b": 0.9552238805970149,
+            "mag_b": 0.9384328358208955,
+            "heatflux": 1.0,
+            "cos_theta_bs": 0.9440298507462687
+          },
+          "joint_distance": {
+            "q1": 0.4226201052505889,
+            "q5": 0.5442775574728523,
+            "q50": 1.0253058267834807,
+            "q95": 1.7754451816072994,
+            "q99": 2.4863784529468815
+          }
+        }
+      },
+      "intercatchment_cases": {
+        "PIG-Thwaites inter-catchment": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "PIG-Thwaites inter-catchment",
+          "test_cells": 2038,
+          "training_cells": 9589,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.9489695780176644,
+          "marginal_mean_coverage": 0.9807000327118089,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.956820412168793,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9882237487733072,
+            "h": 0.9489695780176644,
+            "mag_s": 0.9901864573110893,
+            "mag_h": 0.9838076545632973,
+            "surface_air_temp": 0.9803729146221786,
+            "b": 0.9573110893032385,
+            "mag_b": 0.9892051030421982,
+            "heatflux": 1.0,
+            "cos_theta_bs": 0.9882237487733072
+          },
+          "joint_distance": {
+            "q1": 0.3546898330574743,
+            "q5": 0.45987500515622104,
+            "q50": 0.7903595269081972,
+            "q95": 1.2403323868733525,
+            "q99": 1.581829081869941
+          }
+        },
+        "Thwaites-Dotson inter-catchment": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "Thwaites-Dotson inter-catchment",
+          "test_cells": 145,
+          "training_cells": 9589,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.8344827586206897,
+          "marginal_mean_coverage": 0.9471264367816092,
+          "marginal_limiting_feature": "b",
+          "joint_coverage": 0.8689655172413793,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": false,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.993103448275862,
+            "h": 0.903448275862069,
+            "mag_s": 0.9310344827586207,
+            "mag_h": 0.9724137931034482,
+            "surface_air_temp": 1.0,
+            "b": 0.8344827586206897,
+            "mag_b": 0.9586206896551724,
+            "heatflux": 1.0,
+            "cos_theta_bs": 0.9310344827586207
+          },
+          "joint_distance": {
+            "q1": 0.43462733665148556,
+            "q5": 0.5007687623370847,
+            "q50": 0.8271078895977861,
+            "q95": 1.6794235197105627,
+            "q99": 2.334769774380219
+          }
+        },
+        "Both inter-catchment regions": {
+          "configuration": "6_best_combined_direction",
+          "heldout_region": "Both inter-catchment regions",
+          "test_cells": 2183,
+          "training_cells": 9589,
+          "feature_count": 9,
+          "pca_components": 7,
+          "joint_q95_cutoff": 1.2734748248542873,
+          "marginal_min_coverage": 0.9459459459459459,
+          "marginal_mean_coverage": 0.9784699954191479,
+          "marginal_limiting_feature": "h",
+          "joint_coverage": 0.950984883188273,
+          "passes_marginal_rule": false,
+          "passes_joint_rule": true,
+          "passes_both_frozen_rules": false,
+          "marginal_coverage": {
+            "s": 0.9885478699038021,
+            "h": 0.9459459459459459,
+            "mag_s": 0.9862574438845625,
+            "mag_h": 0.9830508474576272,
+            "surface_air_temp": 0.9816765918460834,
+            "b": 0.9491525423728814,
+            "mag_b": 0.9871736142922584,
+            "heatflux": 1.0,
+            "cos_theta_bs": 0.9844251030691709
+          },
+          "joint_distance": {
+            "q1": 0.3588799359272742,
+            "q5": 0.46195023070286256,
+            "q50": 0.7939845903403523,
+            "q95": 1.2635358698104258,
+            "q99": 1.7249279170239447
+          }
+        }
+      }
+    }
+  }
+}

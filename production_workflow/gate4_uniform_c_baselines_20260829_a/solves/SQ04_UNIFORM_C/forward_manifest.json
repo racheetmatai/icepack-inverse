@@ -1,0 +1,47 @@
+{
+  "adoption_manifest_id": "sha256-json-v1-406472fbb5141aa80e28f42a08bcb30f710726277877e3c2324deb6d25df8134",
+  "attempts": [
+    {
+      "elapsed_seconds": 24.148867868003435,
+      "exception": null,
+      "snes_max_it": 50,
+      "status": "complete"
+    }
+  ],
+  "baseline_campaign_manifest_id": "sha256-json-v1-4eb8156dd591c5b9caf23e70ca202ad01865da74d402fd09417ff6852ce3189c",
+  "control_id": "SQ04_UNIFORM_C",
+  "control_path": "controls/SQ04_UNIFORM_C.npz",
+  "control_sha256": "f00e580509f234efaf4843cd9653d6123f4758441e277d863eb0db75b5735140",
+  "control_values_sha256": "38c01ed3fbff00f294eeecec34923e7fa5379f1c1273b6138d9b092d9fdf82b1",
+  "definitive_point_manifest_id": "sha256-json-v1-94c28ac838c8e1eec63973b6511d5b42dea27b9dafbc6b1c6c08cce3fc810a1e",
+  "elapsed_seconds": 24.148935971898027,
+  "environment": {
+    "hostname": "b6e464cf0478",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "python": "3.10.12 (main, Jun 11 2023, 05:26:28) [GCC 11.4.0]"
+  },
+  "exception": null,
+  "experiment": "SQ04",
+  "finished_utc": "2026-08-29T21:24:51.212632+00:00",
+  "manifest_id": "sha256-json-v1-3631772ad433e6e9017def3cff7d2d340fdf6e5e8c92519991608c59134408e8",
+  "reg_C": 0.01414213562,
+  "schema": "jog-icepack-uniform-c-forward-control-v1",
+  "solver_policy": {
+    "algorithm": "petsc newtontr / gmres / lu / mumps",
+    "initial_velocity": "frozen object_.u_initial for every independent solve",
+    "primary_snes_max_it": 50,
+    "retry_snes_max_it": 100,
+    "retry_trigger": "DIVERGED_MAX_IT only"
+  },
+  "started_utc": "2026-08-29T21:24:27.065996+00:00",
+  "status": "complete",
+  "uniform_C": 1.3481219987537207,
+  "velocity_path": "velocity.npy",
+  "velocity_sha256": "91ebe4adf0f35b0ea34c3913d0977ad215fd59da85d05009da24a88d9b6b9ccb",
+  "velocity_summary": {
+    "finite": true,
+    "maximum_speed": 11214.185335631975,
+    "median_speed": 40.10683356971083,
+    "minimum_speed": 0.047264250397137005
+  }
+}

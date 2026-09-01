@@ -1,0 +1,455 @@
+{
+  "schema": "jog-lcurve-selection-assembly-plan-v1",
+  "purpose": "Machine-readable inventory for assembling the verified final L-curve selection bundle without rerunning inversions.",
+  "created_utc": "2026-08-19T22:58:05.0936363Z",
+  "container_repo_root": "/home/firedrake/icepack/icepack-inverse",
+  "production_runs_root": "/home/firedrake/icepack/icepack-inverse/production_runs",
+  "protocol_contract_path": "gate1_lcurve_v2_20260814_a/run_contract.json",
+  "expected_selected_reg_c": 0.01414213562,
+  "curve_points": [
+    {
+      "classification": "formal_endpoint",
+      "expected_reg_c": 0.01,
+      "independent_manifest_path": "gate1_lcurve_v2_20260814_a/points/regc_0p01_312b95ee_attempt01/point_manifest.json",
+      "effective_manifest_path": "gate1_lcurve_v2_20260814_a/points/regc_0p01_312b95ee_attempt01/point_manifest.json"
+    },
+    {
+      "classification": "confirmed_refinement",
+      "expected_reg_c": 0.01189207115,
+      "independent_manifest_path": "lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p011892/point_manifest.json",
+      "effective_manifest_path": "diag_regc_0p011892_confirm01_r2/point_manifest.json"
+    },
+    {
+      "classification": "confirmed_refinement",
+      "expected_reg_c": 0.01414213562,
+      "independent_manifest_path": "lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_activated/point_manifest.json",
+      "effective_manifest_path": "diag_regc_0p014142_confirm01_r2/point_manifest.json"
+    },
+    {
+      "classification": "confirmed_refinement",
+      "expected_reg_c": 0.01681792831,
+      "independent_manifest_path": "lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_activated/point_manifest.json",
+      "effective_manifest_path": "diag_regc_0p016818_confirm01_r2/point_manifest.json"
+    },
+    {
+      "classification": "formal_endpoint",
+      "expected_reg_c": 0.02,
+      "independent_manifest_path": "gate1_lcurve_v2_20260814_a/points/regc_0p02_a7e46abf_attempt01/point_manifest.json",
+      "effective_manifest_path": "gate1_lcurve_v2_20260814_a/points/regc_0p02_a7e46abf_attempt01/point_manifest.json"
+    }
+  ],
+  "environment_policy": {
+    "allowed_differences": {
+      "docker_image_hint": "The midpoint and confirmation manifests record 'unrecorded'; shared hostname plus docker inspect identifies the same formal-contract container and image.",
+      "docker_image_id": "The midpoint and confirmation manifests record 'unrecorded', not a conflicting ID; docker inspect of their shared container hostname gives the exact formal-contract image ID.",
+      "git_status": "Only non-frozen files and staging state differ; config, all 13 scientific source hashes, immutable inputs, frozen designs, git HEAD, executable, and numerical package versions match."
+    }
+  },
+  "manual_protocol_deviation": {
+    "acknowledged": true,
+    "kind": "manual_refinement_and_confirmation_outside_formal_orchestrator_study",
+    "description": "The five-point refined curve combines two valid formal v2 endpoints with three independent midpoint runs and their one-block confirmations executed in separate diagnostic directories.",
+    "rationale": "The formal orchestrator stopped during its base sweep. Reusing its two verified endpoints and separately verified midpoint lineage avoids unnecessary repeat inversions while preserving the frozen config, scientific sources, inputs, design, numerical runtime, independent C=0 starts, and selection rule.",
+    "scope": "This deviation authorizes only a selection-decision bundle. It does not complete the abandoned formal study, create a definitive inversion artifact, or waive any scientific/source/input/hash/lineage validation."
+  },
+  "formal_contract": {
+    "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/run_contract.json",
+    "manifest_id": "sha256-json-v1-e129f8b1b3bf4a68d559254a642b410e47f668f4a5e11d7ffa9f55b62fabe74d",
+    "manifest_sha256": "752eeeb14657690473381c4a17aa65fd989c43e640e3b436c240825ed5132bf0",
+    "config_sha256": "db5cae4d88c687c6bec6d8967119722732305b4dc24463153167510d429853e7",
+    "scientific_source_count": 13
+  },
+  "formal_study_state": {
+    "run_state_path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/run_state.json",
+    "recorded_status": "running",
+    "recorded_phase": "base",
+    "stale_request_reg_c": 0.1,
+    "study_manifest_present": false,
+    "definitive_inversion_manifest_present": false,
+    "note": "The formal orchestrator stopped before completing the base grid. This recipe deliberately assembles a composite verified bundle from the accepted formal endpoints and separately run midpoint/confirmation lineage."
+  },
+  "environment_compatibility": {
+    "strict_formal_contract_record_equality": false,
+    "allowed_recorded_difference_keys": [
+      "docker_image_hint",
+      "docker_image_id",
+      "git_status"
+    ],
+    "all_other_stable_environment_keys_match": true,
+    "formal_environment": {
+      "docker_image_hint": "icepack-image-correct",
+      "docker_image_id": "sha256:75366f110d592001f6c04ec36e9d93ecf9a6596082c3d467d36b0c2354919359",
+      "hostname": "b6e464cf0478",
+      "git_head": "a5ef7a097daca6b2dd6e9c21938ec894086ebd05",
+      "git_status_sha256": "c95ec77ed6be7e5818e947679b3a3428dce4983bd4a9d8aaba93d33e72a3b9a4"
+    },
+    "midpoint_and_confirmation_environment": {
+      "docker_image_hint": "unrecorded",
+      "docker_image_id": "unrecorded",
+      "hostname": "b6e464cf0478",
+      "git_head": "a5ef7a097daca6b2dd6e9c21938ec894086ebd05",
+      "git_status_sha256": "ea6ef2265085d4c151cd9d11e78593bbacba253bc887e611e724f3d2408ee77d"
+    },
+    "git_status_difference": {
+      "formal_only": [
+        "M create_percent_diff_summary.py"
+      ],
+      "midpoint_and_confirmation_only": [
+        " M create_percent_diff_summary.py",
+        "M create_model_heat_map.ipynb",
+        "?? run_lcurve_midpoint_diagnostics.sh"
+      ],
+      "scientific_source_hash_dictionary_equal": true,
+      "note": "The differing git-status entries are outside the 13 frozen scientific source files, whose hashes match exactly."
+    },
+    "container_identity_reconciliation": {
+      "evidence_kind": "docker_inspect_after_runs_plus_shared_manifest_hostname",
+      "container_name": "xenodochial_cerf",
+      "container_id": "b6e464cf04789f1f77daa4542c7201fbb0a49d27208c3d975d6a3864aaf7460b",
+      "manifest_hostname_prefix": "b6e464cf0478",
+      "docker_inspect_image_id": "sha256:75366f110d592001f6c04ec36e9d93ecf9a6596082c3d467d36b0c2354919359",
+      "docker_inspect_config_image": "icepack-image-correct",
+      "conclusion": "The midpoint value 'unrecorded' is missing manifest metadata, not evidence of a different container image. The formal and midpoint manifests share the same container hostname, and that container is on the exact image recorded by the formal contract."
+    },
+    "bundle_policy": "Permit only the three listed recorded-field differences, preserve them explicitly in the final bundle, and require exact equality for config hash, scientific source hashes, immutable input/design hashes, git HEAD, executable, hostname, platform, Python version, and package versions."
+  },
+  "accepted_independent_by_reg_c": {
+    "0.01": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p01_312b95ee_attempt01/point_manifest.json",
+      "manifest_id": "sha256-json-v1-a42f883f5ff828ca9fbe4c20cd53e7c3f2766d3e84da094f616b76eeefec7d47",
+      "manifest_sha256": "8e5b31d6d745818cc29dd84fd288148076a53426f716853ee1d36555c61399f5",
+      "input_preflight_manifest_id": "sha256-json-v1-2e0ff1debd5a3dff2192ae9f0e3a21cd6427255fbedeb9e2765cea95449badc7",
+      "status": "valid",
+      "run_kind": "independent",
+      "cumulative_block_count": 5,
+      "state_c_sha256": "76c33e3eeb481f8adb9deadd7abfaaf2df206fc2854d4577e0bddb9a6bf57f36"
+    },
+    "0.01189207115": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p011892/point_manifest.json",
+      "manifest_id": "sha256-json-v1-10af09ec2ed2011273f92f800a92554319a3f7b73f6cecca04e2dab4b30a7c69",
+      "manifest_sha256": "54a587ab925b9aacc78f72b415ceb4cb42b8285eb750c8298c4de3488d0652fa",
+      "input_preflight_manifest_id": "sha256-json-v1-cf72c866c24dd778bf85d296f42f83a393ec226d73254fd16b334914ba90746a",
+      "status": "valid",
+      "run_kind": "independent",
+      "cumulative_block_count": 5,
+      "state_c_sha256": "0a855694cc09d3d6aac55627d628ddee9cf8b55f6688604148d0134a6668c378"
+    },
+    "0.01414213562": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_activated/point_manifest.json",
+      "manifest_id": "sha256-json-v1-1eaff2aa6d9d46b3b5db40fd0ff6ba919b04c7e235e33bd8516f89b5a0f0110d",
+      "manifest_sha256": "33a91106b5e57ccb35ed347f86635d5d344ce9431c76f402e6ebc724fc1b3c41",
+      "input_preflight_manifest_id": "sha256-json-v1-fc9d266af56ab420190cfd82035ea760a157735c39ed846281f74687e745e522",
+      "status": "valid",
+      "run_kind": "independent",
+      "cumulative_block_count": 5,
+      "state_c_sha256": "940861d52d8587081958d74d84d412de931892a9eec23a6e980eb866f96a4560"
+    },
+    "0.01681792831": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_activated/point_manifest.json",
+      "manifest_id": "sha256-json-v1-d4777ba5b25bc332260a69fc98f02d68541b8616edaff0e7372405a5aec4e8a1",
+      "manifest_sha256": "4e596b3ed313de56844933a3577b5e44eeee5bbfd41947fcf9c81bea7d43b12b",
+      "input_preflight_manifest_id": "sha256-json-v1-568e55778682f31f803b0a8e2ecc92d7839ab09cfcee23c7e4214f8169ec19e9",
+      "status": "valid",
+      "run_kind": "independent",
+      "cumulative_block_count": 5,
+      "state_c_sha256": "5813c8b4706bdd456d38fffc3e5c8db9a6cb91d47580f1ceed0382d56d5dd401"
+    },
+    "0.02": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p02_a7e46abf_attempt01/point_manifest.json",
+      "manifest_id": "sha256-json-v1-5e58b4fcf4435ec6e065a8ca29a0f086b03d54e7c6f9ba20fc731fcc7b2e9314",
+      "manifest_sha256": "e295a566de71d1be25a229db5ebb0fb6f82d044d07481f9b9539b5985b84dea6",
+      "input_preflight_manifest_id": "sha256-json-v1-5e022f861eb716c6ecbc6179e32e3c27ace1812d19942baf0a2bcd0c6a79ae27",
+      "status": "valid",
+      "run_kind": "independent",
+      "cumulative_block_count": 6,
+      "state_c_sha256": "d0d24e6f2cfca6447f0d4535f91c8fb184d42af4eba34cd5a7f87aa0bbf16862"
+    }
+  },
+  "effective_by_reg_c": {
+    "0.01": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p01_312b95ee_attempt01/point_manifest.json",
+      "manifest_id": "sha256-json-v1-a42f883f5ff828ca9fbe4c20cd53e7c3f2766d3e84da094f616b76eeefec7d47",
+      "manifest_sha256": "8e5b31d6d745818cc29dd84fd288148076a53426f716853ee1d36555c61399f5",
+      "run_kind": "independent",
+      "confirmation_round": null,
+      "misfit": 3104.730961477117,
+      "unweighted_roughness": 0.07848021206846675,
+      "weighted_penalty": 784.8021206846707,
+      "objective": 3889.5330821617877
+    },
+    "0.01189207115": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p011892_confirm01_r2/point_manifest.json",
+      "manifest_id": "sha256-json-v1-121e4342676cfb120c062ef3c368ad8b0c0d5bcf05b089739d6d0a8d2187c7ae",
+      "manifest_sha256": "699957405d7a4faa08ab8a7276c4225b456c41ba31ef6d3da6d87292b77949f5",
+      "run_kind": "confirmation",
+      "confirmation_round": 1,
+      "misfit": 2954.702361895151,
+      "unweighted_roughness": 0.09631794859253914,
+      "weighted_penalty": 681.0707460007328,
+      "objective": 3635.773107895884
+    },
+    "0.01414213562": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p014142_confirm01_r2/point_manifest.json",
+      "manifest_id": "sha256-json-v1-94c28ac838c8e1eec63973b6511d5b42dea27b9dafbc6b1c6c08cce3fc810a1e",
+      "manifest_sha256": "48af8960f4f8504cb6fbb20fb9dcb2f185bef0fedc06c4d7a4dfd329fde6f7fd",
+      "run_kind": "confirmation",
+      "confirmation_round": 1,
+      "misfit": 2833.519357417125,
+      "unweighted_roughness": 0.11668406291380533,
+      "weighted_penalty": 583.4203148768653,
+      "objective": 3416.93967229399
+    },
+    "0.01681792831": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p016818_confirm01_r2/point_manifest.json",
+      "manifest_id": "sha256-json-v1-57e20d20c1b990cb1a1a96ada3721f681b1f32b3092186266be9c222bef034b0",
+      "manifest_sha256": "beeead4be9573b062fe2ea517d7810bf22e8574519e2253eda7944e4cf11a146",
+      "run_kind": "confirmation",
+      "confirmation_round": 1,
+      "misfit": 2728.1949535271947,
+      "unweighted_roughness": 0.1418780560700648,
+      "weighted_penalty": 501.6146774497088,
+      "objective": 3229.8096309769035
+    },
+    "0.02": {
+      "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p02_a7e46abf_attempt01/point_manifest.json",
+      "manifest_id": "sha256-json-v1-5e58b4fcf4435ec6e065a8ca29a0f086b03d54e7c6f9ba20fc731fcc7b2e9314",
+      "manifest_sha256": "e295a566de71d1be25a229db5ebb0fb6f82d044d07481f9b9539b5985b84dea6",
+      "run_kind": "independent",
+      "confirmation_round": null,
+      "misfit": 2637.970263854929,
+      "unweighted_roughness": 0.17221414894713927,
+      "weighted_penalty": 430.53537236784695,
+      "objective": 3068.5056362227756
+    }
+  },
+  "confirmations_by_reg_c": {
+    "0.01189207115": {
+      "round": 1,
+      "parent_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p011892/point_manifest.json",
+      "parent_manifest_id": "sha256-json-v1-10af09ec2ed2011273f92f800a92554319a3f7b73f6cecca04e2dab4b30a7c69",
+      "parent_manifest_sha256": "54a587ab925b9aacc78f72b415ceb4cb42b8285eb750c8298c4de3488d0652fa",
+      "parent_state_c_sha256": "0a855694cc09d3d6aac55627d628ddee9cf8b55f6688604148d0134a6668c378",
+      "child_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p011892_confirm01_r2/point_manifest.json",
+      "child_manifest_id": "sha256-json-v1-121e4342676cfb120c062ef3c368ad8b0c0d5bcf05b089739d6d0a8d2187c7ae",
+      "child_manifest_sha256": "699957405d7a4faa08ab8a7276c4225b456c41ba31ef6d3da6d87292b77949f5",
+      "child_block_parent_c_sha256": "0a855694cc09d3d6aac55627d628ddee9cf8b55f6688604148d0134a6668c378",
+      "child_state_c_sha256": "fbc7cdef8aa3216c15b53e12a5f027bc8f0e63a0afae8dd4f1d148d02db67e2f",
+      "cumulative_block_count": 6,
+      "relative_misfit_change": 1.4243492314805267e-06,
+      "relative_roughness_change": 5.169179031359969e-06,
+      "terminal_gradient_norm": 7.728086556908389e-05,
+      "passed": true
+    },
+    "0.01414213562": {
+      "round": 1,
+      "parent_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_activated/point_manifest.json",
+      "parent_manifest_id": "sha256-json-v1-1eaff2aa6d9d46b3b5db40fd0ff6ba919b04c7e235e33bd8516f89b5a0f0110d",
+      "parent_manifest_sha256": "33a91106b5e57ccb35ed347f86635d5d344ce9431c76f402e6ebc724fc1b3c41",
+      "parent_state_c_sha256": "940861d52d8587081958d74d84d412de931892a9eec23a6e980eb866f96a4560",
+      "child_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p014142_confirm01_r2/point_manifest.json",
+      "child_manifest_id": "sha256-json-v1-94c28ac838c8e1eec63973b6511d5b42dea27b9dafbc6b1c6c08cce3fc810a1e",
+      "child_manifest_sha256": "48af8960f4f8504cb6fbb20fb9dcb2f185bef0fedc06c4d7a4dfd329fde6f7fd",
+      "child_block_parent_c_sha256": "940861d52d8587081958d74d84d412de931892a9eec23a6e980eb866f96a4560",
+      "child_state_c_sha256": "8d8ab48a33c66794198cfbdfe8dfbc1cb18bc252b0d08d057abd690b00e58298",
+      "cumulative_block_count": 6,
+      "relative_misfit_change": 1.409767773228129e-05,
+      "relative_roughness_change": 3.35465169683422e-05,
+      "terminal_gradient_norm": 6.662299405105236e-05,
+      "passed": true
+    },
+    "0.01681792831": {
+      "round": 1,
+      "parent_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_activated/point_manifest.json",
+      "parent_manifest_id": "sha256-json-v1-d4777ba5b25bc332260a69fc98f02d68541b8616edaff0e7372405a5aec4e8a1",
+      "parent_manifest_sha256": "4e596b3ed313de56844933a3577b5e44eeee5bbfd41947fcf9c81bea7d43b12b",
+      "parent_state_c_sha256": "5813c8b4706bdd456d38fffc3e5c8db9a6cb91d47580f1ceed0382d56d5dd401",
+      "child_manifest_path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p016818_confirm01_r2/point_manifest.json",
+      "child_manifest_id": "sha256-json-v1-57e20d20c1b990cb1a1a96ada3721f681b1f32b3092186266be9c222bef034b0",
+      "child_manifest_sha256": "beeead4be9573b062fe2ea517d7810bf22e8574519e2253eda7944e4cf11a146",
+      "child_block_parent_c_sha256": "5813c8b4706bdd456d38fffc3e5c8db9a6cb91d47580f1ceed0382d56d5dd401",
+      "child_state_c_sha256": "5813c8b4706bdd456d38fffc3e5c8db9a6cb91d47580f1ceed0382d56d5dd401",
+      "cumulative_block_count": 6,
+      "relative_misfit_change": 0.0,
+      "relative_roughness_change": 0.0,
+      "terminal_gradient_norm": 9.93878296450142e-05,
+      "passed": true
+    }
+  },
+  "official_post_confirmation_selection": {
+    "implementation": "/home/firedrake/icepack/icepack-inverse/production_workflow/lcurve_selection.py",
+    "method": "maximum Menger curvature after independent [0,1] normalization of log10(misfit) and log10(unweighted roughness); exact ties favor smaller reg_C",
+    "selected_reg_c": 0.01414213562,
+    "selected_manifest_id": "sha256-json-v1-94c28ac838c8e1eec63973b6511d5b42dea27b9dafbc6b1c6c08cce3fc810a1e",
+    "selected_curvature": 0.1716471333289997,
+    "confirmation_candidate_unchanged": true,
+    "confirmation_rounds_required": 1,
+    "curvature_ambiguity": {
+      "threshold": 1.25,
+      "top_reg_c": 0.01414213562,
+      "top_curvature": 0.1716471333289997,
+      "second_reg_c": 0.01681792831,
+      "second_curvature": 0.16495494092662014,
+      "ratio": 1.0405698208540268,
+      "is_ambiguous": true,
+      "note": "The one permitted midpoint-refinement round was already consumed. The selected triple then passed round-1 confirmation without changing the candidate, so the frozen protocol requires no second confirmation round."
+    },
+    "curvature_table": [
+      {
+        "reg_c": 0.01,
+        "curvature": null
+      },
+      {
+        "reg_c": 0.01189207115,
+        "curvature": 0.13466335248178368
+      },
+      {
+        "reg_c": 0.01414213562,
+        "curvature": 0.1716471333289997
+      },
+      {
+        "reg_c": 0.01681792831,
+        "curvature": 0.16495494092662014
+      },
+      {
+        "reg_c": 0.02,
+        "curvature": null
+      }
+    ]
+  },
+  "exclusion_inventory": {
+    "manifested": [
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_20260813_a/points/regc_0p005_2a20f934_attempt01/point_manifest.json",
+        "manifest_id": "sha256-json-v1-959c58fdc5e7ad8fdaf0fe6b1b463cab3466d09a143da65013ead337b136ccbb",
+        "manifest_sha256": "6bc9d113e93083a897c7ce8da4102e48686befe5103089ec9c9e6c456f01820c",
+        "reg_c": 0.005,
+        "status": "invalid",
+        "reason": "Historical v1 point with a different config/contract; explicitly superseded and ineligible for the v2 selection population."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p05_e7039c84_attempt01/point_manifest.json",
+        "manifest_id": "sha256-json-v1-b12fba9104b29944b41f953b7ca5584c24581800f21c4b03efebdb8d74aa4f8d",
+        "manifest_sha256": "15cb2a74bf982ae55b876f10336e9485a4e17b12f37c6d8f355426b5dda301bc",
+        "reg_c": 0.05,
+        "status": "invalid",
+        "reason": "Failed the frozen stability and gradient-safety gates after 6 blocks; terminal delta_E=0.005092499537634849, delta_R=0.015736254285235275, gradient=0.0013799993671062124."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a/points/regc_0p1_01bcb760_attempt01/point_manifest.json",
+        "manifest_id": "sha256-json-v1-4d7e99136d645efa49865b1e4f82a997a28d99b8f3be347d55b90f5e33233e78",
+        "manifest_sha256": "e4616c94e8895c210d8302cab721b162cc8ad94cff4ac7a4febdb1d8c622291e",
+        "reg_c": 0.1,
+        "status": "failed",
+        "reason": "Firedrake/PETSc linear solver failure DIVERGED_PCSETUP_FAILED during the attempted endpoint."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_attempt02/point_manifest.json",
+        "manifest_id": "sha256-json-v1-cdde55160a1c9bd8bf579b89b0abe98d6126813576670189438a709aa90ad550",
+        "manifest_sha256": "91ad776b1759f6e077c40cc87eb392bc792c7b48b4e72f368aab6b9820a1d04b",
+        "reg_c": 0.01414213562,
+        "status": "failed",
+        "reason": "Firedrake environment was not activated; mpicc was absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_attempt03/point_manifest.json",
+        "manifest_id": "sha256-json-v1-8ed6ba6d80579425cb6d6825540c532c4360110db65e945275e9c3384d87e6fa",
+        "manifest_sha256": "a1ba663c1f6f81d5bb2219c538b06baa6989a5480c99a74971c5fd1e8977cd0c",
+        "reg_c": 0.01414213562,
+        "status": "failed",
+        "reason": "Firedrake environment was not activated; mpicc was absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_fresh/point_manifest.json",
+        "manifest_id": "sha256-json-v1-a68063c03547965a8cbc14123eafdba55cbeb6af39a47e7d18728e57fe10d79d",
+        "manifest_sha256": "a2896ed613359d6e8680e6866347fb3210827309158c71aef230cf400923b478",
+        "reg_c": 0.01414213562,
+        "status": "failed",
+        "reason": "Immutable-input preflight aborted because ldd/otool were absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_v3/point_manifest.json",
+        "manifest_id": "sha256-json-v1-43dd18c7cc99da3da8787851bd2f30062791d7c730235454ca85dc228a15fc2c",
+        "manifest_sha256": "97b507eda5f5e7d8ceff621627459d0320adfafc41c752cf205147d1115597ef",
+        "reg_c": 0.01414213562,
+        "status": "failed",
+        "reason": "Immutable-input preflight aborted because ldd/otool were absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818/point_manifest.json",
+        "manifest_id": "sha256-json-v1-65b0167d8d1b1f0be4941d8421fbfccb26cbf0b6585ce1e7745d74ff842f91f9",
+        "manifest_sha256": "86d183bd8283502d31d0667a27efb9789ab7f9bd2eb0e09a8cc2d72398e87624",
+        "reg_c": 0.01681792831,
+        "status": "failed",
+        "reason": "Firedrake environment was not activated; mpicc was absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_attempt03/point_manifest.json",
+        "manifest_id": "sha256-json-v1-1295debee21ec822a0f344540f20c217993a88133c43c440c3794f9817fef847",
+        "manifest_sha256": "8df1cbf7c801384bb5515298031037f7da51a7a02615c5f45a81741cb5f3a183",
+        "reg_c": 0.01681792831,
+        "status": "failed",
+        "reason": "Firedrake environment was not activated; mpicc was absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_fresh/point_manifest.json",
+        "manifest_id": "sha256-json-v1-dad93ea9efca330c87252d3d08783aed21fea0c6ac100430b5999723a6c1f237",
+        "manifest_sha256": "1df0f3ee0c4141014fd215eb8c5154062f47f6f22488fb7a2513d49f0651ae7b",
+        "reg_c": 0.01681792831,
+        "status": "failed",
+        "reason": "Immutable-input preflight aborted because ldd/otool were absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p016818_v3/point_manifest.json",
+        "manifest_id": "sha256-json-v1-545eb83d3724816d622b913ee5abdaeccab908de74602c9dc986d787f425c36b",
+        "manifest_sha256": "d2a2ee1b73251c35f220ed401a39f1bb2c46f34ab5d78befbc8112a93554c8e4",
+        "reg_c": 0.01681792831,
+        "status": "failed",
+        "reason": "Immutable-input preflight aborted because ldd/otool were absent from PATH."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/diag_regc_0p011892_confirm01/point_manifest.json",
+        "manifest_id": "sha256-json-v1-14d713078d95b572a8013d0dfa122f35360e55bec77793bb26b0c26ff9c021c6",
+        "manifest_sha256": "6573638e02e2f21727939753d0058549f004772450dd79e7b5231ada658ff513",
+        "reg_c": 0.01189207115,
+        "status": "failed",
+        "reason": "First confirmation launch correctly failed the parent-environment equality safeguard; superseded by the valid _r2 confirmation."
+      }
+    ],
+    "unmanifested": [
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142",
+        "reg_c": 0.01414213562,
+        "reason": "Interrupted during block 5 after four saved endpoints; no point_manifest.json was produced, so the state is not an accepted endpoint."
+      },
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/lcurve_midpoint_diagnostics_20260817_a/diag_regc_0p014142_from_0p011892",
+        "reg_c": 0.01414213562,
+        "reason": "Empty abandoned directory with no manifest or result artifacts."
+      }
+    ],
+    "duplicate_roots": [
+      {
+        "path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a copy",
+        "canonical_path": "/home/firedrake/icepack/icepack-inverse/production_runs/gate1_lcurve_v2_20260814_a",
+        "reason": "Byte-identical backup copy of the contract, run state, and four present point manifests; exclude to prevent duplicate manifest IDs and duplicate curve points."
+      }
+    ],
+    "unexecuted": [
+      {
+        "reg_c": 0.2,
+        "formal_phase": "base",
+        "reason": "Listed in the formal base grid but never launched after the orchestrator stopped at reg_C=0.1; no run directory or manifest exists."
+      }
+    ]
+  },
+  "assembler_required_checks": [
+    "Recompute every contract, point, and preflight canonical identifier.",
+    "Recompute every recipe-declared manifest file SHA-256 and every point-manifest output SHA-256.",
+    "Require status=valid, state_reusable=true, finite fields/metrics, objective identities, passing solver-log cross-check, and approved practical/ROL acceptance for all five independent and five effective points.",
+    "Require exact config, 13-file scientific source, immutable input, and frozen design hashes against the formal contract.",
+    "Require exact parent manifest ID/file hash, parent terminal C hash, confirmation block number, cumulative block count, and passing confirmation deltas for all three confirmations.",
+    "Allow only the three recorded environment differences documented above and copy the reconciliation evidence into the final bundle.",
+    "Recompute the official five-point curvature table from effective manifests and require selected_reg_c=0.01414213562.",
+    "Reject every path or manifest listed under exclusions from the candidate/effective population."
+  ]
+}

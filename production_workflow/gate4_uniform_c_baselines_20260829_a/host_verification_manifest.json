@@ -1,0 +1,31 @@
+{
+  "campaign_manifest_id": "sha256-json-v1-4eb8156dd591c5b9caf23e70ca202ad01865da74d402fd09417ff6852ce3189c",
+  "checks": {
+    "all_controls_valid": true,
+    "campaign_id": true,
+    "campaign_schema": true,
+    "campaign_summary": true,
+    "declared_count": true,
+    "exact_control_population": true
+  },
+  "created_utc": "2026-08-29T21:27:59.323445+00:00",
+  "failed_controls": [],
+  "manifest_id": "sha256-json-v1-cd4e8d3896a9dcce912b77c39994c70faf6eeb57dea7c874328418b8e148a38c",
+  "passed": true,
+  "retry_controls": [],
+  "schema": "jog-uniform-c-baseline-campaign-verification-v1",
+  "uniform_C_by_experiment": {
+    "REG_INTER": 1.3333221990414335,
+    "REG_PIG": 1.4820301831577853,
+    "SQ01": 1.4398501555091312,
+    "SQ02": 1.3582840636492053,
+    "SQ03": 1.4190779965921527,
+    "SQ04": 1.3481219987537207,
+    "SQ05": 1.370620303334061,
+    "SQ06": 1.3871624107045082,
+    "SQ07": 1.383433515069364,
+    "SQ08": 1.3711209627815375,
+    "SQ09": 1.3923806401973158,
+    "SQ10": 1.3643073082227355
+  }
+}

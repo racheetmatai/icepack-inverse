@@ -1,4 +1,5 @@
 from src.invert_c_theta import Invert
+from src.feature_units import driving_stress_mpa
 import pandas as pd
 import firedrake
 import numpy as np
@@ -237,7 +238,8 @@ def process_csv(filename):
     df = pd.read_csv(filename, index_col=0)
     df = df.sample(frac=1).reset_index(drop=True)
     df['vel_mag'] = np.sqrt(df['x_velocity']**2 + df['y_velocity']**2)
-    df['driving_stress'] = df['h'] * 9.8 * df['mag_s']
+    # Match training and full-mesh Icepack inference exactly (MPa).
+    df['driving_stress'] = driving_stress_mpa(df['h'], df['mag_s'])
     df['phi'] = df.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
     return df
 
