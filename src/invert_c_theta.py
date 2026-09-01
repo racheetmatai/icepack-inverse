@@ -5,6 +5,7 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 from collections.abc import Mapping
+import math
 
 from src.create_mesh import fetch_outline, create_mesh
 from src.helper_functions import get_min_max_coords, plot_bounded_antarctica, convert_to_xarray
@@ -32,7 +33,25 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 import tensorflow as tf
+# import sys
+# # Redirect newer Keras module paths to tf.keras
+# sys.modules['keras'] = tf.keras
+# sys.modules['keras.api'] = tf.keras
+# sys.modules['keras.api._v2'] = tf.keras
+# sys.modules['keras.src'] = tf.keras
+# sys.modules['keras.src.models'] = tf.keras.models
+# sys.modules['keras.src.callbacks'] = tf.keras.callbacks
+# sys.modules['keras.src.callbacks.history'] = tf.keras.callbacks  # <-- add this line
+# sys.modules['keras.src.layers'] = tf.keras.layers
+# sys.modules['keras.src.optimizers'] = tf.keras.optimizers
+# sys.modules['keras.src.utils'] = tf.keras.utils
+# sys.modules['keras.src.models.sequential'] = tf.keras.models
+# sys.modules['keras.src.layers'] = tf.keras.layers
+# sys.modules['keras.src.models.model_from_json'] = tf.keras.models
+
 import keras
+import shap
+import matplotlib.colors as mcolors
 
 class Invert:
     """Class for solving inverse problems related to Antarctic ice flow.
@@ -955,7 +974,7 @@ class Invert:
         self.C0 = firedrake.Constant(constant_val)
         self.create_model_weertman()
 
-    def compute_features(self, u=None, max_tu1_threshold=1998.30, max_tu2_threshold=555.53, max_tu3_threshold=593.56, max_tu4_threshold=859.16, max_tu5_threshold=1088.52):
+    def compute_features(self, u=None, max_tu1_threshold=1998.30, max_tu2_threshold=555.53, max_tu3_threshold=593.56, max_tu4_threshold=859.16, max_tu5_threshold=1088.52, tolerance_bed=0.3):
         if u is None:
             u = self.simulation()
         u1, u2 = firedrake.split(u)
@@ -1002,6 +1021,9 @@ class Invert:
         h_npy = self.h.dat.data[:]
         s_npy = self.s.dat.data[:]
         b_npy = self.b.dat.data[:]
+        bed_class_npy = (
+            None if self.bed_class is None else self.bed_class.dat.data[:]
+        )
 
         C_npy = self.C.dat.data[:]
         theta_npy = self.θ.dat.data[:]
@@ -1093,6 +1115,18 @@ class Invert:
             return np.maximum((1 - p_W / p_I), 0)
         cluster_df_full['phi'] = cluster_df_full.apply(lambda row: get_phi(row['h'], row['s']), axis=1)
         cluster_df_full['C_total'] = self.C0_constant_val*np.exp(cluster_df_full['C'])*cluster_df_full['phi']
+        def clean_bed_class(value):
+            if pandas.isna(value):
+                return 0
+            for target in [1, 2, 3]:
+                if abs(value - target) <= tolerance_bed:
+                    return target
+            return 0
+
+        if 'bed_class' in cluster_df_full:
+            cluster_df_full['bed_class'] = cluster_df_full['bed_class'].apply(
+                clean_bed_class
+            )
         self.cluster_df_full = cluster_df_full
 
     def regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, const_val = 1e-3, bounds = [0,0], folder = 'model_ensemble/', number_of_models = 10):
@@ -1119,9 +1153,33 @@ class Invert:
       
         loaded_model = keras.models.load_model(filename+'.h5')
 
-        df = self.cluster_df_full[loaded_input_columns].copy()
-        df_scaled = loaded_input_scaler.transform(df.to_numpy())
-        prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
+        if "bed_class_0" in loaded_input_columns:
+            loaded_input_columns = [col for col in loaded_input_columns if not col.startswith("bed_class")]
+            loaded_input_columns.append("bed_class")
+            df = self.cluster_df_full[loaded_input_columns].copy()
+            # Store continuous columns BEFORE one-hot encoding
+            continuous_columns = [col for col in loaded_input_columns if col != 'bed_class']
+            
+            # One-hot encode bed_class column
+            df = pandas.get_dummies(df, columns=['bed_class'], prefix='bed_class', drop_first=False, dtype=int)
+            
+            # Get the new one-hot encoded column names AFTER encoding
+            bed_class_cols = [col for col in df.columns if col.startswith('bed_class_')]
+
+            continuous_inputs = df[continuous_columns].to_numpy()
+            categorical_inputs = df[bed_class_cols].to_numpy()
+
+            continuous_scaled = loaded_input_scaler.transform(continuous_inputs)
+
+            inputs_scaled = np.concatenate([continuous_scaled, categorical_inputs], axis=1)
+            prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(inputs_scaled).reshape(-1,1)).reshape(-1,)
+
+
+
+        else:
+            df = self.cluster_df_full[loaded_input_columns].copy()
+            df_scaled = loaded_input_scaler.transform(df.to_numpy())
+            prediction = loaded_output_scaler.inverse_transform(loaded_model.predict(df_scaled).reshape(-1,1)).reshape(-1,)
         
         # use regressor to compute C only on one half of the domain
         if half:
@@ -1139,7 +1197,307 @@ class Invert:
                 self.C0.dat.data[new_df['y_binary'].values == 1] = const_val 
         prediction = np.clip(prediction, bounds[0], bounds[1])
         return prediction
-    
+
+    def compute_ensemble_shap_importance_fields(
+        self,
+        filename='model',
+        folder='model_ensemble/',
+        number_of_models=10,
+        average_method='mean',
+        firedrake_space=None,
+        n_runs=5,
+        random_state=None,
+    ):
+        """
+        Compute two types of SHAP outputs for an ensemble of models:
+        (1) Global feature importances (|SHAP| mean + correlation sign)
+        (2) Spatial SHAP fields (signed SHAP value per spatial point)
+        Collapses one-hot encoded bed_class_* columns into a single 'bed_class' feature.
+
+        Parameters
+        ----------
+        filename : str
+            Base filename for models.
+        folder : str
+            Directory containing the model ensemble.
+        number_of_models : int
+            Number of models in ensemble.
+        average_method : str
+            'mean' or 'median' for ensemble aggregation.
+        firedrake_space : firedrake.FunctionSpace or None
+            Optional Firedrake space (defaults to self.Q).
+        n_runs : int
+            Number of random subsamples for correlation sign computation.
+        random_state : int or None
+            Random seed for reproducibility.
+
+        Returns
+        -------
+        shap_fields : dict
+            {feature: firedrake.Function} with mean(|SHAP|) values (scalar field).
+        shap_sign_fields : dict
+            {feature: firedrake.Function} with correlation-based sign (+1/-1).
+        feature_summary : pandas.DataFrame
+            Aggregated summary (mean |SHAP|, std, sign color).
+        shap_spatial_fields : dict
+            {feature: firedrake.Function} with signed SHAP values per spatial point.
+        """
+        self.compute_features()
+        shap_list = []
+        corr_list = []
+        feature_names = None
+
+        if firedrake_space is None:
+            firedrake_space = self.Q
+
+        df_full = self.cluster_df_full.copy()
+        rng = np.random.RandomState(random_state)
+
+        shap_spatial_accum = None  # shape: [n_points, n_features]
+
+        for i in range(number_of_models):
+            model_path = folder + filename + f'_{i}'
+            with open(model_path + '.pkl', "rb") as f:
+                bundle = pickle.load(f)
+            model = tf.keras.models.load_model(model_path + '.h5')
+            scaler_x = bundle['input_scaler']
+            input_cols = bundle['input_columns']
+
+            # Handle one-hot encoded categorical features
+            if "bed_class_0" in input_cols:
+                input_cols = [c for c in input_cols if not c.startswith("bed_class")]
+                input_cols.append("bed_class")
+                df = df_full[input_cols].copy()
+                continuous_cols = [c for c in input_cols if c != "bed_class"]
+                df = pandas.get_dummies(df, columns=["bed_class"], prefix="bed_class", drop_first=False, dtype=int)
+                bed_cols = [c for c in df.columns if c.startswith("bed_class_")]
+                continuous_scaled = scaler_x.transform(df[continuous_cols])
+                X = np.concatenate([continuous_scaled, df[bed_cols].to_numpy()], axis=1)
+                X_df = pandas.DataFrame(X, columns=continuous_cols + bed_cols)
+            else:
+                df = df_full[input_cols].copy()
+                X = scaler_x.transform(df.to_numpy())
+                X_df = pandas.DataFrame(X, columns=input_cols)
+
+            feature_names = X_df.columns
+
+            # ----- Compute SHAP values for all samples (spatial SHAPs) -----
+            masker = shap.maskers.Independent(X_df)
+            explainer = shap.Explainer(model, masker, 
+                                       algorithm="permutation",  # explicitly use Permutation SHAP
+                                       n_jobs=-1)
+            shap_values = explainer(X_df).values  # shape: (n_points, n_features)
+
+            # Initialize spatial accumulator
+            if shap_spatial_accum is None:
+                shap_spatial_accum = np.zeros_like(shap_values, dtype=np.float32)
+            shap_spatial_accum += shap_values
+
+            # ----- Repeated SHAP computation for correlation-based sign -----
+            abs_shap_vals_all = []
+            corr_vals_all = []
+
+            for run in range(n_runs):
+                idxs = rng.choice(len(X_df), len(X_df)//n_runs, replace=False)
+                X_sub = X_df.iloc[idxs].copy()
+                shap_sub = shap_values[idxs, :]
+
+                abs_shap_vals_all.append(np.abs(shap_sub).mean(axis=0))
+
+                corrs = []
+                for col_i, col in enumerate(feature_names):
+                    x = X_sub[col].values
+                    s = shap_sub[:, col_i]
+                    if np.std(x) > 0 and np.std(s) > 0:
+                        corrs.append(np.corrcoef(x, s)[0, 1])
+                    else:
+                        corrs.append(0.)
+                corr_vals_all.append(corrs)
+
+            abs_shap_arr = np.vstack(abs_shap_vals_all)
+            corr_arr = np.vstack(corr_vals_all)
+
+            mean_abs_shap = abs_shap_arr.mean(axis=0)
+            mean_corr = corr_arr.mean(axis=0)
+
+            shap_list.append(mean_abs_shap)
+            corr_list.append(mean_corr)
+
+        # ----- Aggregate across ensemble -----
+        shap_stack = np.stack(shap_list, axis=0)
+        corr_stack = np.stack(corr_list, axis=0)
+        shap_spatial_mean = shap_spatial_accum / number_of_models
+
+        if average_method == 'median':
+            shap_agg = np.median(shap_stack, axis=0)
+            corr_agg = np.median(corr_stack, axis=0)
+        else:
+            shap_agg = np.mean(shap_stack, axis=0)
+            corr_agg = np.mean(corr_stack, axis=0)
+
+        # ----- Collapse bed_class_* columns -----
+        bed_cols = [i for i, f in enumerate(feature_names) if f.startswith("bed_class_")]
+        if len(bed_cols) > 0:
+            shap_spatial_bed = shap_spatial_mean[:, bed_cols].sum(axis=1)
+            shap_agg_bed = shap_agg[bed_cols].sum()
+            corr_agg_bed = corr_agg[bed_cols].mean()
+
+            keep_cols = [i for i in range(len(feature_names)) if i not in bed_cols]
+
+            # Update arrays
+            shap_agg = np.concatenate([shap_agg[keep_cols], [shap_agg_bed]])
+            corr_agg = np.concatenate([corr_agg[keep_cols], [corr_agg_bed]])
+            shap_spatial_mean = np.column_stack([shap_spatial_mean[:, keep_cols], shap_spatial_bed])
+
+            # Update feature names
+            feature_names = [f for i, f in enumerate(feature_names) if i in keep_cols] + ["bed_class"]
+
+        # ----- Summary DataFrame -----
+        sign_colors = np.where(corr_agg > 0, 'red', 'blue')
+        feature_summary = pandas.DataFrame({
+            "Variable": feature_names,
+            "MeanSHAP": shap_agg,
+            "SignCorr": corr_agg,
+            "SignColor": sign_colors
+        }).sort_values("MeanSHAP", ascending=False).reset_index(drop=True)
+
+        # ----- Firedrake constant fields (aggregated global SHAPs) -----
+        shap_fields = {}
+        shap_sign_fields = {}
+        for i, feature in enumerate(feature_names):
+            f_abs = firedrake.Function(firedrake_space)
+            f_sign = firedrake.Function(firedrake_space)
+            f_abs.dat.data[:] = shap_agg[i]
+            f_sign.dat.data[:] = np.sign(corr_agg[i])
+            shap_fields[feature] = f_abs
+            shap_sign_fields[feature] = f_sign
+
+        # ----- Firedrake spatial fields (pointwise signed SHAPs) -----
+        shap_spatial_fields = {}
+        for i, feature in enumerate(feature_names):
+            f_spatial = firedrake.Function(firedrake_space)
+            f_spatial.dat.data[:] = shap_spatial_mean[:, i]
+            shap_spatial_fields[feature] = f_spatial
+
+        return shap_fields, shap_sign_fields, feature_summary, shap_spatial_fields
+
+    def plot_spatial_shap_fields(self, shap_spatial_fields, n_cols=3, vmin=None, vmax=None, suptitle='Spatial SHAP Fields'):
+        """
+        Plot spatial SHAP fields for multiple features in a grid of subplots.
+
+        Parameters
+        ----------
+        shap_spatial_fields : dict
+            Dictionary {feature_name: firedrake.Function} with spatial SHAP values.
+        n_cols : int
+            Number of columns in the subplot grid.
+        vmin, vmax : float or None
+            Min and max for color scale (applied to all subplots for consistent comparison).
+        suptitle : str
+            Figure title.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+        axes_list : list of matplotlib.axes._subplots.AxesSubplot
+        """
+        n_features = len(shap_spatial_fields)
+        n_rows = math.ceil(n_features / n_cols)
+
+        fig, axes_array = plt.subplots(n_rows, n_cols, figsize=(5*n_cols, 4*n_rows))
+        axes_array = np.array(axes_array).reshape(-1)  # flatten in case of 1 row/col
+
+        for ax, (feature, field) in zip(axes_array, shap_spatial_fields.items()):
+            # Plot the field using your existing plot_scalar_field
+            # We temporarily override plot_scalar_field to just plot on given axes
+            firedrake.tripcolor(field, vmin=vmin, vmax=vmax, axes=ax)
+            ax.set_title(feature)
+            ax.set_xlabel("meters")
+            ax.set_ylabel("meters")
+
+        # Turn off empty axes
+        for ax in axes_array[n_features:]:
+            ax.axis('off')
+
+        fig.suptitle(suptitle, fontsize=16)
+        fig.tight_layout(rect=[0, 0, 1, 0.96])
+
+        # Optional: add a single colorbar for all subplots
+        sm = plt.cm.ScalarMappable(cmap='viridis', norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        sm.set_array([])
+        fig.colorbar(sm, ax=axes_array[:n_features], orientation='vertical', fraction=0.02, pad=0.04)
+
+        return fig, axes_array
+
+    def plot_top3_shap_features(self, shap_spatial_fields, n_cols=1, suptitle='Top 3 SHAP Features'):
+        """
+        For each spatial point, find the top 3 features by absolute SHAP value.
+        Plot three categorical maps showing 1st, 2nd, and 3rd most important features.
+
+        Parameters
+        ----------
+        shap_spatial_fields : dict
+            Dictionary {feature_name: firedrake.Function} with spatial SHAP values.
+        n_cols : int
+            Number of columns in the subplot grid (default 1).
+        suptitle : str
+            Figure title.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+        axes_array : list of matplotlib.axes.Axes
+        """
+
+        feature_names = list(shap_spatial_fields.keys())
+        n_features = len(feature_names)
+        n_points = len(next(iter(shap_spatial_fields.values())).dat.data)
+
+        # Stack SHAPs into array: shape (n_points, n_features)
+        shap_arr = np.column_stack([shap_spatial_fields[f].dat.data for f in feature_names])
+        abs_shap_arr = np.abs(shap_arr)
+
+        # Indices of top 3 features at each point
+        top1_idx = np.argmax(abs_shap_arr, axis=1)
+        # For 2nd and 3rd, we can use argpartition trick
+        top_indices = np.argsort(-abs_shap_arr, axis=1)[:, :3]  # descending order
+        top2_idx = top_indices[:, 1]
+        top3_idx = top_indices[:, 2]
+
+        # Create firedrake Functions to store top features
+        top_maps = []
+        for idx_array in [top1_idx, top2_idx, top3_idx]:
+            f_map = firedrake.Function(next(iter(shap_spatial_fields.values())).ufl_domain())
+            # Assign feature indices
+            f_map.dat.data[:] = idx_array
+            top_maps.append(f_map)
+
+        # ----- Plot using subplot grid -----
+        fig, axes_array = plt.subplots(1, 3, figsize=(15, 5))
+
+        # Colormap for categorical features
+        cmap = plt.get_cmap('tab20', n_features)
+        norm = mcolors.BoundaryNorm(boundaries=np.arange(n_features+1)-0.5, ncolors=n_features)
+
+        for ax, f_map, rank in zip(axes_array, top_maps, ['1st', '2nd', '3rd']):
+            colors = firedrake.tripcolor(f_map, cmap=cmap, norm=norm, axes=ax)
+            ax.set_title(f'Top {rank} Feature')
+            ax.set_xlabel('meters')
+            ax.set_ylabel('meters')
+
+        # Colorbar with feature names
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=axes_array, orientation='vertical', fraction=0.02, pad=0.04)
+        cbar.set_ticks(np.arange(n_features))
+        cbar.set_ticklabels(feature_names)
+        cbar.ax.tick_params(labelsize=10)
+
+        fig.suptitle(suptitle, fontsize=16)
+        fig.tight_layout(rect=[0, 0, 1, 0.95])
+
+        return fig, axes_array
+
     def compute_C_theta_ML_regress(self, filename = 'model', half = False, flip = True, use_driving_stress = False, u = None, C_bounds = [-28, 38], θ_bounds =[-300, 111], folder = 'model_ensemble/', number_of_models = 10 ):
         self.compute_features(u=u)
         self.C.dat.data[:] = self.regress(filename+'_C', half = half, flip = flip, use_driving_stress = use_driving_stress, bounds = C_bounds, folder = folder, number_of_models = number_of_models)
