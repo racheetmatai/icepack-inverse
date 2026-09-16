@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -25,17 +26,19 @@ import pandas as pd
 import generate_revision_figures_and_tables as base
 
 
-ROOT = Path(__file__).resolve().parent.parent
-PRED = ROOT / "production_workflow/gate3_full_mesh_ensemble_predictions_20260828_a"
-EVAL = ROOT / "production_workflow/gate4_forward_evaluation_20260829_a"
-CDIAG = ROOT / "production_workflow/gate4_c_diagnostics_20260829_a"
-UNIFORM = ROOT / "production_workflow/gate4_uniform_c_baselines_20260829_a"
-SPLITS = ROOT / "production_workflow/gate2_results/gate2_split_manifests_20260820_a"
-SUPPORT = ROOT / "production_workflow/gate2_results/gate2_distribution_diagnostics_20260820_c"
-DATASET = ROOT / "production_workflow/gate2_results/gate2_canonical_dataset_20260820_c"
-DESIGN = ROOT / "production_workflow/frozen_design"
-OUT = ROOT / "output/pdf"
-ANALYSIS = ROOT / "output/analysis"
+ROOT = Path(os.environ.get("JOG_REPOSITORY_ROOT", Path(__file__).resolve().parent.parent))
+ARTIFACT_ROOT = Path(os.environ.get("JOG_ARTIFACT_ROOT", ROOT))
+RUNS = ARTIFACT_ROOT / "production_runs"
+PRED = RUNS / "gate3_full_mesh_ensemble_predictions_20260828_a"
+EVAL = RUNS / "gate4_forward_evaluation_support_aligned_20260910"
+CDIAG = RUNS / "gate4_c_diagnostics_20260829_a"
+UNIFORM = RUNS / "gate4_uniform_c_baselines_20260829_a"
+SPLITS = RUNS / "gate2_split_manifests_20260820_a"
+SUPPORT = RUNS / "gate2_distribution_diagnostics_20260820_c"
+DATASET = RUNS / "gate2_canonical_dataset_20260820_c"
+DESIGN = ARTIFACT_ROOT / "production_workflow/frozen_design"
+OUT = Path(os.environ.get("JOG_OUTPUT_ROOT", ROOT / "output/pdf"))
+ANALYSIS = OUT / "analysis"
 PANEL_PDFS = {
     "C": OUT / "figure6a_pig_cfg02_control_difference.pdf",
     "absolute": OUT / "figure6b_pig_cfg02_velocity_error.pdf",
@@ -81,7 +84,7 @@ def verify_inputs() -> dict:
     baseline = read_json(UNIFORM / "baseline_campaign_manifest.json")
     baseline_forward = read_json(UNIFORM / "solves/REG_PIG_UNIFORM_C/forward_manifest.json")
     model_forward = read_json(
-        ROOT / "production_workflow/gate4_forward_solve_campaign_20260828_a/solves/REG_PIG_CFG02_MEDIAN/forward_manifest.json"
+        RUNS / "gate4_forward_solve_campaign_20260828_a/solves/REG_PIG_CFG02_MEDIAN/forward_manifest.json"
     )
 
     if any(item.get("status") != "complete" for item in (prediction_manifest, evaluation, cdiag, support_manifest, dataset_manifest, model_forward)):
@@ -104,7 +107,7 @@ def verify_inputs() -> dict:
     require_hash(SPLITS / "member_splits/REG_PIG.npz", split_manifest["output_sha256"]["member_splits/REG_PIG.npz"])
     require_hash(UNIFORM / "solves/REG_PIG_UNIFORM_C/velocity.npy", baseline_forward["velocity_sha256"])
     require_hash(
-        ROOT / "production_workflow/gate4_forward_solve_campaign_20260828_a/solves/REG_PIG_CFG02_MEDIAN/velocity.npy",
+        RUNS / "gate4_forward_solve_campaign_20260828_a/solves/REG_PIG_CFG02_MEDIAN/velocity.npy",
         model_forward["velocity_sha256"],
     )
 

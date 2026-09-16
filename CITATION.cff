@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "Please cite the associated manuscript and Zenodo record."
+title: "Point-wise inference of basal friction in the Amundsen Sea sector"
+type: software
+authors:
+  - family-names: Matai
+    given-names: Racheet
+  - family-names: Kingslake
+    given-names: Jonathan
+  - family-names: Tinto
+    given-names: Kirsty
+  - family-names: Hoffman
+    given-names: Andrew
+  - family-names: Porter
+    given-names: Dave
+repository-code: "https://github.com/racheetmatai/icepack-inverse"
+version: "1.0.0"
+date-released: "2026-09-16"
+

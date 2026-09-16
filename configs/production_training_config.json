@@ -1,0 +1,23 @@
+{
+  "schema": "jog-portable-training-launch-config-v2",
+  "dataset_manifest_id": "sha256-json-v1-496a391df29fc4d64ba1b134fc8e12fd808b2bb1194935e60981d980767dfd8e",
+  "split_bundle_manifest_id": "sha256-json-v1-b838631dfde2849f84ee2165749fe9ce44c01e71513e53fb66afe1d8785281b8",
+  "l2_pilot_values": [0.0, 1e-6, 1e-5, 1e-4],
+  "l2_calibration": {
+    "configuration": "CFG06",
+    "jobs": 4,
+    "population": "common eligible rows excluding only ten central 50 km square masks",
+    "retained": "all buffers, PIG, and both inter-catchment corridors",
+    "split": [0.7, 0.2, 0.1],
+    "split_seed": 20260811,
+    "model_seed": 30260811,
+    "shuffle_seed": 40260811,
+    "minimum_absolute_validation_improvement_over_zero": 0.0001,
+    "test_access": "only once after L2 selection is frozen"
+  },
+  "batch_size": 1024,
+  "maximum_epochs": 1500,
+  "training_fraction_of_development_population": 0.9,
+  "validation_fraction_of_development_population": 0.1,
+  "heldout_rows_available_during_fit": false
+}

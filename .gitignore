@@ -1,14 +1,36 @@
-# Python/Jupyter caches and temporary files
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
-tmp/
+.pytest_cache/
+.mypy_cache/
 
-# Local Firedrake/Icepack run products
+# Downloaded or regenerated scientific artifacts
+data/
+production_runs/
+cuda_results/
+output/
+reproduced_paper/
+production_workflow/gate1_results/
+production_workflow/gate2_results/
+production_workflow/gate3_*_202*/
+production_workflow/gate4_*_202*/
+production_workflow/final_figures_*/
+production_workflow/training_representation_diagnostic_*/
+production_workflow/*_20*/
+production_workflow/frozen_design/frozen_design/
+
+# Historical local products retained only on the preservation branch
+manuscript_20260916/
+mesh_resolution_C/
+mlp_ensemble_*/
+/*.csv
+/*.png
+
+# Large model and numerical files
 *.msh
 *.geo
 *.npy
-*.csv
+*.npz
 *.csv.gz
 *.h5
 *.keras
@@ -18,22 +40,9 @@ tmp/
 *.zip
 *.log
 
-# Model ensembles and production run artifacts
-mlp_ensemble_*/
-production_runs/
-mesh_resolution_C/
-
-# External raster/data products are backed up separately and cited by DOI
-data/geophysics/*.nc
-data/geophysics/*.tif
-data/geophysics/*.grd
-
-# Generated diagnostic images at repository root
-/R2validation_scores.png
-/aggregate_score.png
-
-# Keep the source/provenance workflow in Git, but omit regenerated heavy data
-production_workflow/**/canonical_master_dataset.csv.gz
-production_workflow/**/forward_fields.npz
-production_workflow/**/member_fields.npz
-
+# Local environments and editor files
+.venv/
+.conda/
+.idea/
+.vscode/
+tmp/

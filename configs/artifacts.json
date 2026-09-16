@@ -1,0 +1,53 @@
+{
+  "schema": "jog-reproduction-artifacts-v1",
+  "zenodo_doi": "TO_BE_ASSIGNED",
+  "archives": [
+    {
+      "filename": "01_inputs_and_frozen_design.tar.gz",
+      "profiles": ["paper", "full"],
+      "bytes": 631271015,
+      "sha256": "8b6a67933621c8639413ace56291dcef42dd26d44e51e2899f2351e2d9de034f",
+      "contents": "Scientific rasters, mesh, regional boundaries, frozen design, accepted inversion evidence, canonical dataset, support diagnostics, and exact splits"
+    },
+    {
+      "filename": "02_cuda_training_runs.tar.gz",
+      "profiles": ["full"],
+      "bytes": 5499300180,
+      "sha256": "c19f999d62b42177a0d5b6d69573a647f7470d13c1aa2a9b2305f4cc82ebe6d2",
+      "contents": "All 660 verified production MLP training runs, checkpoints, scalers, histories, predictions, and manifests"
+    },
+    {
+      "filename": "03_l2_calibration.tar.gz",
+      "profiles": ["full"],
+      "bytes": 70762519,
+      "sha256": "0a09d1b003d87a75ef6adf019473756b47f9231135a7c8f13df88a753746c3b1",
+      "contents": "Blinded L2 calibration runs, selection, and held-out calibration-test evaluation"
+    },
+    {
+      "filename": "04_model_and_forward_outputs.tar.gz",
+      "profiles": ["paper", "full"],
+      "bytes": 1147368550,
+      "sha256": "487bddc6dad9d22b6a0712c02fd230805de55dca3acde50bf29b88449b6af999",
+      "contents": "The 66 median controls, modeled velocities, uniform-control baselines, corrected evaluations, and core diagnostics"
+    },
+    {
+      "filename": "05_paper_analysis_outputs.tar.gz",
+      "profiles": ["paper", "full"],
+      "bytes": 733110675,
+      "sha256": "035cffbc8a53229790b6ab2a36ef144a43d8846fc7e87010527ccce86a2ee7f3",
+      "contents": "Analysis-ready reporting, 600 lightweight training histories, training-representation, BedMachine, convergence, spatial-map, and figure-source outputs"
+    }
+  ],
+  "external_downloads": [
+    {
+      "name": "BedMachineAntarctica_2020-07-15_v02.nc",
+      "provider": "NSIDC",
+      "sha256": "71ff97f8fb034fbfe235cd1cad044eeea2ae1543e82115afbd886a24c1e71069"
+    },
+    {
+      "name": "antarctic_ice_vel_phase_map_v01.nc",
+      "provider": "NSIDC",
+      "sha256": "fa0957618b8bd98099f4a419d7dc0e3a2c562d89e9791b4d0ed55e6017f52416"
+    }
+  ]
+}

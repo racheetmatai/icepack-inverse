@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 from pathlib import Path
 
@@ -12,15 +13,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("JOG_REPOSITORY_ROOT", Path(__file__).resolve().parents[1]))
+ARTIFACT_ROOT = Path(os.environ.get("JOG_ARTIFACT_ROOT", ROOT))
 RUNS = (
-    ROOT
-    / "cuda_results"
-    / "JOG_PRODUCTION_RESULTS_20260828"
+    ARTIFACT_ROOT
+    / "paper_training_histories"
     / "sha256-json-v1-b9ce7f5acd43e094cca85e2c0f7463029c5d73b7a7546bd2c80a2a43b1dc6f24"
     / "runs"
 )
-OUTPUT = ROOT / "production_workflow" / "final_figures_20260830_a"
+OUTPUT = Path(os.environ.get("JOG_OUTPUT_ROOT", ROOT / "production_workflow" / "final_figures_20260830_a"))
 PATTERN = re.compile(r"SQ\d{2}_(CFG\d{2})_M\d{2}$")
 NORMALIZED_PROGRESS = np.linspace(0.0, 1.0, 241)
 

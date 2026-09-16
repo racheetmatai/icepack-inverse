@@ -1,0 +1,6 @@
+# Preserve hash-bound design inputs and archived manuscript bytes.
+production_workflow/frozen_design/** -text
+manuscript/** -text
+*.sh text eol=lf
+*.py text eol=lf
+*.patch text eol=lf

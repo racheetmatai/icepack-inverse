@@ -1,0 +1,47 @@
+diff --git a/src/icepack/datasets.py b/src/icepack/datasets.py
+index 72ac779..83d5036 100644
+--- a/src/icepack/datasets.py
++++ b/src/icepack/datasets.py
+@@ -67,6 +67,18 @@ _nsidc_links = {
+         "md5:2e1ca76870a6e67ace309a9850739dc9",
+         f"{_n5eil01u}/MEASURES/NSIDC-0754.001/1996.01.01",
+     ),
++    "Antarctica_ice_velocity_2015_2016_1km_v01.nc": (
++        "md5:2dfa174663052f015da749d47aea1299",
++        f"{_n5eil01u}/MEASURES/NSIDC-0720.001/2015.07.01",
++    ),
++    "Antarctica_ice_velocity_2018_2019_1km_v01.1.nc": (
++        "md5:f11986f66b83b37e558ec1ff6e19da3d",
++        f"{_n5eil01u}/MEASURES/NSIDC-0720.001/2018.07.01",
++    ),
++    "Antarctica_ice_velocity_2019_2020_1km_v01.1.nc": (
++        "md5:ca3eb798cbc35ae5137e0d893b893080",
++        f"{_n5eil01u}/MEASURES/NSIDC-0720.001/2019.07.01",
++    ),
+     "BedMachineAntarctica_2020-07-15_v02.nc": (
+         "md5:35b36e1527fd846cbf38ce25b0e0c563",
+         f"{_n5eil01u}/MEASURES/NSIDC-0756.002/1970.01.01",
+@@ -108,8 +120,8 @@ nsidc_data = pooch.create(
+ )
+ 
+ 
+-def fetch_measures_antarctica():
++def fetch_measures_antarctica(name="antarctic_ice_vel_phase_map_v01.nc"):
+     r"""Fetch the MEaSUREs Antarctic velocity map"""
+     return nsidc_data.fetch(
+-        "antarctic_ice_vel_phase_map_v01.nc", downloader=_earthdata_downloader
++        name, downloader=_earthdata_downloader
+     )
+diff --git a/src/icepack/statistics.py b/src/icepack/statistics.py
+index 57f85d9..c47decc 100644
+--- a/src/icepack/statistics.py
++++ b/src/icepack/statistics.py
+@@ -161,7 +161,7 @@ class MaximumProbabilityEstimator:
+         if isinstance(self.problem.controls, (firedrake.Function, firedrake.Constant)):
+             self._controls = self.problem.controls.copy(deepcopy=True)
+         else:
+-            self._controls = [field.copy(deepcopy=True) for field in problem.controls]
++            self._controls = [field.copy(deepcopy=True) for field in self.problem.controls]
+ 
+         # Form the objective functional
+         self._state = self.problem.simulation(self.controls)

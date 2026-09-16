@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -26,21 +27,23 @@ import pandas as pd
 from pyproj import Transformer
 
 
-ROOT = Path(__file__).resolve().parent.parent
-PW = ROOT / "production_workflow"
+ROOT = Path(os.environ.get("JOG_REPOSITORY_ROOT", Path(__file__).resolve().parent.parent))
+ARTIFACT_ROOT = Path(os.environ.get("JOG_ARTIFACT_ROOT", ROOT))
+PW = ARTIFACT_ROOT / "production_workflow"
+RUNS = ARTIFACT_ROOT / "production_runs"
 DESIGN = PW / "frozen_design"
-GATE1 = PW / "gate1_results/gate1_lcurve_selection_bundle_20260819_a/evidence/diag_regc_0p014142_confirm01_r2"
-DATASET = PW / "gate2_results/gate2_canonical_dataset_20260820_c"
-SUPPORT = PW / "gate2_results/gate2_distribution_diagnostics_20260820_c"
-PREDICTIONS = PW / "gate3_full_mesh_ensemble_predictions_20260828_a"
-FORWARD = PW / "gate4_forward_evaluation_20260829_a"
+GATE1 = RUNS / "gate1_lcurve_selection_bundle_20260819_a/evidence/diag_regc_0p014142_confirm01_r2"
+DATASET = RUNS / "gate2_canonical_dataset_20260820_c"
+SUPPORT = RUNS / "gate2_distribution_diagnostics_20260820_c"
+PREDICTIONS = RUNS / "gate3_full_mesh_ensemble_predictions_20260828_a"
+FORWARD = RUNS / "gate4_forward_evaluation_support_aligned_20260910"
 REPORTING = PW / "gate4_forward_reporting_20260829_b"
-C_DIAG = PW / "gate4_c_diagnostics_20260829_a"
+C_DIAG = RUNS / "gate4_c_diagnostics_20260829_a"
 FOOTPRINT_ERRORS = PW / "gate4_square_footprint_error_maps_20260830_b"
 REGIONAL_MAPS = FORWARD / "median_map_data"
-OUT = PW / "final_figures_20260830_a"
+OUT = Path(os.environ.get("JOG_OUTPUT_ROOT", PW / "final_figures_20260830_a"))
 ANTARCTICA_LAND = DESIGN / "ne_110m_land.geojson"
-DOMAIN_OUTLINE = ROOT / "tmp/amundsen_v1.geojson"
+DOMAIN_OUTLINE = ARTIFACT_ROOT / "data/geojson/amundsen_v1.geojson"
 
 CONFIGS = [f"CFG{i:02d}" for i in range(1, 7)]
 CONFIG_LABELS = {
@@ -944,6 +947,20 @@ def main() -> None:
     print(json.dumps({"status": "complete", "outputs": len(outputs), "manifest_id": manifest["manifest_id"]}, indent=2))
 
 
+def paper_only() -> None:
+    """Generate only tables and artwork retained by the manuscript."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    style()
+    outputs: list[Path] = []
+    outputs += generate_tables()
+    outputs += figure1()
+    outputs += figure2()
+    outputs += figure3()
+    outputs += figure4()
+    outputs += regional_transfer_figures()
+    print(json.dumps({"status": "complete", "outputs": len(outputs)}, indent=2))
+
+
 def refresh_figure7_only() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     style()
@@ -1005,14 +1022,17 @@ def refresh_spatial_revisions() -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--paper-only", action="store_true")
     parser.add_argument("--figure7-only", action="store_true")
     parser.add_argument("--spatial-revision-only", action="store_true")
     args = parser.parse_args()
-    if args.figure7_only and args.spatial_revision_only:
+    if sum((args.figure7_only, args.spatial_revision_only, args.paper_only)) > 1:
         parser.error("Choose only one targeted refresh mode")
     if args.spatial_revision_only:
         refresh_spatial_revisions()
     elif args.figure7_only:
         refresh_figure7_only()
+    elif args.paper_only:
+        paper_only()
     else:
         main()

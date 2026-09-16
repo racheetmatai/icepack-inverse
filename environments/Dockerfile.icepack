@@ -1,0 +1,25 @@
+FROM firedrakeproject/firedrake-vanilla:2023-09
+
+ARG ICEPACK_COMMIT=28eed36fe652da79769d0130822037f903b23ed3
+
+RUN sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends git patch patchelf \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+RUN . /home/firedrake/firedrake/bin/activate \
+    && pip install --no-cache-dir \
+       git+https://github.com/icepack/Trilinos.git@190384db6cb1d148cea36f2d8d69033a90b2d991 \
+       git+https://github.com/icepack/pyrol.git@3bc1802e436eda8949a286abf54528c7a882f706 \
+       scikit-learn h5py xarray h5netcdf rasterio pyproj
+
+RUN git clone https://github.com/icepack/icepack.git /home/firedrake/icepack \
+    && cd /home/firedrake/icepack \
+    && git checkout "$ICEPACK_COMMIT" \
+    && . /home/firedrake/firedrake/bin/activate \
+    && pip install --editable .
+
+COPY patches/icepack.patch /tmp/icepack.patch
+RUN cd /home/firedrake/icepack && git apply --check /tmp/icepack.patch \
+    && git apply /tmp/icepack.patch
+
+WORKDIR /workspace/icepack-inverse

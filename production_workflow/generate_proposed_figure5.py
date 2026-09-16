@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -27,12 +28,13 @@ import pandas as pd
 import generate_revision_figures_and_tables as base
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get("JOG_REPOSITORY_ROOT", Path(__file__).resolve().parent.parent))
+ARTIFACT_ROOT = Path(os.environ.get("JOG_ARTIFACT_ROOT", ROOT))
 ERROR_ROOT = base.FOOTPRINT_ERRORS
-OUTPUT_ROOT = ROOT / "output" / "pdf"
+OUTPUT_ROOT = Path(os.environ.get("JOG_OUTPUT_ROOT", ROOT / "output" / "pdf"))
 CONFIGS = ("CFG02", "CFG04")
 DISPLAY_GRID_M = 1800.0
-DATASET = ROOT / "production_workflow/gate2_results/gate2_canonical_dataset_20260820_c/canonical_master_dataset.csv.gz"
+DATASET = ARTIFACT_ROOT / "production_runs/gate2_canonical_dataset_20260820_c/canonical_master_dataset.csv.gz"
 INVERSION_CONTOUR_LEVEL = 100.0
 INVERSION_CONTOUR_COLOR = "#29D8E6"
 
