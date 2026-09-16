@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "old_evaluation_id": "sha256-json-v1-0781061bdfc78fdfec760f3bf9c04e3d2a8670faa5d56319b2b1fb34120b178f",
+  "corrected_evaluation_id": "sha256-json-v1-7e9e5d7114a8ede7098af6059209e7bf4c7f3b14bc8a41b10ca8fc0fec844c5a",
+  "controls": 726,
+  "complete_population_partitions": 2112,
+  "median_maps": 66,
+  "whole_population_values_exactly_identical": true,
+  "maximum_whole_population_numeric_change": 0.0,
+  "old_map_entries_with_unassigned_marker_255": 1988421,
+  "map_entries_with_changed_category": 2063649,
+  "old_sentinel_meaning": "unassigned category, not affected-row count",
+  "map_fields_other_than_support_exactly_identical": true,
+  "gate2_support_summary_agreement": true,
+  "later_diagnostic_cases_identical": 21,
+  "PIG_checks": {
+    "area_fraction_lower_error": 0.7814875815271098,
+    "both_supported_fraction": 0.9193666688626831,
+    "supported_fraction_net_squared_error_reduction": 0.8558632513016723
+  },
+  "old_and_new_declared_hashes_verified": true,
+  "recomputed_physical_solutions": 0,
+  "retrained_models": 0,
+  "source_sha256": "ad30293f9a2234ad88cd5c6edcc8ccf44fcd576d298d97d9a865d8b6e637ade6"
+}

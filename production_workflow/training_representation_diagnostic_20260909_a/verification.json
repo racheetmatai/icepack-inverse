@@ -1,0 +1,16 @@
+{
+  "schema": "jog-training-representation-verification-v1",
+  "status": "passed",
+  "dataset_rows": 1530992,
+  "all_training_test_pairs_disjoint": true,
+  "spatial_thinning_or_deduplication": false,
+  "self_neighbor_removed_by_row_position": true,
+  "brute_force_d20_check_passed": true,
+  "area_fraction_max_abs_error": 1.1102230246251565e-16,
+  "square_ml_rmse_max_abs_error": 7.105427357601002e-15,
+  "square_uniform_rmse_max_abs_error": 5.684341886080802e-14,
+  "support_labels_joined_by_stable_row_id": true,
+  "square_both_support_max_abs_error": 1.1102230246251565e-16,
+  "equal_area_weighting": "row means on common-area projected observation pixels, matching the authoritative forward evaluation",
+  "pig_sampling": "none; all eligible held-out PIG rows were used"
+}

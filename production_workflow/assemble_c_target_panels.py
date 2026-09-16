@@ -180,6 +180,12 @@ def density(values: np.ndarray, edges: np.ndarray) -> np.ndarray:
     return histogram
 
 
+def density_in_display_window(values: np.ndarray, edges: np.ndarray) -> np.ndarray:
+    """Histogram density normalized by the complete population size."""
+    counts, _ = np.histogram(values, bins=edges)
+    return counts / (len(values) * np.diff(edges))
+
+
 def distribution_metrics(training: np.ndarray, heldout: np.ndarray) -> dict:
     q01, q99 = np.quantile(training, [0.01, 0.99])
     grid = np.linspace(0.005, 0.995, 199)
@@ -201,11 +207,11 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
     target = frame["reference_log_C"].to_numpy(float)
     if not np.isfinite(target).all():
         raise RuntimeError("Non-finite inversion targets in common eligible population")
-    edges = np.linspace(*np.quantile(target, [.001, .999]), 121)
-    centers = (edges[:-1] + edges[1:]) / 2
+    regional_edges = np.linspace(*np.quantile(target, [.001, .999]), 121)
+    regional_centers = (regional_edges[:-1] + regional_edges[1:]) / 2
     records = []
 
-    fig, axes = plt.subplots(2, 5, figsize=(15.4, 6.9), sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 5, figsize=(15.4, 6.9), sharex=False, sharey=False)
     for index, axis in enumerate(axes.flat, start=1):
         experiment = f"SQ{index:02d}"
         mask_path = splits / "population_masks" / f"{experiment}.npz"
@@ -219,19 +225,30 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
         records.append({"experiment": experiment, "population": "central_50km", **metrics})
         records.append({"experiment": experiment, "population": "exclusion_annulus",
                         **distribution_metrics(training_values, annulus_values)})
-        axis.plot(centers, density(training_values, edges), color="0.35", linewidth=1.4, label="Development pool")
-        axis.plot(centers, density(annulus_values, edges), color="#D55E00", linewidth=1.2,
-                  linestyle="--", label="Held-out annulus")
-        axis.plot(centers, density(central_values, edges), color="#0072B2", linewidth=1.7,
-                  label="Central 50 km")
-        axis.set_title(f"{experiment}\ncentral within training 1–99%: "
-                       f"{100 * metrics['heldout_inside_training_q01_q99_fraction']:.1f}%", fontsize=9)
+        populations = (training_values, annulus_values, central_values)
+        display_min = min(float(np.quantile(values, .05)) for values in populations)
+        display_max = max(float(np.quantile(values, .95)) for values in populations)
+        if not display_max > display_min:
+            raise RuntimeError(f"Degenerate target-distribution display range: {experiment}")
+        square_edges = np.linspace(display_min, display_max, 121)
+        square_centers = (square_edges[:-1] + square_edges[1:]) / 2
+        axis.plot(square_centers, density_in_display_window(training_values, square_edges),
+                  color="0.35", linewidth=1.4, label="Training and validation")
+        axis.plot(square_centers, density_in_display_window(annulus_values, square_edges),
+                  color="#D55E00", linewidth=1.2,
+                  linestyle="--", label="40 km buffer")
+        axis.plot(square_centers, density_in_display_window(central_values, square_edges),
+                  color="#0072B2", linewidth=1.7,
+                  label="Central 50 km square")
+        axis.set_xlim(display_min, display_max)
+        axis.set_ylim(bottom=0)
+        axis.set_title(experiment, fontsize=10)
         axis.grid(alpha=.16)
-    for axis in axes[-1, :]: axis.set_xlabel("Inversion target C")
+    for axis in axes[-1, :]: axis.set_xlabel("Inversion-reference C")
     for axis in axes[:, 0]: axis.set_ylabel("Density")
     handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.suptitle("Inversion-target distributions for the ten square holdouts\n"
-                 "Output distributions are descriptive; inversion C is not assumed unique",
+    fig.suptitle("Inversion-reference C distributions for the ten withheld squares\n"
+                 "C from the sector-wide reference inversion",
                  fontsize=14, y=.99)
     fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False,
                bbox_to_anchor=(.5, .89))
@@ -251,13 +268,13 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
         training_values = target[development]; heldout_values = target[heldout]
         metrics = distribution_metrics(training_values, heldout_values)
         records.append({"experiment": experiment, "population": heldout_name, **metrics})
-        axis.plot(centers, density(training_values, edges), color="0.35", linewidth=1.5, label="Development pool")
-        axis.plot(centers, density(heldout_values, edges), color="#0072B2", linewidth=1.8, label="Held-out region")
-        axis.set_title(f"{label} ({experiment})\nwithin training 1–99%: "
+        axis.plot(regional_centers, density(training_values, regional_edges), color="0.35", linewidth=1.5, label="Training and validation")
+        axis.plot(regional_centers, density(heldout_values, regional_edges), color="#0072B2", linewidth=1.8, label="Held-out region")
+        axis.set_title(f"{label}\nwithin training and validation 1–99%: "
                        f"{100 * metrics['heldout_inside_training_q01_q99_fraction']:.1f}%")
-        axis.set_xlabel("Inversion target C"); axis.grid(alpha=.16)
+        axis.set_xlabel("Inversion-reference C"); axis.grid(alpha=.16)
     axes[0].set_ylabel("Density")
-    fig.suptitle("Regional stress-test target distributions", fontsize=14, y=.99)
+    fig.suptitle("Inversion-reference C distributions for regional experiments", fontsize=14, y=.99)
     fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=2, frameon=False,
                bbox_to_anchor=(.5, .90))
     fig.tight_layout(rect=(0, 0, 1, .82))

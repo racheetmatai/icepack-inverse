@@ -1,10 +1,14 @@
 # Production L-curve run status
 
-Last recorded: 14 August 2026.
+Last recorded: 19 August 2026.
 
 ## Current state
 
-The approved adaptive-v2 study is running serially in Docker.
+Regularization selection is closed at `reg_C=0.01414213562`. The formal
+adaptive-v2 study did not complete: `0.01` and `0.02` were valid, `0.05` was
+invalid under the common gate, `0.1` failed numerically, and `0.2` was not run.
+Its stale running state is preserved as attempt history and must not be resumed
+or reported as a completed formal study.
 
 - Run ID: `gate1_lcurve_v2_20260814_a`
 - Docker path:
@@ -13,12 +17,21 @@ The approved adaptive-v2 study is running serially in Docker.
 - Contract schema: `jog-production-lcurve-contract-v2`
 - Contract ID:
   `sha256-json-v1-e129f8b1b3bf4a68d559254a642b410e47f668f4a5e11d7ffa9f55b62fabe74d`
-- Current phase at launch verification: base grid, first independent point
-  `reg_C=0.01`, attempt 1 (`regc_0p01_312b95ee_attempt01`).
-- Execution check: one controller and exactly one point child were active; no
-  point-level parallelism was present.
-- No v2 `reg_C` has been selected yet. Do not report the historical `0.005`
-  diagnostic as part of this curve.
+- Final formal-study disposition: incomplete; no orchestrated study manifest or
+  definitive inversion was produced.
+- Do not report the historical `0.005` diagnostic as part of the accepted
+  refined-window curve.
+
+The author accepted a separately run and confirmed five-point local refinement
+as an explicit deviation from the incomplete base study. The resulting
+selection-only bundle is
+`gate1_lcurve_selection_bundle_20260819_a`. It verified all 341 declared files
+both in place and after a portable copy. Bundle manifest ID:
+`sha256-json-v1-c40934dbb444fd7bf70130cd80ce09a9b63da2884be75a4d03d87195d4ddf6fc`.
+The bundle itself remains selection-only. A separate verified adoption record
+now designates its selected confirmed endpoint as the definitive inversion,
+without recomputation. Adoption manifest ID:
+`sha256-json-v1-406472fbb5141aa80e28f42a08bcb30f710726277877e3c2324deb6d25df8134`.
 
 The exact-source prerequisite is
 `gate1_forward_smoke_v2_20260814_a`, run from
@@ -68,8 +81,11 @@ overwrite its contract, attempts, logs, fields, or manifests.
 - Every newly introduced base, extension, or midpoint point starts
   independently from exact logarithmic control `C=0`. A confirmation block is
   a same-`reg_C` continuation from that point's own saved control.
-- Run one inversion process at a time; do not parallelize points on this
-  machine.
+- The original protocol specified one inversion process at a time. On 19 August
+  2026 the author confirmed that this PC can safely run two independent
+  inversions concurrently. The accepted midpoint runs used at most two, had
+  separate run IDs/directories and no shared mutable state, and are not invalid
+  on that basis.
 - Record misfit `E`, unweighted roughness `R`, weighted penalty, total
   objective, native ROL state, reduced-gradient norm, field checks, and full
   provenance after every block.
@@ -119,9 +135,9 @@ overwrite its contract, attempts, logs, fields, or manifests.
 
 ## Next action
 
-Let `gate1_lcurve_v2_20260814_a` proceed serially under its immutable contract.
-Do not edit any contract-locked source/configuration file, start points in
-parallel, resume the superseded v1 study, or select a corner early. After the
-adaptive study completes, independently verify the complete formal-point and
-confirmation lineage before recording the selected `reg_C` and definitive
-inversion.
+Do not resume either superseded/incomplete study and do not rerun the selected
+inversion. Use the independently verified adoption record
+`gate1_definitive_inversion_adoption_20260819_a.json` to load the selected
+confirmed state, requiring exact mesh-coordinate equality. Next export the
+canonical dataset and its attrition/provenance manifest. Preserve the verified
+selection-only bundle and its appendix curve unchanged.

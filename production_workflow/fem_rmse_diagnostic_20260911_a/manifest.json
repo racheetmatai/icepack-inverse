@@ -1,0 +1,103 @@
+{
+  "by_configuration": [
+    {
+      "configuration": "CFG01",
+      "fem_improves_count": 8,
+      "grid_improves_count": 8,
+      "median_fem_relative_rmse": 0.4435627471422615,
+      "median_fem_rmse": 32.89558829286263,
+      "median_grid_relative_rmse": 0.4423461070479056,
+      "median_grid_rmse": 32.66437504701353
+    },
+    {
+      "configuration": "CFG02",
+      "fem_improves_count": 8,
+      "grid_improves_count": 8,
+      "median_fem_relative_rmse": 0.48088561855906486,
+      "median_fem_rmse": 32.51639428744287,
+      "median_grid_relative_rmse": 0.48748437558383495,
+      "median_grid_rmse": 32.257383753435064
+    },
+    {
+      "configuration": "CFG03",
+      "fem_improves_count": 6,
+      "grid_improves_count": 6,
+      "median_fem_relative_rmse": 0.9655110037961221,
+      "median_fem_rmse": 60.714380188946365,
+      "median_grid_relative_rmse": 0.9704409462609052,
+      "median_grid_rmse": 61.03498618814582
+    },
+    {
+      "configuration": "CFG04",
+      "fem_improves_count": 7,
+      "grid_improves_count": 7,
+      "median_fem_relative_rmse": 0.8853448309723464,
+      "median_fem_rmse": 40.60179339736608,
+      "median_grid_relative_rmse": 0.8853637011834201,
+      "median_grid_rmse": 41.002387994717736
+    },
+    {
+      "configuration": "CFG05",
+      "fem_improves_count": 9,
+      "grid_improves_count": 9,
+      "median_fem_relative_rmse": 0.5940716805266284,
+      "median_fem_rmse": 50.63513754153146,
+      "median_grid_relative_rmse": 0.5885334453908224,
+      "median_grid_rmse": 50.727336184355536
+    },
+    {
+      "configuration": "CFG06",
+      "fem_improves_count": 9,
+      "grid_improves_count": 9,
+      "median_fem_relative_rmse": 0.5919666584989166,
+      "median_fem_rmse": 53.26202169438701,
+      "median_grid_relative_rmse": 0.5907830555745205,
+      "median_grid_rmse": 53.34509823805361
+    }
+  ],
+  "cases": 61,
+  "created_utc": "2026-09-11T02:35:40.873689+00:00",
+  "elapsed_seconds": 464.40474849700695,
+  "first_case_seconds": 2.0187650910083903,
+  "inputs": {
+    "adoption_manifest_id": "sha256-json-v1-406472fbb5141aa80e28f42a08bcb30f710726277877e3c2324deb6d25df8134",
+    "baseline_manifest_id": "sha256-json-v1-4eb8156dd591c5b9caf23e70ca202ad01865da74d402fd09417ff6852ce3189c",
+    "corrected_evaluation_manifest_id": "sha256-json-v1-7e9e5d7114a8ede7098af6059209e7bf4c7f3b14bc8a41b10ca8fc0fec844c5a",
+    "dataset_sha256": "c8ce0b82e764c591e994774f3a6ea42e3075e5b98e9a9fb16d4e01e64a5d1487",
+    "mesh_path": "amundsen.msh",
+    "mesh_sha256": "b414ab0ab994cd377bc827c91c94cd8ed2368915905a8e5188f043a298b9a34a"
+  },
+  "manifest_id": "sha256-json-v1-a66e47887590c4470d7213e3ae1426c2d867b6cae14ea665f5d508d58d028c30",
+  "maximum_absolute_ml_rmse_difference": 12.26329808739699,
+  "maximum_absolute_ml_rmse_percent_difference": 9.144200660799417,
+  "maximum_quadrature4_vs6_ml_difference": 5.684341886080801e-13,
+  "median_absolute_ml_rmse_percent_difference": 0.6257582413730312,
+  "method": {
+    "coverage": "whole production triangles whose barycentre maps to a frozen common-eligible 450 m observation pixel and whose local CG2 nodes have finite MEaSUREs vx and vy",
+    "geography": "central-square bounds or PIG region applied at triangle barycentres",
+    "integration": "Firedrake assembly of DG0 cell mask times squared CG2 vector residual, divided by assembled masked area",
+    "limitation": "coverage and geographic boundaries are represented by whole triangles selected at barycentres; triangles touched by raster missing-data interpolation are conservatively excluded, so this differs from the exact retained observation-row population",
+    "observed_velocity": "existing Icepack CG2 MEaSUREs velocity fields u_exp_x/u_exp_y on production mesh",
+    "quadrature_degree": 6,
+    "region_overlap_cell_count": 52
+  },
+  "observation_roundtrip_finite_fraction": 0.9948778308443154,
+  "observation_roundtrip_finite_rows": 1523150,
+  "observation_roundtrip_rmse_m_per_a": 1.924244005031422e-14,
+  "observation_roundtrip_total_rows": 1530992,
+  "outputs": {
+    "rmse_comparison.csv": "9013e294a95f52bf938970694b62706f10184bf88ca4fa32dc9d3d0791f69147"
+  },
+  "schema": "jog-grid-fem-rmse-comparison-v1",
+  "software": {
+    "firedrake": "0.13.0+5833.gc0999bd1e",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "python": "3.10.12 (main, Jun 11 2023, 05:26:28) [GCC 11.4.0]"
+  },
+  "square_interpretation_changes": [],
+  "status": "complete",
+  "synthetic_3_4_vector_rmse": 5.000000000000005,
+  "synthetic_zero_rmse": 0.0
+}

@@ -89,12 +89,12 @@ def configure_style() -> None:
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
-            "font.size": 9.0,
-            "axes.titlesize": 10.0,
-            "axes.labelsize": 10.5,
-            "xtick.labelsize": 9.0,
-            "ytick.labelsize": 9.0,
-            "legend.fontsize": 8.5,
+            "font.size": 10.5,
+            "axes.titlesize": 11.5,
+            "axes.labelsize": 12.5,
+            "xtick.labelsize": 10.5,
+            "ytick.labelsize": 10.5,
+            "legend.fontsize": 10.0,
             "axes.linewidth": 0.7,
             "pdf.fonttype": 42,
             "svg.fonttype": "none",
@@ -336,7 +336,7 @@ def draw_map(
             ha="left",
             va="bottom",
             color="black",
-            fontsize=5.8,
+            fontsize=7.2,
             zorder=7,
             bbox={"boxstyle": "square,pad=0.12", "facecolor": "white",
                   "edgecolor": "0.25", "linewidth": 0.45, "alpha": 0.94},
@@ -389,9 +389,13 @@ def add_colorbar(figure, image, axes):
     colorbar = figure.colorbar(
         image, ax=axes, fraction=0.035, pad=0.025, extend="both"
     )
-    colorbar.set_label(r"Vector velocity error magnitude (m a$^{-1}$; log scale)")
+    colorbar.set_label(
+        r"Vector velocity error magnitude (m a$^{-1}$; log scale)",
+        fontsize=12.5,
+    )
     colorbar.set_ticks([1, 3, 10, 30, 100, 300, 1000, 2000])
     colorbar.set_ticklabels(["1", "3", "10", "30", "100", "300", "1000", "2000"])
+    colorbar.ax.tick_params(labelsize=10.5)
 
 
 def main() -> None:

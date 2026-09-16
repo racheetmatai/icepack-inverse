@@ -1,0 +1,34 @@
+{
+  "source_zip": "C:\\Users\\LDEO-GPU-TITANX\\Downloads\\Testing_point_wise_inference_of_basal_friction__4_.zip",
+  "source_sha256": "61b68918512bc1ce490b6838d992f01a73fb1e94e57d6157827f92023b29d106",
+  "text_before_results_unchanged": true,
+  "text_after_results_unchanged_except_appendix_figure": true,
+  "unchanged_other_figure_files": 16,
+  "PIG_artwork_unchanged": true,
+  "bibliography_class_and_style_unchanged": true,
+  "references_resolved": true,
+  "overfull_boxes": false,
+  "figure_pages_visually_checked": [
+    12,
+    41
+  ],
+  "existing_warnings": "lineno.sty UTF-8 warning and bibliography underfull box also present in source build",
+  "plot_verification": {
+    "inputs": {
+      "/tmp/jog_figure3_20260912/metrics.csv": "05b65c6797b2b398e134d3a795e98eb44b0cad8f38310b69cf0911189e947668",
+      "/tmp/jog_figure3_20260912/previous.csv": "7778a63fbe83fb2051c87dba229d9db251a37e4deac0447dd8c24542d4b74d67"
+    },
+    "verification": "All 60 median results and both baselines agree with the previous figure inputs.",
+    "range_m_per_a": [
+      2.655919123308478,
+      277.4972516775072
+    ],
+    "inversion_range_m_per_a": [
+      2.655919123308478,
+      35.115493569983094
+    ],
+    "median_inversion_m_per_a": 13.123267284732531,
+    "physical_solves": 0
+  },
+  "manuscript_pdf_sha256": "ad88b27c93184e38eef674bc418a70110b47610c615356fb5ab0a81008cc3682"
+}

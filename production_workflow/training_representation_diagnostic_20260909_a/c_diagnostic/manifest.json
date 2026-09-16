@@ -1,0 +1,83 @@
+{
+  "created_utc": "2026-09-09T18:52:03.686825+00:00",
+  "input_sha256": {
+    "exact_FE_C_metrics": "48029656d07ab6fce16db657e3bb9ebbfcb2dd0129148e609672d5002870a7eb",
+    "parent_manifest": "a8b62190fadf43a40a5bdb273d047f23bd8999a4db0ab66a39acd39c27e00299",
+    "point_diagnostics": "6dc20c5568f1eacf4d68ad9c94aeda136e422582244e1c397032874b92f33fc0"
+  },
+  "manifest_id": "sha256-json-v1-e3e10c96d6df3f792fdb8c5a725c6b41256fa97f8b1c9e038a3267ad6e270b9f",
+  "observation_grid_c_export": {
+    "adoption_manifest_id": "sha256-json-v1-406472fbb5141aa80e28f42a08bcb30f710726277877e3c2324deb6d25df8134",
+    "cases": 21,
+    "input_sha256": {
+      "REG_PIG_CFG02.npz": "c72754d0694dfb353e481665722501eb3338e9c37693a27d51fe6d5f138d0546",
+      "SQ01_CFG02.npz": "922e63f0b26c0379c92273bcd1ecfceee27e60ce64d1e8c57a6ae3e6f83f6e1a",
+      "SQ01_CFG04.npz": "add13d6f5e1484fc6fb25d9b5e1cc1b0bed798585838d24129ab70bf425fb527",
+      "SQ02_CFG02.npz": "82d79b50592e4fd57b60a18ad5d2e2321e5db26ed407652a35eb3b3d6b195419",
+      "SQ02_CFG04.npz": "1f34678ddb51f230432c42b3627f4c7e352055f5f57c238833e698d32a148d29",
+      "SQ03_CFG02.npz": "80dfaca05998904b39fa8e1c32d223ae111ccc748a6c0218c299c41db7a932ef",
+      "SQ03_CFG04.npz": "a9a3e828c7d6c49d44f7ad8bef7fd63c09f56b1fe08a37c89e1b0360068143d0",
+      "SQ04_CFG02.npz": "a71adb8442cabc6fbd6472152e65ba5e29f5e899f5304c5d0ef3b8374a9448ff",
+      "SQ04_CFG04.npz": "4ad54fd951083aef5ca7256c438d4debd5b39eaec70b22e5d47af37ea567231a",
+      "SQ05_CFG02.npz": "ffbfc944525213eea99a585f1f70cb70eedb2ab9a6ebbbfdf90c94f057d71772",
+      "SQ05_CFG04.npz": "713d045d903f605d15ea2d585bd7b011c2933781f7674c0a3820c78ab5ba3096",
+      "SQ06_CFG02.npz": "416016a23e022ed28f447b490bb75187de2d34df8c6faa0eadbabbfdd7aa35c0",
+      "SQ06_CFG04.npz": "e6ebd02e51eb5d7987a8837616ebfb1524bfb8f98ee25489a03328176727b298",
+      "SQ07_CFG02.npz": "be5b2042b502fb8891b5258b207c06adc60775048f7584c99895ac160bdda247",
+      "SQ07_CFG04.npz": "5bdc174f8d8d366154ef251df32a9fa7b225c14c6ecaf30a8ae68aca54f9d944",
+      "SQ08_CFG02.npz": "646085b1eefd8a895af834c4fb851267f638ffeaef9f4c9ba3e241a39e0c2e7e",
+      "SQ08_CFG04.npz": "9f87c466c13ad49442ebf06a55611a7f8deae5d7ea3f9fdbcdc24a2a257aefd4",
+      "SQ09_CFG02.npz": "383a505f4c0fa81800ec2cb01c4a37c538ee671ed0b32257e10564d7b119f324",
+      "SQ09_CFG04.npz": "c3068e807a6dc0ddfd8e7797c631ecabb254db2dbed4514f3ac0dd34c86214c8",
+      "SQ10_CFG02.npz": "cd936e5bc499b375e55f77f835b7a149cb349cac60697886495766595d9e2d6c",
+      "SQ10_CFG04.npz": "566ae09228b08becc322439a3e89c9bf6137410efb4ea0bfe0430e93248d5cd4",
+      "canonical_dataset": "c8ce0b82e764c591e994774f3a6ea42e3075e5b98e9a9fb16d4e01e64a5d1487",
+      "queries": "6dc20c5568f1eacf4d68ad9c94aeda136e422582244e1c397032874b92f33fc0"
+    },
+    "method": "icepack.interpolate(CG2 control, canonical observation mesh Delta)",
+    "output_sha256": "ffb8e7e054501c942d2cce46c63158357a869bc8f3ddd3d8918d868057ad0a29",
+    "reference_max_abs_difference_vs_canonical": 3.552713678800501e-15,
+    "rows": 474327,
+    "schema": "jog-observation-grid-median-c-export-v1",
+    "source_sha256": "b7a44f8e6a763af7940f341ebc91e7b7bbf8e568c93a70976ce97dd8bb6d561d",
+    "status": "complete",
+    "target": "dimensionless inversion control C"
+  },
+  "output_sha256": {
+    "LATEX_SUGGESTIONS.md": "6f58f3f0e1d5b9155432a814fcacf20563482e3e7ac8d4ba44f93a4d6dce7830",
+    "README.md": "bcb6ed486cf52ce701d66a829af49787c849db86f6dc3e71eea9d83815dd1ff6",
+    "c_associations.csv": "91cec826e80f36f5faabf887b6b861434a1022e5a425c7753dd0141405a2a08b",
+    "c_authoritative_metric_checks.csv": "0575951475052db50b3d11f64d0d264a7d2b10f1882ae6ff1eda00cb30760201",
+    "c_category_metrics.csv": "fa639f93c3305d988517e0e563ea761bea522dfdf924e928e3f2a003a3a271e6",
+    "c_overall_metrics.csv": "5e091167be0f77596e402cfc019007bf94c0c1194c7093d99644d179006ae03e",
+    "c_speed_overall_metrics.csv": "8a2f0ce5f886e02bf49263890112a62454721ee26918c0e39aa3922efae28032",
+    "c_speed_stratified_metrics.csv": "d77d08e47d3513ff2e1a7e91ef06334ee68184012923ab95b791ba39f8387c8f",
+    "c_support_stratified_metrics.csv": "8f3ed77188f9d908332bdb9f6aca914cee60f9c0edecce5536869940cc6bdd6e",
+    "c_velocity_associations.csv": "c96fdf234ac95fb87eeba6ac35b0e6c6b6ef7a826455adceb03e177d790db652",
+    "figure_C_C_rmse_by_representation.pdf": "9f2dd8a5080c43a5fafd272117694048fcf916603bfb2e2c22c49e9dcf56d70a",
+    "figure_C_C_rmse_by_representation.png": "fb84a66f8125797094d586415004aa2d8e258e546c05fa92e006536cd740e29f",
+    "observation_grid_c.csv.gz": "ffb8e7e054501c942d2cce46c63158357a869bc8f3ddd3d8918d868057ad0a29",
+    "observation_grid_c_export.json": "218b26a7b2e65c433bb3ae05b999c879a62905c763be4546a5e06497bf102b07",
+    "point_c_diagnostics.csv.gz": "2f768998841a47f8da4069edee9c5a338e9259cad5a18de70fdc5d446d524140",
+    "verification.json": "57f332141be81b1626b2f7aba6426a71080423a7cf01d692c295919c65bea72b"
+  },
+  "parent_representation_manifest_id": "sha256-json-v1-db2d5e324c6801298a6f5182d44c3825fe346fb105a2aa6763661702ce3a330e",
+  "population": "unchanged rows from completed representation analysis",
+  "purpose": "descriptive association between actual training representation and reproduction of inversion-reference C",
+  "schema": "jog-training-representation-c-diagnostic-v1",
+  "software": {
+    "matplotlib": "3.9.1.post1",
+    "numpy": "1.26.4",
+    "pandas": "2.2.2",
+    "platform": "Windows-10-10.0.19045-SP0",
+    "python": "3.9.19 (main, May  6 2024, 20:12:36) [MSC v.1916 64 bit (AMD64)]",
+    "scipy": "1.13.1"
+  },
+  "source_sha256": {
+    "analyze_c_representation.py": "ea430a40173d05f84268ede0c9b5ea983013ccc177592a806728382bafbb2df1",
+    "export_observation_grid_controls.py": "b7a44f8e6a763af7940f341ebc91e7b7bbf8e568c93a70976ce97dd8bb6d561d"
+  },
+  "status": "complete",
+  "target": "dimensionless inversion control C; not exp(C) or dimensional basal-friction coefficient",
+  "weights": "equal-area 450 m observation-grid rows"
+}

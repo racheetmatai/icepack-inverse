@@ -1,0 +1,161 @@
+{
+  "checks": {
+    "mesh_hash_matches_production": true,
+    "all_tags_1_through_11": true,
+    "every_exterior_edge_tagged_exactly_once": true,
+    "triangles_manifold": true,
+    "icepack_complement_is_2_and_4": true,
+    "no_side_wall_class": true
+  },
+  "passed": true,
+  "nodes": 9069,
+  "triangles": 17653,
+  "exterior_edges": 497,
+  "boundaries": [
+    {
+      "tag": 1,
+      "condition": "prescribed velocity",
+      "edges": 251,
+      "length_km": 2030.2887515841774,
+      "closed_loop": false,
+      "bounds_m": [
+        -1730301.46571,
+        -779024.517305,
+        -1076714.755067,
+        16487.180774
+      ]
+    },
+    {
+      "tag": 2,
+      "condition": "terminus stress",
+      "edges": 71,
+      "length_km": 402.3408500336131,
+      "closed_loop": false,
+      "bounds_m": [
+        -1622188.420248,
+        -579939.715011,
+        -1524425.78199,
+        -300781.551712
+      ]
+    },
+    {
+      "tag": 3,
+      "condition": "prescribed velocity",
+      "edges": 16,
+      "length_km": 94.18673667413427,
+      "closed_loop": false,
+      "bounds_m": [
+        -1610574.846803,
+        -643530.175249,
+        -1575989.533674,
+        -579939.715011
+      ]
+    },
+    {
+      "tag": 4,
+      "condition": "terminus stress",
+      "edges": 9,
+      "length_km": 55.41853040549893,
+      "closed_loop": false,
+      "bounds_m": [
+        -1598113.424504,
+        -695203.022337,
+        -1582736.791138,
+        -643530.175249
+      ]
+    },
+    {
+      "tag": 5,
+      "condition": "prescribed velocity",
+      "edges": 21,
+      "length_km": 103.36141301962873,
+      "closed_loop": true,
+      "bounds_m": [
+        -1513899.568639,
+        -661710.501928,
+        -1475122.6156,
+        -635006.177122
+      ]
+    },
+    {
+      "tag": 6,
+      "condition": "prescribed velocity",
+      "edges": 22,
+      "length_km": 87.09758505941005,
+      "closed_loop": true,
+      "bounds_m": [
+        -1491415.014464,
+        -698183.800415,
+        -1467962.609509,
+        -669815.37717
+      ]
+    },
+    {
+      "tag": 7,
+      "condition": "prescribed velocity",
+      "edges": 24,
+      "length_km": 138.7922371619343,
+      "closed_loop": true,
+      "bounds_m": [
+        -1410370.213424,
+        -704524.384571,
+        -1381870.751226,
+        -645595.127014
+      ]
+    },
+    {
+      "tag": 8,
+      "condition": "prescribed velocity",
+      "edges": 20,
+      "length_km": 86.88108714718913,
+      "closed_loop": true,
+      "bounds_m": [
+        -1289516.838899,
+        -689024.298253,
+        -1265138.311673,
+        -658144.830434
+      ]
+    },
+    {
+      "tag": 9,
+      "condition": "prescribed velocity",
+      "edges": 17,
+      "length_km": 39.36018375126599,
+      "closed_loop": true,
+      "bounds_m": [
+        -1276096.154032,
+        -649042.195843,
+        -1267353.77926,
+        -633187.380577
+      ]
+    },
+    {
+      "tag": 10,
+      "condition": "prescribed velocity",
+      "edges": 28,
+      "length_km": 131.74868406247163,
+      "closed_loop": true,
+      "bounds_m": [
+        -1516874.251213,
+        -583210.152743,
+        -1483724.42855,
+        -544826.605193
+      ]
+    },
+    {
+      "tag": 11,
+      "condition": "prescribed velocity",
+      "edges": 18,
+      "length_km": 109.13682924095096,
+      "closed_loop": true,
+      "bounds_m": [
+        -1403515.650545,
+        -580300.942992,
+        -1371677.200783,
+        -546483.83251
+      ]
+    }
+  ],
+  "mesh_sha256": "b414ab0ab994cd377bc827c91c94cd8ed2368915905a8e5188f043a298b9a34a",
+  "geometry_sha256": "a324365b9bc9c4622a08a12e4afa6726abc34a71ec5e86d0dbf12fa97acaeb76"
+}

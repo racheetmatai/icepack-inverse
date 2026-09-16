@@ -145,6 +145,13 @@ Each preflight run contains:
 No L-curve point, inversion, dataset export, or ML training is performed by
 the `preflight` command.
 
+The accepted revision training implementation lives at
+`icepack-mlp/production_training`, with launch instructions in
+`icepack-mlp/README_PRODUCTION_TRAINING.md`. It consumes this workflow's frozen
+canonical dataset and split-bundle identities; historical notebook training is
+formally superseded. Gate 2 data preparation has passed, while TensorFlow/GPU
+execution remains reserved for the mandatory CUDA smoke gate.
+
 Each L-curve point contains its own input preflight, native solver log,
 attempt/status table, model-state DOF arrays with exact mesh hash, complete
 objective decomposition, environment/source hashes, and self-hashed manifest.
@@ -152,3 +159,80 @@ The parent study contains the immutable contract and source snapshot,
 incremental resume state, every point reference, curvature evidence,
 normalization bounds, diagnostics, appendix plot, and
 `definitive_inversion.json`.
+
+## Canonical dataset export
+
+The accepted revised dataset is `gate2_canonical_dataset_20260820_c`, generated
+from the verified adopted endpoint at `reg_C=0.01414213562`. It retains all
+1,622,598 selected observations and marks the single common population of
+1,530,992 grounded rows finite for the union of all twelve predictors. Its
+training target is logarithmic control `reference_log_C`; observed and inversion
+velocities are evaluation-only. Row-level BedMachine `source`/`errbed`, bed
+class, MEaSUREs diagnostics, exact square masks, and direct frozen-mesh regional
+labels are auxiliary.
+
+Verify an export with:
+
+```bash
+source /home/firedrake/firedrake/bin/activate
+cd /home/firedrake/icepack/icepack-inverse
+python -B production_workflow/tools/verify_canonical_dataset.py \
+  production_runs/gate2_canonical_dataset_20260820_c
+```
+
+The accepted manifest ID is
+`sha256-json-v1-496a391df29fc4d64ba1b134fc8e12fd808b2bb1194935e60981d980767dfd8e`.
+
+## Held-out distribution diagnostics
+
+The accepted descriptive bundle is
+`gate2_distribution_diagnostics_20260820_c`. It reads only the accepted
+canonical dataset and frozen 5 km support evidence. It cannot move locations,
+change masks/features, or remove unsupported rows. It reports all four
+point-support categories and treats inversion-reference `C` as a separate
+descriptive diagnostic.
+
+Run and verify with:
+
+```bash
+source /home/firedrake/firedrake/bin/activate
+cd /home/firedrake/icepack/icepack-inverse
+python production_workflow/describe_heldout_distributions.py \
+  --dataset-dir production_runs/gate2_canonical_dataset_20260820_c \
+  --reference-grid production_workflow/frozen_design/amundsen_input_support_grid_5km.npz \
+  --partition production_workflow/frozen_design/five_region_partition_5km.npz \
+  --selected-squares production_workflow/frozen_design/selected_squares.csv \
+  --support-evidence production_workflow/frozen_design/five_region_partition_and_support.json \
+  --output production_runs/<immutable-diagnostic-id>
+python production_workflow/tools/verify_heldout_distributions.py \
+  --bundle production_runs/<immutable-diagnostic-id> \
+  --dataset-dir production_runs/gate2_canonical_dataset_20260820_c
+```
+
+Accepted manifest ID:
+`sha256-json-v1-a27e564c9b5456ae52fbbe917e5aa6dbe30a9e24591f4d573d69292a988d3bca`.
+
+## Exact split manifests
+
+The accepted row-partition bundle is `gate2_split_manifests_20260820_a`.
+It stores the sorted stable eligible row IDs once and uses lossless bit-packed
+masks for every held-out/development population and all 120 member
+training/validation splits. This is an exact row-ID representation, not a
+probabilistic index or regenerated split. Matched configurations reference one
+unchanged experiment/member split.
+
+Run and verify with:
+
+```bash
+source /home/firedrake/firedrake/bin/activate
+cd /home/firedrake/icepack/icepack-inverse
+python production_workflow/create_split_manifests.py \
+  --dataset-dir production_runs/gate2_canonical_dataset_20260820_c \
+  --output production_runs/<immutable-split-bundle-id>
+python production_workflow/tools/verify_split_manifests.py \
+  --bundle production_runs/<immutable-split-bundle-id> \
+  --dataset-dir production_runs/gate2_canonical_dataset_20260820_c
+```
+
+Accepted manifest ID:
+`sha256-json-v1-b838631dfde2849f84ee2165749fe9ce44c01e71513e53fb66afe1d8785281b8`.

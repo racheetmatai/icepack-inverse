@@ -58,6 +58,18 @@ def verify(root: Path) -> dict:
             problems.append("identity")
         if item.get("control_kind") not in {"member", "median"} or not item.get("metrics"):
             problems.append("kind_or_metrics")
+        if item.get("evaluation_identity", {}).get("support_alignment") != "stable-row-id-v2":
+            problems.append("obsolete_support_alignment")
+        populations = {r["population"] for r in item.get("metrics", [])}
+        for population in populations:
+            rows = [r for r in item["metrics"] if r["population"] == population]
+            all_rows = [r for r in rows if r["support_stratum"] == "all"]
+            strata = [r for r in rows if r["support_stratum"] != "all"]
+            names = [r["support_stratum"] for r in strata]
+            if (len(all_rows) != 1 or len(names) != len(set(names))
+                    or not set(names).issubset({"neither", "marginal_only", "joint_only", "both"})
+                    or sum(r["rows"] for r in strata) != all_rows[0]["rows"]):
+                problems.append("support_partition")
         ensemble_kinds.setdefault(item.get("ensemble_id"), []).append(item.get("control_kind"))
         for row in item.get("metrics", []):
             required = ["rows", "vector_rmse_m_per_a", "vector_mae_m_per_a",
@@ -79,6 +91,9 @@ def verify(root: Path) -> dict:
             numeric = [archive[name] for name in archive.files if name != "row_id"]
             if len(sizes) != 1 or not sizes or next(iter(sizes)) == 0 or not all(np.isfinite(x).all() for x in numeric):
                 failures.append({"control_id": path.stem, "problems": ["map_archive"]})
+            if (len(np.unique(archive["row_id"])) != len(archive["row_id"])
+                    or not np.isin(archive["support_category"], [0, 1, 2, 3]).all()):
+                failures.append({"control_id": path.stem, "problems": ["map_support_or_ids"]})
     metrics_path = root / "control_population_metrics.csv"
     median_path = root / "median_population_metrics.csv"
     summary_path = root / "ensemble_member_summary.csv"

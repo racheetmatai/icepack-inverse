@@ -1,0 +1,13 @@
+{
+  "cases": 21,
+  "category_area_fraction_max_abs_error": 1.1102230246251565e-16,
+  "comparison_note": "Observation-grid equal-area means and exact FE cell integration use different discretizations; agreement is checked within 8%.",
+  "maximum_C_rmse_relative_difference_vs_exact_FE": 0.0237139714564036,
+  "median_control_identity": "exact saved vertex-wise median, then icepack.interpolate to the canonical observation mesh",
+  "reference_interpolation_max_abs_difference_vs_canonical": 3.552713678800501e-15,
+  "speed_category_area_fraction_max_abs_error": 1.1102230246251565e-16,
+  "stable_row_id_one_to_one_join": true,
+  "status": "passed",
+  "target_units": "dimensionless inversion control C",
+  "unchanged_rows": 474327
+}

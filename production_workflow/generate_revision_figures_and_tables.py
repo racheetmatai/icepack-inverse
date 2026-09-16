@@ -7,6 +7,7 @@ keeps panel letters out of artwork so LaTeX can supply subfigure labels.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -16,7 +17,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
 from matplotlib.colors import BoundaryNorm, ListedColormap, LogNorm, TwoSlopeNorm
+from matplotlib.lines import Line2D
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
 import numpy as np
 import pandas as pd
@@ -34,6 +37,7 @@ FORWARD = PW / "gate4_forward_evaluation_20260829_a"
 REPORTING = PW / "gate4_forward_reporting_20260829_b"
 C_DIAG = PW / "gate4_c_diagnostics_20260829_a"
 FOOTPRINT_ERRORS = PW / "gate4_square_footprint_error_maps_20260830_b"
+REGIONAL_MAPS = FORWARD / "median_map_data"
 OUT = PW / "final_figures_20260830_a"
 ANTARCTICA_LAND = DESIGN / "ne_110m_land.geojson"
 DOMAIN_OUTLINE = ROOT / "tmp/amundsen_v1.geojson"
@@ -81,10 +85,10 @@ CONFIG_FEATURES = {
 
 def style() -> None:
     plt.rcParams.update({
-        "font.family": "DejaVu Sans", "font.size": 9.0,
-        "axes.titlesize": 10.5, "axes.labelsize": 10.5,
-        "xtick.labelsize": 9.0, "ytick.labelsize": 9.0,
-        "legend.fontsize": 9.0, "axes.linewidth": 0.8,
+        "font.family": "DejaVu Sans", "font.size": 10.5,
+        "axes.titlesize": 12.0, "axes.labelsize": 12.0,
+        "xtick.labelsize": 10.5, "ytick.labelsize": 10.5,
+        "legend.fontsize": 10.5, "axes.linewidth": 0.8,
         "pdf.fonttype": 42, "svg.fonttype": "none",
         "savefig.dpi": 300,
     })
@@ -282,13 +286,13 @@ def figure2() -> list[Path]:
     ax.set_xlim(0, 1.04); ax.set_ylim(0, 1); ax.axis("off")
     lanes = [
         (0.80, "Icepack / CPU", [
-            (0.12, "Geophysical\nrasters + velocity"), (0.34, "Whole-sector\ninversion"),
-            (0.56, "Canonical mesh\ndataset"), (0.78, "ML-augmented\nforward solves")]),
+            (0.12, "Input data +\nobserved velocity"), (0.34, "Whole-sector\ninversion"),
+            (0.56, "Common mesh\ndataset"), (0.78, "Forward runs using\npredicted $C$")]),
         (0.46, "CUDA training", [
-            (0.34, "Frozen row-ID\nsplits"), (0.56, "660 reproducible\nMLP fits"), (0.78, "66 median\nensembles")]),
+            (0.34, "Fixed training and\nvalidation rows"), (0.56, "660 reproducible\nMLP fits"), (0.78, "66 median\n$C$ fields")]),
         (0.12, "Evaluation", [
-            (0.34, "Input-support\ndiagnostics"), (0.56, "$C$ diagnostics\n(secondary)"),
-            (0.78, "Velocity skill\n(primary test)")]),
+            (0.34, "Predictor\nsupport"), (0.56, "$C$ agreement\n(secondary)"),
+            (0.78, "Velocity error\n(primary test)")]),
     ]
     colors = ["#E8F1FA", "#F0EAF6", "#EAF4EA"]
     boxes = {}
@@ -309,7 +313,7 @@ def figure2() -> list[Path]:
     arrow((.645, .715), (.645, .555)); arrow((.865, .555), (.865, .715)); arrow((.645, .375), (.645, .215))
     arrow((1.025, .12), (.955, .12), color="#7A0019")
     ax.text(.99, .155, "observations", ha="center", va="bottom", fontsize=7, color="#7A0019")
-    ax.text(.50, .965, "Data construction, training, and outcome-blind held-out evaluation", ha="center", va="top", fontsize=11)
+    ax.text(.50, .965, "Data construction, training, and evaluation in withheld areas", ha="center", va="top", fontsize=11)
     return save(fig, "figure2_end_to_end_workflow")
 
 
@@ -515,11 +519,14 @@ def generate_tables() -> list[Path]:
     return outputs
 
 
-def load_c_fields(config: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.DataFrame]:
+def load_c_fields(
+    config: str,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.DataFrame]:
     squares = square_table()
     coords = reference = eligible = None
     predicted = np.full(1, np.nan)
-    pieces = []
+    owner = np.full(1, -1, dtype=np.int16)
+    best_distance = np.full(1, np.inf)
     for row in squares.itertuples():
         with np.load(PREDICTIONS / f"{row.square_id}_{config}.npz", allow_pickle=False) as z:
             c = z["coordinates"].astype(float); e = z["eligible_mask"].astype(bool)
@@ -527,14 +534,70 @@ def load_c_fields(config: str) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.n
         if coords is None:
             coords, eligible, reference = c, e, ref
             predicted = np.full_like(ref, np.nan)
+            owner = np.full(ref.shape, -1, dtype=np.int16)
+            best_distance = np.full(ref.shape, np.inf)
         elif not (np.array_equal(coords, c) and np.array_equal(eligible, e) and np.array_equal(reference, ref)):
             raise RuntimeError("Full-mesh prediction identity mismatch")
-        mask = e & (c[:, 0] >= row.test_xmin_m) & (c[:, 0] <= row.test_xmax_m) \
-                 & (c[:, 1] >= row.test_ymin_m) & (c[:, 1] <= row.test_ymax_m)
-        predicted[mask] = pred[mask]
-        pieces.append(pd.DataFrame({"square": row.square_id, "mask_index": np.flatnonzero(mask)}))
+        footprint = e & (c[:, 0] >= row.footprint_xmin_m) & (c[:, 0] <= row.footprint_xmax_m) \
+                      & (c[:, 1] >= row.footprint_ymin_m) & (c[:, 1] <= row.footprint_ymax_m)
+        distance = (c[:, 0] - row.center_x_m) ** 2 + (c[:, 1] - row.center_y_m) ** 2
+        # Overlapping footprints are owned by their nearest held-out-square
+        # center.  Strict comparison leaves exact ties with the earlier square
+        # in the frozen SQ01--SQ10 order.
+        replace = footprint & (distance < best_distance)
+        predicted[replace] = pred[replace]
+        owner[replace] = int(row.square_id.removeprefix("SQ"))
+        best_distance[replace] = distance[replace]
     mask = np.isfinite(predicted) & eligible
-    return coords[mask] / 1000, reference[mask], predicted[mask], predicted[mask] - reference[mask], squares
+    if not np.all(owner[mask] > 0):
+        raise RuntimeError("Figure 7 footprint ownership is incomplete")
+    return (
+        coords[mask] / 1000,
+        reference[mask],
+        predicted[mask],
+        predicted[mask] - reference[mask],
+        owner[mask],
+        squares,
+    )
+
+
+def draw_continuous_c_difference(
+    ax: plt.Axes,
+    coords: np.ndarray,
+    values: np.ndarray,
+    owner: np.ndarray,
+    dmax: float,
+):
+    """Render vertex values as a continuous piecewise-linear mesh field.
+
+    The original mesh connectivity is not included in the portable prediction
+    archive, so the common vertex set is triangulated deterministically. Long
+    boundary-spanning triangles and triangles crossing footprint-ownership
+    boundaries are masked before Gouraud interpolation.
+    """
+    triangulation = mtri.Triangulation(coords[:, 0], coords[:, 1])
+    triangles = triangulation.triangles
+    points = coords[triangles]
+    longest_edge = np.max(
+        np.linalg.norm(points - np.roll(points, 1, axis=1), axis=2), axis=1
+    )
+    triangle_owner = owner[triangles]
+    mask = (
+        (triangle_owner[:, 0] != triangle_owner[:, 1])
+        | (triangle_owner[:, 0] != triangle_owner[:, 2])
+        | (longest_edge > 8.0)
+        | ~np.all(np.isfinite(values[triangles]), axis=1)
+    )
+    triangulation.set_mask(mask)
+    return ax.tripcolor(
+        triangulation,
+        values,
+        shading="gouraud",
+        cmap="RdBu_r",
+        norm=TwoSlopeNorm(vcenter=0, vmin=-dmax, vmax=dmax),
+        rasterized=True,
+        zorder=2,
+    )
 
 
 def load_normalized_velocity_error(config: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -543,32 +606,70 @@ def load_normalized_velocity_error(config: str) -> tuple[np.ndarray, np.ndarray,
                           & (metrics["population"] == "central_50km") & (metrics["support_stratum"] == "all")
                           & (metrics["configuration"] == config)].set_index("experiment")
     with np.load(FOOTPRINT_ERRORS / f"{config}_ten_square_footprint_errors.npz", allow_pickle=False) as z:
-        chunks = []
-        for number in range(1, 11):
-            mask = (z["square_number"] == number) & z["central"].astype(bool)
-            population_rms = float(metrics.loc[f"SQ{number:02d}", "observed_vector_rms_m_per_a"])
-            chunks.append(np.column_stack([z["x"][mask] / 1000.0, z["y"][mask] / 1000.0,
-                                           100.0 * z["error_magnitude"][mask] / population_rms]))
-    values = np.concatenate(chunks)
-    return values[:, 0], values[:, 1], values[:, 2]
+        x = z["x"].astype(float)
+        y = z["y"].astype(float)
+        number = z["square_number"].astype(np.int16)
+        error = z["error_magnitude"].astype(float)
+    squares = square_table().set_index("square_id")
+    center_x = np.array([np.nan] + [squares.loc[f"SQ{i:02d}", "center_x_m"] for i in range(1, 11)])
+    center_y = np.array([np.nan] + [squares.loc[f"SQ{i:02d}", "center_y_m"] for i in range(1, 11)])
+    distance = (x - center_x[number]) ** 2 + (y - center_y[number]) ** 2
+    # Sort each repeated coordinate by distance and then square number; retain
+    # the first row so C and velocity panels use the same ownership rule.
+    order = np.lexsort((number, distance, y, x))
+    sx, sy = x[order], y[order]
+    first = np.r_[True, (sx[1:] != sx[:-1]) | (sy[1:] != sy[:-1])]
+    selected = order[first]
+    selected_number = number[selected]
+    population_rms = np.array([np.nan] + [
+        float(metrics.loc[f"SQ{i:02d}", "observed_vector_rms_m_per_a"])
+        for i in range(1, 11)
+    ])
+    normalized = 100.0 * error[selected] / population_rms[selected_number]
+    selected_x, selected_y = x[selected], y[selected]
+    if np.any((selected_x[1:] == selected_x[:-1]) & (selected_y[1:] == selected_y[:-1])):
+        raise RuntimeError("Figure 7 velocity footprint ownership contains duplicate coordinates")
+    return x[selected] / 1000.0, y[selected] / 1000.0, normalized
 
 
-def draw_figure7_row(axes: np.ndarray, config: str, dmax: float, add_locator: bool) -> tuple[object, object]:
-    coords, _, _, diff, squares = load_c_fields(config)
+def draw_figure7_holdout_geometry(ax: plt.Axes, squares: pd.DataFrame, show_legend: bool = False) -> None:
+    for row in squares.itertuples():
+        ax.add_patch(Rectangle((row.footprint_xmin_m/1000, row.footprint_ymin_m/1000), 130, 130,
+                               fill=False, edgecolor="0.15", lw=.65, ls=(0, (4, 3)), zorder=3))
+        ax.add_patch(Rectangle((row.test_xmin_m/1000, row.test_ymin_m/1000), 50, 50,
+                               fill=False, edgecolor="0.15", lw=.8, zorder=4))
+    if show_legend:
+        ax.legend(handles=[
+            Line2D([0], [0], color="0.15", lw=1.2, ls=(0, (4, 3)),
+                   label="130 km held-out footprint"),
+            Line2D([0], [0], color="0.15", lw=1.2,
+                   label="50 km primary test square"),
+        ], loc="lower left", frameon=True, fancybox=False, framealpha=.94,
+           edgecolor="0.4", facecolor="white", fontsize=9.5,
+           handlelength=2.2, handletextpad=.55, labelspacing=.3,
+           borderpad=.35, borderaxespad=.45)
+
+
+def draw_figure7_row(
+    axes: np.ndarray,
+    config: str,
+    dmax: float,
+    add_locator: bool,
+    show_titles: bool = True,
+) -> tuple[object, object]:
+    coords, _, _, diff, owner, squares = load_c_fields(config)
     vx, vy, verr = load_normalized_velocity_error(config)
     r, v = region_context(), aggregate_velocity_grid()
     for ax in axes:
         draw_speed_basemap(ax, r, v, alpha=.27)
-    cim = axes[0].scatter(coords[:, 0], coords[:, 1], c=diff, s=2.0, cmap="RdBu_r",
-                          norm=TwoSlopeNorm(vcenter=0, vmin=-dmax, vmax=dmax), linewidths=0, rasterized=True, zorder=2)
-    vim = axes[1].scatter(vx, vy, c=verr, s=.8, cmap="inferno", norm=LogNorm(vmin=1, vmax=500),
+    cim = draw_continuous_c_difference(axes[0], coords, diff, owner, dmax)
+    vim = axes[1].scatter(vx, vy, c=verr, s=.6, cmap="inferno", norm=LogNorm(vmin=1, vmax=500),
                           linewidths=0, rasterized=True, zorder=2)
-    axes[0].set_title(r"Median predicted $C$ minus inversion-reference $C$")
-    axes[1].set_title("Local vector error / population RMS observed speed")
+    if show_titles:
+        axes[0].set_title(r"Predicted minus reference $C$", fontsize=11.5)
+        axes[1].set_title("Normalized local velocity error", fontsize=11.5)
     for ax in axes:
-        for row in squares.itertuples():
-            ax.add_patch(Rectangle((row.test_xmin_m/1000, row.test_ymin_m/1000), 50, 50,
-                                   fill=False, edgecolor="0.15", lw=.65, zorder=3))
+        draw_figure7_holdout_geometry(ax, squares)
         map_axes(ax, r["outline"])
     for ax in axes:
         add_antarctica_locator(ax, r["outline"])
@@ -581,7 +682,7 @@ def c_velocity_subfigure(config: str, dmax: float) -> list[Path]:
     cb0 = fig.colorbar(cim, ax=axes[0], shrink=.76, pad=.02); cb0.set_label(r"$\Delta C$")
     cb1 = fig.colorbar(vim, ax=axes[1], shrink=.76, pad=.02, extend="max")
     cb1.set_label("Normalized local vector error (%)")
-    fig.suptitle(f"{CONFIG_LABELS[config]} ({config})", y=1.01, fontsize=10.5)
+    fig.suptitle(f"{CONFIG_LABELS[config]} ({config})", y=1.01, fontsize=12.5)
     return save(fig, f"figure7_{config.lower()}_c_velocity_comparison")
 
 
@@ -591,16 +692,14 @@ def c_velocity_single_panel(config: str, kind: str, dmax: float) -> list[Path]:
     fig, ax = plt.subplots(figsize=(4.6, 4.45), constrained_layout=True)
     draw_speed_basemap(ax, r, v, alpha=.27)
     if kind == "c_difference":
-        coords, _, _, diff, _ = load_c_fields(config)
-        image = ax.scatter(coords[:, 0], coords[:, 1], c=diff, s=2.0, cmap="RdBu_r",
-                           norm=TwoSlopeNorm(vcenter=0, vmin=-dmax, vmax=dmax),
-                           linewidths=0, rasterized=True, zorder=2)
+        coords, _, _, diff, owner, _ = load_c_fields(config)
+        image = draw_continuous_c_difference(ax, coords, diff, owner, dmax)
         colorbar = fig.colorbar(image, ax=ax, shrink=.88, pad=.02)
         colorbar.set_label(r"$\Delta C$")
         suffix = "c_difference"
     elif kind == "velocity_error":
         vx, vy, verr = load_normalized_velocity_error(config)
-        image = ax.scatter(vx, vy, c=verr, s=.8, cmap="inferno",
+        image = ax.scatter(vx, vy, c=verr, s=.6, cmap="inferno",
                            norm=LogNorm(vmin=1, vmax=500), linewidths=0,
                            rasterized=True, zorder=2)
         colorbar = fig.colorbar(image, ax=ax, shrink=.88, pad=.02, extend="max")
@@ -608,9 +707,7 @@ def c_velocity_single_panel(config: str, kind: str, dmax: float) -> list[Path]:
         suffix = "velocity_error"
     else:
         raise ValueError(f"Unknown Figure 7 panel kind: {kind}")
-    for row in squares.itertuples():
-        ax.add_patch(Rectangle((row.test_xmin_m/1000, row.test_ymin_m/1000), 50, 50,
-                               fill=False, edgecolor="0.15", lw=.65, zorder=3))
+    draw_figure7_holdout_geometry(ax, squares, show_legend=True)
     map_axes(ax, r["outline"])
     add_antarctica_locator(ax, r["outline"])
     return save(fig, f"figure7_{config.lower()}_{suffix}")
@@ -618,20 +715,22 @@ def c_velocity_single_panel(config: str, kind: str, dmax: float) -> list[Path]:
 
 def figure7() -> list[Path]:
     all_diff = []
-    for cfg in ("CFG02", "CFG01"):
-        _, _, _, diff, _ = load_c_fields(cfg)
+    for cfg in ("CFG02", "CFG04"):
+        _, _, _, diff, _, _ = load_c_fields(cfg)
         all_diff.append(diff)
     dmax = float(np.quantile(np.abs(np.concatenate(all_diff)), .995))
     paths = []
     paths.extend(c_velocity_subfigure("CFG02", dmax))
-    paths.extend(c_velocity_subfigure("CFG01", dmax))
-    for config in ("CFG02", "CFG01"):
+    paths.extend(c_velocity_subfigure("CFG04", dmax))
+    for config in ("CFG02", "CFG04"):
         paths.extend(c_velocity_single_panel(config, "c_difference", dmax))
         paths.extend(c_velocity_single_panel(config, "velocity_error", dmax))
     combined, axes = plt.subplots(2, 2, figsize=(8.2, 7.6), constrained_layout=True, sharex=True, sharey=True)
     images = []
-    for row, config in enumerate(("CFG02", "CFG01")):
-        images.append(draw_figure7_row(axes[row], config, dmax, row == 0))
+    for row, config in enumerate(("CFG02", "CFG04")):
+        images.append(draw_figure7_row(
+            axes[row], config, dmax, row == 0, show_titles=(row == 0)
+        ))
         axes[row, 0].text(.99, .02, f"{config}: {CONFIG_LABELS[config]}", transform=axes[row, 0].transAxes,
                           ha="right", va="bottom", fontsize=7.2,
                           bbox=dict(facecolor="white", edgecolor="0.4", alpha=.9, pad=2))
@@ -640,6 +739,116 @@ def figure7() -> list[Path]:
     cb1.set_label("Normalized local vector error (%)")
     paths.extend(save(combined, "figure7_c_velocity_comparison_preview"))
     return paths
+
+
+REGIONAL_TRANSFER_CONFIGS = {
+    "REG_PIG": ("CFG02", "CFG01", "CFG03"),
+    "REG_INTER": ("CFG04", "CFG05", "CFG06"),
+}
+
+
+def center_edges(values: np.ndarray) -> np.ndarray:
+    values = np.asarray(values, dtype=float)
+    differences = np.diff(values)
+    step = float(np.median(differences))
+    if not np.allclose(differences, step, rtol=0, atol=max(1e-7, abs(step) * 1e-8)):
+        raise RuntimeError("Regional map coordinates are not a regular grid")
+    return np.r_[values - step / 2, values[-1] + step / 2]
+
+
+def complete_regular_axis(values: np.ndarray) -> np.ndarray:
+    unique = np.unique(np.asarray(values, dtype=float))
+    differences = np.diff(unique)
+    positive = differences[differences > 1e-9]
+    if not len(positive):
+        raise RuntimeError("Regional map coordinate axis has fewer than two values")
+    step = float(np.min(positive))
+    indices = np.rint((unique - unique[0]) / step).astype(np.int64)
+    if not np.allclose(unique, unique[0] + indices * step, rtol=0, atol=max(1e-5, step * 1e-8)):
+        raise RuntimeError("Regional map coordinates do not lie on one regular lattice")
+    return unique[0] + np.arange(indices[-1] + 1) * step
+
+
+def regional_error_grid(experiment: str, config: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    path = REGIONAL_MAPS / f"{experiment}_{config}_MEDIAN.npz"
+    with np.load(path, allow_pickle=False) as archive:
+        x = archive["x"].astype(float)
+        y = archive["y"].astype(float)
+        error = archive["error_magnitude"].astype(float)
+    if not (np.isfinite(x).all() and np.isfinite(y).all() and np.isfinite(error).all()):
+        raise RuntimeError(f"Non-finite regional map values: {path.name}")
+    unique_x = complete_regular_axis(x)
+    unique_y = complete_regular_axis(y)
+    grid = np.full((len(unique_y), len(unique_x)), np.nan, dtype=float)
+    x_step = unique_x[1] - unique_x[0]
+    y_step = unique_y[1] - unique_y[0]
+    ix = np.rint((x - unique_x[0]) / x_step).astype(np.int64)
+    iy = np.rint((y - unique_y[0]) / y_step).astype(np.int64)
+    if np.any(np.isfinite(grid[iy, ix])):
+        raise RuntimeError(f"Duplicate regional map coordinates: {path.name}")
+    grid[iy, ix] = error
+    return center_edges(unique_x / 1000), center_edges(unique_y / 1000), grid
+
+
+def draw_regional_transfer_error(
+    ax: plt.Axes,
+    experiment: str,
+    config: str,
+    show_locator: bool = True,
+):
+    region = region_context()
+    velocity = aggregate_velocity_grid()
+    draw_speed_basemap(ax, region, velocity, alpha=.27)
+    x_edges, y_edges, error = regional_error_grid(experiment, config)
+    image = ax.pcolormesh(
+        x_edges,
+        y_edges,
+        np.ma.masked_invalid(error),
+        cmap="inferno",
+        norm=LogNorm(vmin=1, vmax=2000),
+        shading="flat",
+        rasterized=True,
+        zorder=2,
+    )
+    map_axes(ax, region["outline"])
+    if experiment == "REG_PIG":
+        ax.set_xlim(x_edges[0] - 8, x_edges[-1] + 8)
+        ax.set_ylim(y_edges[0] - 8, y_edges[-1] + 8)
+    else:
+        ax.set_xlim(-1750, -1050)
+        ax.set_ylim(-800, 35)
+    if show_locator:
+        add_antarctica_locator(ax, region["outline"])
+    return image
+
+
+def regional_transfer_figure(experiment: str) -> list[Path]:
+    configs = REGIONAL_TRANSFER_CONFIGS[experiment]
+    if experiment == "REG_PIG":
+        prefix = "figure_pig_catchment_transfer"
+    else:
+        prefix = "appendix_intercatchment_transfer"
+    paths: list[Path] = []
+    for config in configs:
+        fig, ax = plt.subplots(figsize=(4.6, 4.45), constrained_layout=True)
+        image = draw_regional_transfer_error(ax, experiment, config)
+        colorbar = fig.colorbar(image, ax=ax, shrink=.88, pad=.02, extend="max")
+        colorbar.set_label("Velocity vector error (m a$^{-1}$; log scale)")
+        paths.extend(save(fig, f"{prefix}_{config.lower()}_velocity_error"))
+    combined, axes = plt.subplots(1, 3, figsize=(12.0, 4.25), constrained_layout=True,
+                                  sharex=True, sharey=True)
+    image = None
+    for ax, config in zip(axes, configs):
+        image = draw_regional_transfer_error(ax, experiment, config)
+        ax.set_title(f"{config}: {CONFIG_LABELS[config]}")
+    colorbar = combined.colorbar(image, ax=axes, shrink=.82, pad=.02, extend="max")
+    colorbar.set_label("Velocity vector error (m a$^{-1}$; log scale)")
+    paths.extend(save(combined, f"{prefix}_velocity_error_preview"))
+    return paths
+
+
+def regional_transfer_figures() -> list[Path]:
+    return regional_transfer_figure("REG_PIG") + regional_transfer_figure("REG_INTER")
 
 
 def figure8() -> list[Path]:
@@ -684,10 +893,11 @@ def main() -> None:
     outputs += figure3()
     outputs += figure4()
     outputs += figure7()
+    outputs += regional_transfer_figures()
     manifest = {
         "schema": "jog-revision-prewriting-figure-bundle-v1",
         "status": "complete",
-        "scope": "Tables 1-3 and retained working Figures 1,3,4,7; Figures 5-6 are generated separately; working Figures 2 and 8 are retired",
+        "scope": "Tables 1-3; retained working Figures 1,3,4,7; and regional-transfer spatial figures. Figures 5-6 are generated separately; working Figures 2 and 8 are retired",
         "retired_outputs": {
             "figure2_workflow": "Retired from the active manuscript plan because the workflow is adequately described in prose and methods.",
             "figure8_support_and_c_diagnostics": "Retired because its useful relationships are reported directly in Figure 4, Figure 7, and the accompanying text."
@@ -699,6 +909,18 @@ def main() -> None:
         ],
         "archived_not_reported_metric": "P_exp",
         "panel_letters_in_artwork": False,
+        "figure7_spatial_population": {
+            "display": "complete_130km_held_out_footprints",
+            "primary_statistics": "central_50km_squares_only",
+            "overlap_rule": "nearest_held_out_square_center_exact_ties_smaller_square_number",
+        },
+        "regional_transfer_spatial_figures": {
+            "main_text": "complete_PIG_holdout_CFG02_CFG01_CFG03",
+            "appendix": "complete_two_corridor_intercatchment_holdout_CFG04_CFG05_CFG06",
+            "quantity": "ensemble_median_C_forward_velocity_vector_error_m_per_a",
+            "scale": "common_log_1_to_2000_m_per_a",
+            "replication": "each_regional_holdout_is_one_secondary_spatial_stress_test",
+        },
         "outputs": {p.name: sha(p) for p in outputs},
         "inputs": {
             "selected_squares": sha(DESIGN / "selected_squares.csv"),
@@ -709,6 +931,11 @@ def main() -> None:
             "observed_speed_basemap": sha(OUT / "revision_velocity_grid_5km.npz"),
             "antarctica_land": sha(ANTARCTICA_LAND),
             "footprint_error_export": sha(FOOTPRINT_ERRORS / "footprint_error_export_manifest.json"),
+            "regional_map_archives": {
+                f"{experiment}_{config}": sha(REGIONAL_MAPS / f"{experiment}_{config}_MEDIAN.npz")
+                for experiment, configs in REGIONAL_TRANSFER_CONFIGS.items()
+                for config in configs
+            },
         },
     }
     body = json.dumps(manifest, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
@@ -717,5 +944,75 @@ def main() -> None:
     print(json.dumps({"status": "complete", "outputs": len(outputs), "manifest_id": manifest["manifest_id"]}, indent=2))
 
 
+def refresh_figure7_only() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    style()
+    outputs = figure7()
+    manifest_path = OUT / "prewriting_figure_bundle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["figure7_spatial_population"] = {
+        "display": "complete_130km_held_out_footprints",
+        "primary_statistics": "central_50km_squares_only",
+        "overlap_rule": "nearest_held_out_square_center_exact_ties_smaller_square_number",
+    }
+    for path in outputs:
+        manifest["outputs"][path.name] = sha(path)
+    manifest.pop("manifest_id", None)
+    body = json.dumps(manifest, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    manifest["manifest_id"] = "sha256-json-v1-" + hashlib.sha256(body).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"status": "complete", "outputs": len(outputs),
+                      "manifest_id": manifest["manifest_id"]}, indent=2))
+
+
+def refresh_spatial_revisions() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    style()
+    outputs = figure7() + regional_transfer_figures()
+    manifest_path = OUT / "prewriting_figure_bundle_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["scope"] = (
+        "Tables 1-3; retained working Figures 1,3,4,7; and regional-transfer "
+        "spatial figures. Figures 5-6 are generated separately; working Figures 2 and 8 are retired"
+    )
+    manifest["figure7_spatial_population"] = {
+        "display": "complete_130km_held_out_footprints",
+        "primary_statistics": "central_50km_squares_only",
+        "overlap_rule": "nearest_held_out_square_center_exact_ties_smaller_square_number",
+        "C_rendering": "continuous_piecewise_linear_triangulation_with_boundary_and_ownership_masks",
+    }
+    manifest["regional_transfer_spatial_figures"] = {
+        "main_text": "complete_PIG_holdout_CFG02_CFG01_CFG03",
+        "appendix": "complete_two_corridor_intercatchment_holdout_CFG04_CFG05_CFG06",
+        "quantity": "ensemble_median_C_forward_velocity_vector_error_m_per_a",
+        "scale": "common_log_1_to_2000_m_per_a",
+        "replication": "each_regional_holdout_is_one_secondary_spatial_stress_test",
+    }
+    manifest["inputs"]["regional_map_archives"] = {
+        f"{experiment}_{config}": sha(REGIONAL_MAPS / f"{experiment}_{config}_MEDIAN.npz")
+        for experiment, configs in REGIONAL_TRANSFER_CONFIGS.items()
+        for config in configs
+    }
+    for path in outputs:
+        manifest["outputs"][path.name] = sha(path)
+    manifest.pop("manifest_id", None)
+    body = json.dumps(manifest, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    manifest["manifest_id"] = "sha256-json-v1-" + hashlib.sha256(body).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"status": "complete", "outputs": len(outputs),
+                      "manifest_id": manifest["manifest_id"]}, indent=2))
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--figure7-only", action="store_true")
+    parser.add_argument("--spatial-revision-only", action="store_true")
+    args = parser.parse_args()
+    if args.figure7_only and args.spatial_revision_only:
+        parser.error("Choose only one targeted refresh mode")
+    if args.spatial_revision_only:
+        refresh_spatial_revisions()
+    elif args.figure7_only:
+        refresh_figure7_only()
+    else:
+        main()

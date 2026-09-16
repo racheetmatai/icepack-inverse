@@ -2,8 +2,15 @@
 
 **Decision date:** 19 August 2026  
 **Selected regularization:** `reg_C = 0.01414213562`  
-**Status:** selection decision only; the definitive revised whole-sector
-inversion is still pending.
+**Status at freeze:** selection decision only.
+
+**19 August adoption addendum:** the selected confirmed endpoint subsequently
+passed a separate definitive-state audit and was adopted without recomputation.
+The controlling record is
+`gate1_results/gate1_definitive_inversion_adoption_20260819_a.json`, manifest ID
+`sha256-json-v1-406472fbb5141aa80e28f42a08bcb30f710726277877e3c2324deb6d25df8134`.
+The historical selection-only distinction below remains accurate for this
+freeze record; the external adoption record authorizes downstream use.
 
 ## Purpose and scope
 
@@ -157,8 +164,8 @@ independently:
 Permitted description: **author-accepted refined-window L-curve selection,
 confirmed for endpoint stability**.
 
-Do not describe the result as a completed full-base adaptive-v2 study, an
-unambiguous curvature maximum, or a completed definitive inversion. The
-selected confirmation field is selection evidence only. The next scientific
-artifact is a fresh definitive whole-sector inversion from exact `C=0` at
-`reg_C=0.01414213562`, with its own immutable identity and full provenance.
+Do not describe the result as a completed full-base adaptive-v2 study or an
+unambiguous curvature maximum. This freeze record alone is selection evidence;
+the later external adoption audit establishes that its selected confirmed
+endpoint also satisfies the definitive-inversion requirements, so no redundant
+rerun is required.

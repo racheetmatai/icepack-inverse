@@ -1,0 +1,14 @@
+{
+  "acceptance_basis": "identical row order, all finite, and absolute log_C difference <=2e-5 across every validation row",
+  "all_finite": true,
+  "checkpoint": "SQ01_CFG06_M01/best_model.keras",
+  "maximum_absolute_difference": 1.1086917996339096e-05,
+  "mean_absolute_difference": 1.3414265860969372e-07,
+  "q999_absolute_difference": 2.1044206407632216e-06,
+  "q99_absolute_difference": 6.009926426286947e-07,
+  "row_ids_identical": true,
+  "rows": 144830,
+  "tensorflow_version": "2.18.0",
+  "training_tensorflow_version": "2.19.1",
+  "within_2e-5": true
+}

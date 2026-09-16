@@ -175,6 +175,9 @@ def map_atlas(root: Path, output: Path) -> None:
             error = archive["error_magnitude"]
             improvement = archive["signed_local_squared_error_improvement"]
             support = archive["support_category"].astype(float)
+            if (not np.isin(support, [0, 1, 2, 3]).all()
+                    or len(np.unique(archive["row_id"])) != len(archive["row_id"])):
+                raise ValueError("Superseded/misaligned support map: use gate4_forward_evaluation_support_aligned_20260910")
         arrays = [pred_speed, obs_speed, signed_speed, error, improvement, support]
         gridded = [grid(values, x, y)[0] for values in arrays]; extent = grid(pred_speed, x, y)[1]
         speed_max = float(np.nanquantile(np.concatenate([pred_speed, obs_speed]), .99))

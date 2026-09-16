@@ -106,13 +106,65 @@ def metrics(prediction: np.ndarray, observed: np.ndarray, baseline: np.ndarray,
     }
 
 
-def support_categories(path: Path, experiment: str, config: str, row_count: int) -> np.ndarray:
+def support_categories(path: Path, experiment: str, config: str,
+                       original_ids: np.ndarray, frame: pd.DataFrame) -> np.ndarray:
+    """Resolve archived eligible-row positions to stable IDs BEFORE reordering."""
     with np.load(path, allow_pickle=False) as archive:
         indices = archive[f"{experiment}__row_index"]
         values = archive[f"{experiment}__{CONFIG_NAMES[config]}"]
-    result = np.full(row_count, 255, dtype=np.uint8)
-    result[indices] = values
+    source = pd.Index(original_ids)
+    target = pd.Index(frame["row_id"].astype(str))
+    if source.has_duplicates or target.has_duplicates:
+        raise ValueError("Duplicate eligible row IDs")
+    if (indices.ndim != 1 or len(indices) != len(values)
+            or not np.issubdtype(indices.dtype, np.integer)
+            or np.any(indices < 0) or np.any(indices >= len(source))
+            or len(np.unique(indices)) != len(indices)
+            or not np.isin(values, list(CATEGORY_NAMES)).all()):
+        raise ValueError("Invalid support indices or categories")
+    destination = target.get_indexer(source[indices])
+    if np.any(destination < 0):
+        raise ValueError("Support row missing from evaluation frame")
+    result = np.full(len(frame), 255, dtype=np.uint8)
+    result[destination] = values
+    masks = population_masks(frame, experiment)
+    applicable = np.logical_or.reduce(list(masks.values()))
+    if not np.array_equal(np.sort(destination), np.flatnonzero(applicable)):
+        raise ValueError("Support rows do not exactly cover the experiment")
+    summary = pd.read_csv(path.parent / "support_categories.csv")
+    for population, mask in masks.items():
+        local = result[mask]
+        if not np.isin(local, list(CATEGORY_NAMES)).all():
+            raise ValueError("Unassigned or invalid support in evaluation population")
+        counts = np.bincount(local, minlength=4)
+        reference = summary.loc[summary.experiment.eq(experiment)
+                                & summary.configuration.eq(CONFIG_NAMES[config])
+                                & summary.population.eq(population)]
+        if len(reference) != 1 or int(reference.iloc[0].heldout_rows) != int(mask.sum()):
+            raise ValueError("Authoritative support population disagrees")
+        if int(counts.sum()) != int(mask.sum()):
+            raise ValueError("Categories do not partition evaluation population")
+        expected = reference.iloc[0][[f"{CATEGORY_NAMES[i]}_fraction" for i in range(4)]].to_numpy(float)
+        np.testing.assert_allclose(counts / counts.sum(), expected, rtol=0, atol=1e-12)
     return result
+
+
+def verify_unchanged_totals(result: dict, previous: dict) -> None:
+    """A label repair may not change any whole-population metric."""
+    old = {r["population"]: r for r in previous["metrics"] if r["support_stratum"] == "all"}
+    new = {r["population"]: r for r in result["metrics"] if r["support_stratum"] == "all"}
+    if old.keys() != new.keys():
+        raise ValueError("Whole-population membership changed")
+    for population in old:
+        if old[population].keys() != new[population].keys():
+            raise ValueError("Whole-population metric definitions changed")
+        for key, value in old[population].items():
+            current = new[population][key]
+            if isinstance(value, (int, float)):
+                np.testing.assert_allclose(current, value, rtol=1e-12, atol=1e-10,
+                                           err_msg=f"Whole-population result changed: {population}/{key}")
+            elif current != value:
+                raise ValueError(f"Whole-population result changed: {population}/{key}")
 
 
 def interpolate_velocity(object_, values: np.ndarray, eligible_lookup: np.ndarray) -> np.ndarray:
@@ -199,6 +251,7 @@ def control_result(args, record, prediction, observed, inversion, baseline, fram
         "control_id": record["control_id"], "ensemble_id": record["ensemble_id"],
         "control_kind": record["kind"], "experiment": experiment, "configuration": config,
         "forward_manifest_id": record["forward_manifest_id"], "metrics": rows,
+        "evaluation_identity": args.evaluation_identity,
         "interpolation": "Icepack/Firedrake finite-element interpolation to the frozen observation mesh",
         "observational_reference": "MEaSUREs observed vx and vy; inversion velocity is secondary only",
     }
@@ -238,6 +291,8 @@ def write_tables(output: Path, result_paths: list[Path]) -> None:
 
 def run(args) -> dict:
     output = args.output.resolve(); output.mkdir(parents=True, exist_ok=True)
+    if args.supersedes and output == args.supersedes.resolve():
+        raise ValueError("Never overwrite the superseded evaluation bundle")
     controls_dir = output / "control_metrics"; controls_dir.mkdir(exist_ok=True)
     maps_dir = output / "median_map_data"; maps_dir.mkdir(exist_ok=True)
     object_, adoption, _ = build_object(args.config.resolve(), args.repo_root.resolve(), args.adoption_record.resolve())
@@ -250,6 +305,18 @@ def run(args) -> dict:
         for experiment, item in baselines.items()
     }
     support_path = args.support_bundle.resolve() / "point_support_categories.npz"
+    raw_ids = pd.read_csv(args.dataset, usecols=["row_id", "common_eligible"])
+    original_ids = raw_ids.loc[raw_ids.common_eligible.astype(bool), "row_id"].astype(str).to_numpy()
+    args.evaluation_identity = {
+        "support_alignment": "stable-row-id-v2",
+        "evaluator_sha256": sha256_file(Path(__file__)),
+        "dataset_sha256": sha256_file(args.dataset),
+        "support_sha256": sha256_file(support_path),
+        "support_summary_sha256": sha256_file(support_path.parent / "support_categories.csv"),
+        "adoption_manifest_id": adoption["adoption_manifest_id"],
+        "baseline_manifest_sha256": sha256_file(args.baseline_root / "baseline_campaign_manifest.json"),
+    }
+    support_cache = {}
     registry = model_registry(args.campaign_root.resolve())
     result_paths = []
     for number, record in enumerate(registry, start=1):
@@ -257,15 +324,29 @@ def run(args) -> dict:
         if destination.is_file():
             existing = read_json(destination)
             if (existing.get("forward_manifest_id") == record["forward_manifest_id"]
+                    and existing.get("evaluation_identity") == args.evaluation_identity
+                    and (record["kind"] != "median" or
+                         ((maps_dir / f"{record['control_id']}.npz").is_file() and
+                          sha256_file(maps_dir / f"{record['control_id']}.npz") == existing.get("map_sha256")))
                     and manifest_identifier(existing) == existing.get("manifest_id")):
                 result_paths.append(destination); continue
         experiment = experiment_from_ensemble(record["ensemble_id"])
         config = config_from_ensemble(record["ensemble_id"])
-        support = support_categories(support_path, experiment, config, len(frame))
+        key = (experiment, config)
+        if key not in support_cache:
+            support_cache[key] = support_categories(support_path, experiment, config, original_ids, frame)
+        support = support_cache[key]
         prediction = interpolate_velocity(object_, np.load(record["velocity_path"], allow_pickle=False), lookup)
         result = control_result(args, record, prediction, observed, inversion,
                                 baseline_predictions[experiment], frame, support)
-        atomic_json(destination, result); result_paths.append(destination)
+        if args.supersedes:
+            previous_path = args.supersedes / "control_metrics" / destination.name
+            previous = read_json(previous_path)
+            if manifest_identifier(previous) != previous.get("manifest_id"):
+                raise ValueError("Invalid superseded metric manifest")
+            verify_unchanged_totals(result, previous)
+            result["supersedes_manifest_id"] = previous["manifest_id"]
+            result["whole_population_unchanged_verified"] = True
         if record["kind"] == "median":
             primary_name = "central_50km" if experiment.startswith("SQ") else ("both_corridors" if experiment == "REG_INTER" else "PIG")
             mask = population_masks(frame, experiment)[primary_name]
@@ -280,6 +361,9 @@ def run(args) -> dict:
                        error_magnitude=np.linalg.norm(prediction[mask] - observed[mask], axis=1),
                        signed_local_squared_error_improvement=local,
                        support_category=support[mask])
+            result["map_sha256"] = sha256_file(maps_dir / f"{record['control_id']}.npz")
+        result["manifest_id"] = manifest_identifier(result)
+        atomic_json(destination, result); result_paths.append(destination)
         if number % 25 == 0 or number == len(registry):
             print(json.dumps({"evaluated": number, "total": len(registry)}), flush=True)
     write_tables(output, result_paths)
@@ -293,12 +377,15 @@ def run(args) -> dict:
         "dataset_sha256": sha256_file(args.dataset.resolve()),
         "support_manifest_id": read_json(args.support_bundle.resolve() / "diagnostics_manifest.json")["manifest_id"],
         "adoption_manifest_id": adoption["adoption_manifest_id"], "output_sha256": outputs,
+        "evaluation_identity": args.evaluation_identity,
+        "supersedes_manifest_id": (read_json(args.supersedes / "evaluation_manifest.json")["manifest_id"]
+                                    if args.supersedes else None),
         "P_exp_definition": "100*(1-model vector MSE/uniform-C vector MSE), denominator once per population",
         "independent_spatial_replicates": "ten squares; members and nested regions are uncertainty/diagnostic levels",
     }
     manifest["manifest_id"] = manifest_identifier(manifest)
     atomic_json(output / "evaluation_manifest.json", manifest)
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    print(json.dumps({k: manifest[k] for k in ["status", "evaluated_controls", "manifest_id"]}))
     return manifest
 
 
@@ -312,6 +399,7 @@ def main() -> None:
     parser.add_argument("--campaign-root", required=True, type=Path)
     parser.add_argument("--baseline-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--supersedes", type=Path, help="Read-only old bundle; assert unchanged whole-population metrics")
     args = parser.parse_args(); run(args)
 
 
