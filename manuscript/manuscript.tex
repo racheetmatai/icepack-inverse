@@ -183,7 +183,7 @@ $r_C \simeq 0.014$ using a maximum-curvature criterion
 
 \subsection{Learning dataset and predictor configurations}
 
-We construct a common learning dataset by collocating the mesh-interpolated predictors with the inversion-reference $C$ on the observation grid. Each row contains the predictors and reference $C$ at one observation-grid location. Eligible rows are required to have finite values for all twelve predictors and both velocity components, with $\phi>0.1$ to exclude floating ice and the immediate grounding transition. The same eligibility criteria are used for all predictor configurations and experiments. Observed velocity is not included as a predictor; the twelve predictors and their six configurations (CFG01--CFG06) are summarized in Table~\ref{tab:configurations}. Gradient construction and exact row counts are given in Appendix section~\nameref{app:predictor_population}.
+We construct a common learning dataset by collocating the mesh-interpolated predictors with the inversion-reference $C$ on the observation grid. Each row contains the predictors and reference $C$ at one observation-grid location. Eligible rows are required to have finite values for all twelve predictors and both velocity components, with $\phi>0.1$ to exclude floating ice and the immediate grounding transition. The same eligibility criteria are used for all predictor configurations and experiments. This eligible region, mapped against the complete modeled domain, is shown in Appendix Figure~\ref{fig:eligible_region_map}. Observed velocity is not included as a predictor; the twelve predictors and their six configurations (CFG01--CFG06) are summarized in Table~\ref{tab:configurations}. Gradient construction and exact row counts are given in Appendix section~\nameref{app:predictor_population}.
  
 The additional predictor in CFG06 measures bed--surface gradient alignment,
 \begin{equation}
@@ -952,7 +952,19 @@ MEaSUREs source flag to be positive retains 2,294,138 paired-velocity pixels;
 1,622,598 of these lie inside the computational mesh. All twelve predictors
 are finite at those mesh-contained rows. Applying $\phi>0.1$ leaves 1,530,992
 common eligible rows, which are used by every predictor configuration. No
-additional rows are removed for individual configurations.
+additional rows are removed for individual configurations. Figure~\ref{fig:eligible_region_map} maps this eligible region against the complete modeled domain.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.82\linewidth]{figure_appendix_eligible_region_map.png}
+\caption{The modeled domain and the eligible region used for training and
+for every reported metric. The excluded fringe (orange, 6.0\% of the modeled
+domain by 5~km grid cell) is where $\phi\leq0.1$ or no paired MEaSUREs
+velocity observation is available; it is computed and simulated but never
+scored. The two are shown together here because every other map in this
+paper already restricts display to the eligible region alone.}
+\label{fig:eligible_region_map}
+\end{figure}
 
 For the ten square experiments, excluding the 130~km footprint leaves 1,447,471--1,463,861 rows available for training and validation. Each MLP's reproducible 90/10 split contains 1,302,723--1,317,474 training rows and 144,748--146,387 validation rows. The central-square evaluation sets contain 12,321 rows, except SQ03, which contains 12,432. For each training realization, every predictor configuration uses the same training locations and the same validation locations. Rows outside the common grounded eligible area retain inversion-reference $C$ in every forward simulation. White or uncolored regions in maps denote locations outside the area shown for that experiment or outside that common mask; they were not removed on the basis of target values or model performance.
 
