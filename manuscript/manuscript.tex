@@ -97,7 +97,7 @@ The experiment links a sector-wide basal-friction inversion with spatially withh
 \begin{figure*}
 \centering
 \includegraphics[width=\textwidth]{method_overview.pdf}
-\caption{Steps in the spatial-transfer experiment. Each experiment--configuration pair uses one modeled velocity field obtained from the vertex-wise median of ten predicted basal-friction controls. Predicted $C$ replaces reference $C$ only within the defined grounded area; reference $C$ is retained elsewhere. Observed velocity enters the inversion and the final velocity comparison, but is not an MLP predictor.}
+\caption{Steps in the spatial-transfer experiment. Each experiment--configuration pair uses one modeled velocity field obtained from the vertex-wise median of ten predicted basal-friction controls. Predicted $C$ replaces reference $C$ only within the withheld footprint or catchment, intersected with the eligible grounded area; reference $C$ is retained elsewhere. Observed velocity enters the inversion and the final velocity comparison, but is not an MLP predictor.}
 \label{fig:method_overview}
 \end{figure*}
 
@@ -308,11 +308,18 @@ a separate Icepack forward simulation.
 
 For each experiment and predictor configuration, the vertex-wise median of
 the ten predicted $C$ fields is evaluated in a separate Icepack forward
-simulation. This gives 66 MLP-based forward simulations in total. Predicted
-$C$ is applied only where $\phi>0.1$ within the common data mask; elsewhere,
-the inversion-reference $C$ is retained through the grounding transition.
+simulation. For each square, predicted $C$ replaces the inversion-reference
+$C$ only within the complete 130~km excluded footprint, intersected with the
+common eligible grounded mask. The inversion-reference $C$ is retained
+everywhere outside that footprint. The corresponding uniform-$C$ simulation
+uses the identical replacement mask, so the two simulations differ only in
+the spatial pattern of $C$ inside the excluded footprint. The PIG experiment
+uses the same procedure over the withheld catchment. This controlled
+evaluation comprises 60 square simulations using predicted $C$, one PIG
+simulation using predicted $C$, ten square-specific uniform-$C$ simulations,
+and one PIG uniform-$C$ simulation.
 
-The primary measure of performance is vector velocity RMSE (hereafter velocity RMSE) against observed MEaSUREs velocity over the evaluation area $A$. Modeled velocity is evaluated on the regular 450~m observation grid. The spatial average below is approximated using the mean squared vector residual at these equally spaced points (Appendix section~\nameref{app:training_campaign}):
+The primary measure of performance is vector velocity RMSE (hereafter velocity RMSE) against the original paired MEaSUREs velocity components at their regular 450~m pixel centres over the evaluation area $A$. Modeled velocity is evaluated at the same locations. This evaluation is distinct from the mesh-interpolated observation field used by the solver for inversion and boundary conditions. The spatial average below is approximated using the mean squared vector residual at these equally spaced points (Appendix section~\nameref{app:training_campaign}):
 \begin{equation}
 \label{eq:vector_rmse}
 \mathrm{RMSE}_{u}=
@@ -341,7 +348,9 @@ constant over that region, while containing no predictor-dependent spatial
 variation. Because $C_b\propto\exp(C)$, averaging $C$ corresponds to a
 geometric mean of $C_0\exp(C)$ before multiplication by the grounding ramp
 $\phi$. The constant is not fitted to held-out velocity and is applied over
-the same region as the predicted fields. The comparison therefore asks whether spatial variation in $C$ inferred from the predictors improves modeled velocity beyond what is obtained from a single representative friction control. We also report relative RMSE,
+the same withheld replacement region as the predicted field, while the
+inversion-reference $C$ is retained outside that region in both simulations.
+The comparison therefore asks whether spatial variation in $C$ inferred from the predictors improves modeled velocity beyond what is obtained from a single representative friction control. We also report relative RMSE,
 $\mathrm{RMSE}_{\mathrm{ML}}/\mathrm{RMSE}_{\mathrm{uniform}}$; values below
 one indicate improvement over the uniform-$C$ reference.
 
@@ -364,8 +373,10 @@ squares. The inversion reference and square-specific uniform-$C$ reference are
 followed by forward simulations using the median predicted $C$ for all six
 configurations. Each gray line connects the same square; shading spans the
 minimum to maximum across squares, and short horizontal marks show the medians.
-The vertical axis is logarithmic. Uniform $C$ is calculated separately outside
-each excluded footprint. The inversion reference was fitted using sector-wide
+The vertical axis is logarithmic. Uniform $C$ is calculated separately from
+the eligible region outside each excluded footprint; both the predicted and
+uniform controls replace the inversion reference only inside that footprint.
+The inversion reference was fitted using sector-wide
 observations, including those in the test squares.}
 \label{fig:performance}
 \end{figure*}
@@ -375,15 +386,15 @@ relative to the spatially uniform-$C$ reference, but performance varies
 substantially among locations. Figure~\ref{fig:performance} shows the velocity
 RMSE for each held-out square, including the inversion and uniform-$C$
 references. The two ice-product configurations have the lowest median RMSE
-values across the squares, 32.7~m~a$^{-1}$ for CFG01 and
-32.3~m~a$^{-1}$ for CFG02, and each improves on uniform $C$ in eight of ten
+values across the squares, 32.9~m~a$^{-1}$ for CFG01 and
+32.5~m~a$^{-1}$ for CFG02, and each improves on uniform $C$ in eight of ten
 squares (Table~\ref{tab:performance_summary}). CFG05 and CFG06, which combine the selected ice-product and geophysical-product
 predictors, improve on uniform $C$ in nine squares, while CFG03 and CFG04, the
 all- and selected-geophysical configurations, improve on uniform $C$ in six and
 seven squares, respectively.
 
 The inversion-reference solution has a substantially lower median RMSE of
-13.1~m~a$^{-1}$. This is not a withheld benchmark, because the inversion was
+13.2~m~a$^{-1}$. This is not a withheld benchmark, because the inversion was
 fitted using velocity observations from the complete sector, including the
 evaluation squares. It nevertheless provides context for the velocity fit
 obtained with the spatially resolved inversion. The substantially larger errors
@@ -406,32 +417,32 @@ $\mathrm{m\,a^{-1}}$.}
 \toprule
 Control/config. & Predictors & \shortstack{Median\\RMSE} & IQR & \shortstack{Better than\\uniform} & \shortstack{Median\\relative RMSE} & \shortstack{Relative RMSE\\IQR}\\
 \midrule
-Uniform $C$ & spatially uniform & 45.6 & 25.6--117.6 &
+Uniform $C$ & spatially uniform & 44.9 & 25.0--117.8 &
 -- & 1.00 & 1.00--1.00\\
-Inversion reference & -- & 13.1 & 8.0--22.8 &
-10/10 & 0.19 & 0.16--0.28\\
+Inversion reference & -- & 13.2 & 8.0--23.0 &
+10/10 & 0.19 & 0.17--0.29\\
 \midrule
-CFG01 & all ice & 32.7 & 12.8--90.6 &
-8/10 & 0.44 & 0.36--0.87\\
-CFG02 & selected ice & 32.3 & 12.6--93.0 &
-8/10 & 0.49 & 0.37--0.87\\
-CFG03 & all geophysical & 61.0 & 21.3--96.3 &
-6/10 & 0.97 & 0.53--1.09\\
-CFG04 & selected geophysical & 41.0 & 19.6--109.5 &
-7/10 & 0.89 & 0.56--1.03\\
-CFG05 & selected combined & 50.7 & 12.9--68.0 &
-9/10 & 0.59 & 0.49--0.89\\
-CFG06 & combined + alignment & 53.3 & 12.3--70.7 &
-9/10 & 0.59 & 0.46--0.88\\
+CFG01 & all ice & 32.9 & 12.8--91.3 &
+8/10 & 0.45 & 0.37--0.88\\
+CFG02 & selected ice & 32.5 & 12.7--93.7 &
+8/10 & 0.50 & 0.37--0.87\\
+CFG03 & all geophysical & 60.9 & 21.3--96.6 &
+6/10 & 0.97 & 0.54--1.09\\
+CFG04 & selected geophysical & 40.0 & 19.9--109.5 &
+7/10 & 0.88 & 0.56--1.03\\
+CFG05 & selected combined & 50.7 & 13.0--68.1 &
+9/10 & 0.59 & 0.50--0.90\\
+CFG06 & combined + alignment & 53.3 & 12.4--70.7 &
+9/10 & 0.61 & 0.47--0.88\\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 Removing driving stress from CFG01 to form CFG02 changes the median velocity
-RMSE only slightly, from 32.7 to 32.3~m~a$^{-1}$, and both configurations
+RMSE only slightly, from 32.9 to 32.5~m~a$^{-1}$, and both configurations
 improve on uniform $C$ in eight squares. Because driving stress is derived from
 ice thickness and surface slope, which are already included in CFG02, supplying
-it explicitly provides no consistent improvement across the ten squares. Among the geophysical configurations, CFG04 has a lower median velocity RMSE than CFG03 (41.0 versus 61.0~m~a$^{-1}$), but CFG04 has lower velocity RMSE than CFG03 in only five of the ten squares; CFG03 performs better in the other five. Relative to uniform $C$, CFG03 reduces velocity RMSE in six squares and CFG04 in seven.
+it explicitly provides no consistent improvement across the ten squares. Among the geophysical configurations, CFG04 has a lower median velocity RMSE than CFG03 (40.0 versus 60.9~m~a$^{-1}$), but CFG04 has lower velocity RMSE than CFG03 in only five of the ten squares; CFG03 performs better in the other five. Relative to uniform $C$, CFG03 reduces velocity RMSE in six squares and CFG04 in seven.
 
 %Their training behavior also differs: across the primary-square runs, the median validation MSE decreases by a factor of 19.4 for CFG02 but only 1.68 for CFG04 (Appendix Fig.~\ref{fig:training_convergence}). These factors describe the decrease from each configuration's initial loss and do not measure the fraction of target variation reproduced.
 
@@ -452,7 +463,7 @@ relationship across the study region.
 We next examine whether poor modeled velocity performance is associated with low predictor support. Across the ten primary squares, predictor support is
 generally high (Fig.~\ref{fig:support_skill}a). Marginal support covers more
 than 94\% of each primary square, while lower joint support is concentrated
-mainly in SQ08. High support, however, does not guarantee good modeled velocity performance. Figure~\ref{fig:support_skill}b shows performance relative to uniform $C$; a relative RMSE greater than one means that the predicted control performs worse than the uniform-$C$ reference. SQ07--CFG03, for example, has 99.4\% support by both criteria but a relative RMSE of 2.32, while SQ02--CFG04 has 97.3\% support and a relative RMSE of 1.48 (Table~\ref{tab:supported_failures}). These failures cannot be explained solely by individual predictors falling outside their training ranges or by the absence of a nearby multivariable match under the adopted definition.
+mainly in SQ08. High support, however, does not guarantee good modeled velocity performance. Figure~\ref{fig:support_skill}b shows performance relative to uniform $C$; a relative RMSE greater than one means that the predicted control performs worse than the uniform-$C$ reference. SQ07--CFG03, for example, has 99.4\% support by both criteria but a relative RMSE of 2.33, while SQ02--CFG04 has 97.3\% support and a relative RMSE of 1.44 (Table~\ref{tab:supported_failures}). These failures cannot be explained solely by individual predictors falling outside their training ranges or by the absence of a nearby multivariable match under the adopted definition.
 
 \begin{figure*}
 \centering
@@ -478,10 +489,10 @@ mainly in SQ08. High support, however, does not guarantee good modeled velocity 
 Square & Config. & Support (\%) & ML RMSE & Uniform RMSE & Relative RMSE\\
        &         &              & \multicolumn{2}{c}{(m~a$^{-1}$)} & \\
 \midrule
-SQ02 & CFG04 & 97.3 & 37.6  & 25.5  & 1.48\\
-SQ06 & CFG01 & 97.6 & 118.2 & 108.3 & 1.09\\
-SQ07 & CFG03 & 99.4 & 60.6  & 26.1  & 2.32\\
-SQ09 & CFG02 & 96.4 & 62.7  & 55.0  & 1.14\\
+SQ02 & CFG04 & 97.3 & 35.6  & 24.8  & 1.44\\
+SQ06 & CFG01 & 97.6 & 118.3 & 108.2 & 1.09\\
+SQ07 & CFG03 & 99.4 & 60.2  & 25.9  & 2.33\\
+SQ09 & CFG02 & 96.4 & 62.7  & 54.8  & 1.14\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -505,50 +516,53 @@ $e_{\mathrm{ML}}=\lVert\mathbf{u}_{\mathrm{ML}}-
 $e_{\mathrm{ML}}-e_{\mathrm{uniform}}$; negative values indicate lower local
 error for the predicted control and positive values indicate lower error for
 uniform $C$. Cyan contours in panels (c, d) mark an inversion-reference
-velocity error of $100\,\mathrm{m\,a^{-1}}$. Velocity errors are shown as $1.8\,\mathrm{km}$ bin means for legibility; all statistics were calculated from the evaluated observation-grid points.}
+velocity error of $100\,\mathrm{m\,a^{-1}}$. In each experiment, both controls
+replace the inversion reference only inside the complete 130~km footprint.
+Velocity errors use the original paired MEaSUREs components and are shown as
+$1.8\,\mathrm{km}$ bin means for legibility; all statistics were calculated from the evaluated observation-grid points.}
 \label{fig:square_maps}
 \end{figure}
 
-Figure~\ref{fig:square_maps} compares CFG02, the selected ice-product configuration, with CFG04, the selected geophysical-product configuration. The two ice-product configurations have nearly identical summary performance, so CFG02 is used to represent that predictor group without repeating a visually similar map. Each square comes from a separate set of MLPs for which the complete 130~km footprint was excluded from training and validation; the panels therefore assemble ten separately withheld predictions rather than one sector-wide prediction. Across the central 50~km squares, CFG02 has lower velocity RMSE than CFG04 in eight of ten tests. Over the complete 130~km footprints, both configurations improve on uniform $C$ in nine of ten tests, with median relative RMSEs of 0.54 for CFG02 and 0.82 for CFG04. Across the ten central 50~km squares, velocity error exceeds $100\,\mathrm{m\,a^{-1}}$ over 12.9\% for CFG02 and 22.8\% for CFG04, compared with only 0.13\% for the inversion-reference solution. Thus, although the predicted controls often improve on uniform $C$, regions of large absolute velocity error remain much more extensive than for the fitted inversion-reference control.  %Panels (c, d) show the absolute errors that remain, while panels (e, f) show where predicting spatial variation in $C$ reduces or increases local error relative to uniform $C$.
+Figure~\ref{fig:square_maps} compares CFG02, the selected ice-product configuration, with CFG04, the selected geophysical-product configuration. The two ice-product configurations have nearly identical summary performance, so CFG02 is used to represent that predictor group without repeating a visually similar map. Each square comes from a separate set of MLPs for which the complete 130~km footprint was excluded from training and validation; the panels therefore assemble ten separately withheld predictions rather than one sector-wide prediction. In every simulation, the predicted and uniform controls replace the inversion reference only inside the corresponding footprint. Across the central 50~km squares, CFG02 has lower velocity RMSE than CFG04 in eight of ten tests. Over the complete 130~km footprints, both configurations improve on uniform $C$ in nine of ten tests, with median relative RMSEs of 0.64 for CFG02 and 0.86 for CFG04. Across the ten central 50~km squares, velocity error exceeds $100\,\mathrm{m\,a^{-1}}$ over 13.0\% for CFG02 and 22.8\% for CFG04, compared with only 0.13\% for the inversion-reference solution. Thus, although the predicted controls often improve on uniform $C$, regions of large absolute velocity error remain much more extensive than for the fitted inversion-reference control.  %Panels (c, d) show the absolute errors that remain, while panels (e, f) show where predicting spatial variation in $C$ reduces or increases local error relative to uniform $C$.
 
 The maps show that the advantage of the ice-product configuration occurs
 across several distinct flow settings. In the fast PIG test SQ01, the
 central-square RMSE ratio is 0.50 for CFG02 and 0.94 for CFG04, with the
 largest CFG02 improvement concentrated in the fast-flowing part of the
 square. The local error difference adds an important distinction: CFG02
-reduces error over 85.1\% of the central square, with a median pointwise
-reduction of $132.5\,\mathrm{m\,a^{-1}}$, whereas CFG04 reduces error at
+reduces error over 84.8\% of the central square, with a median pointwise
+reduction of $133.5\,\mathrm{m\,a^{-1}}$, whereas CFG04 reduces error at
 every evaluated point but has a much smaller median pointwise reduction of
-$13.5\,\mathrm{m\,a^{-1}}$. Thus, the fraction of the square with lower local error does not by itself
+$14.8\,\mathrm{m\,a^{-1}}$. Thus, the fraction of the square with lower local error does not by itself
 determine the RMSE improvement; the magnitude and spatial distribution of the
-error reductions are also important. CFG02 also gives the larger improvement in moderately fast Thwaites flow in SQ03 (0.37 versus 0.83). There, local error is lower than for uniform $C$ over 90.9\% of the central square for CFG02 and 77.4\% for CFG04. Good performance is not confined to fast flow:
+error reductions are also important. CFG02 also gives the larger improvement in moderately fast Thwaites flow in SQ03 (0.37 versus 0.83). There, local error is lower than for uniform $C$ over 90.4\% of the central square for CFG02 and 77.5\% for CFG04. Good performance is not confined to fast flow:
 both configurations improve substantially on uniform $C$ in the slow
-Thwaites square SQ04 (0.29 and 0.41) and the slow PIG--Thwaites corridor
-square SQ10 (0.21 and 0.39).
+Thwaites square SQ04 (0.30 and 0.42) and the slow PIG--Thwaites corridor
+square SQ10 (0.22 and 0.41).
 
 The large absolute residuals in the SQ05 footprint occur where it extends
 from the PIG--Thwaites corridor into fast PIG flow. These large residuals
 contribute disproportionately to the footprint-wide RMSE, yet both learned
-controls still improve on uniform $C$ (ratios of 0.82 and 0.85).
+controls still improve on uniform $C$ (ratios of 0.85 and 0.86).
 Figure~\ref{fig:square_maps} panels (e, f) show that this footprint contains both reductions and
-increases in local error: CFG02 reduces error over 82.3\% of its evaluated
-area and CFG04 over 61.9\%. The large absolute errors in panels (c, d)
+increases in local error: CFG02 reduces error over 80.7\% of its evaluated
+area and CFG04 over 60.2\%. The large absolute errors in panels (c, d)
 therefore coexist with improvements relative to the uniform control.
 The inversion-reference velocity error is also elevated in this part of
 SQ05, indicating that some of the mismatch remains even with the fitted
 reference $C$. Over the complete footprint, however, the velocity RMSEs
-are $538.8$ and $560.4\,\mathrm{m\,a^{-1}}$ for CFG02 and CFG04, compared
-with $72.8\,\mathrm{m\,a^{-1}}$ for the inversion reference. The predicted
+are $539.5$ and $546.2\,\mathrm{m\,a^{-1}}$ for CFG02 and CFG04, compared
+with $77.1\,\mathrm{m\,a^{-1}}$ for the inversion reference. The predicted
 controls therefore introduce substantial additional error.
 
 Although CFG02 performs better than CFG04 in most squares, the relative
 performance of the two predictor groups varies by location. In SQ02,
 which spans the PIG--Thwaites corridor and Thwaites, CFG02 performs
 substantially better than the uniform-$C$ reference, whereas CFG04
-performs worse. The central-square RMSE ratios are 0.47 for CFG02 and
-1.48 for CFG04, and the corresponding full-footprint ratios are 0.43
-and 1.73. The local comparison shows that CFG02 reduces error over
-98.7\% of the central square, whereas CFG04 reduces it over only 43.1\%.
+performs worse. The central-square RMSE ratios are 0.49 for CFG02 and
+1.44 for CFG04, and the corresponding full-footprint ratios are 0.58
+and 1.91. The local comparison shows that CFG02 reduces error over
+99.8\% of the central square, whereas CFG04 reduces it over only 42.5\%.
 The higher CFG04 RMSE therefore accompanies a mixture of local
 improvements and deteriorations, rather than uniformly larger errors.
 CFG02 also agrees more closely with the inversion-reference control
@@ -556,7 +570,7 @@ in the central square, with a $C$ RMSE of 0.22 compared with 0.61 for
 CFG04. SQ09, spanning PIG and the PIG--Thwaites corridor, shows the
 opposite pattern: CFG04 improves on uniform $C$ while CFG02 does not,
 with central-square ratios of 0.81 and 1.14 and full-footprint ratios
-of 0.92 and 1.16, respectively. In this central square,
+of 0.88 and 1.20, respectively. In this central square,
 $e_{\mathrm{ML}}-e_{\mathrm{uniform}}$ is positive at every evaluated
 point for CFG02 and negative at every evaluated point for CFG04.
 CFG04 also has the lower central-square $C$ RMSE in SQ09
@@ -568,23 +582,23 @@ is used only as a secondary spatial diagnostic.
 In SQ06, both configurations are slightly worse than uniform $C$ in the
 central Thwaites square (ratios of 1.07 and 1.04), despite simultaneous
 predictor support exceeding 98\%. Local error is lower than uniform $C$
-over only 13.0\% of the central square for CFG02 and 23.0\% for CFG04.
-Over the complete footprint, however, the ratios decrease to 0.34 and
-0.62, and local error reductions cover 59.0\% and 62.0\% of the evaluated
+over only 12.6\% of the central square for CFG02 and 22.6\% for CFG04.
+Over the complete footprint, however, the ratios decrease to 0.62 and
+0.79, and local error reductions cover 54.1\% and 59.5\% of the evaluated
 area, respectively. The difference maps therefore show how improvements
 around the central square can accompany poorer performance within it.
-Similarly, CFG04 changes from a ratio of 1.21 in central SQ07 to 0.75
+Similarly, CFG04 changes from a ratio of 1.24 in central SQ07 to 0.80
 over the complete footprint. In contrast, the CFG04 failure in SQ02
 and the CFG02 failure in SQ09 remain even when the full footprints
-are evaluated. SQ08 presents a different case: the uniform-$C$ error is already only 15.9~m~a$^{-1}$, compared with 12.2~m~a$^{-1}$ for the inversion-reference simulation, leaving relatively little scope for improvement. CFG02 and CFG04 give RMSE values of 14.4 and 15.7~m~a$^{-1}$, respectively. Although local error is lower than for uniform $C$ over 74.9\% and 71.2\% of the central square, the median local reductions are only $4.4$ and $5.1\,\mathrm{m\,a^{-1}}$. In this case, widespread negative values in panels (e, f) represent small absolute gains, and the larger residuals elsewhere limit the reduction in RMSE.
+are evaluated. SQ08 presents a different case: the uniform-$C$ error is already only 15.9~m~a$^{-1}$, compared with 12.3~m~a$^{-1}$ for the inversion-reference simulation, leaving relatively little scope for improvement. CFG02 and CFG04 give RMSE values of 14.5 and 15.8~m~a$^{-1}$, respectively. Although local error is lower than for uniform $C$ over 75.0\% and 71.3\% of the central square, the median local reductions are only $4.3$ and $5.0\,\mathrm{m\,a^{-1}}$. In this case, widespread negative values in panels (e, f) represent small absolute gains, and the larger residuals elsewhere limit the reduction in RMSE.
 
 As discussed above, agreement with the inversion-reference $C$ and velocity performance coincide in SQ02 and SQ09. In fact, when comparing CFG02 with CFG04 within each of the ten central squares, the configuration with lower $C$ RMSE also has lower velocity RMSE. The size of the improvement in velocity RMSE from one configuration to the other, however, does not follow directly from the magnitude of the control error. Over
 the complete SQ06 footprint, CFG02 and CFG04 have nearly identical
 $C$ RMSE values (0.435 and 0.439), while their velocity RMSE ratios
-differ substantially (0.34 and 0.62). Conversely, over the complete
+differ substantially (0.62 and 0.79). Conversely, over the complete
 SQ05 footprint, the lower $C$ RMSE of CFG02 (0.57 versus 0.85 for
 CFG04) accompanies only a modest reduction in velocity RMSE
-(538.8 versus $560.4\,\mathrm{m\,a^{-1}}$). Closer agreement with
+(539.5 versus $546.2\,\mathrm{m\,a^{-1}}$). Closer agreement with
 the inversion-reference control therefore does not translate into a
 proportional improvement in velocity RMSE. Within the individual
 squares, larger absolute local differences from the inversion-reference $C$ generally coincide with larger local velocity errors, although the strength of this relationship varies among locations. The median within-square Spearman correlations are 0.32 for CFG02 and 0.42 for CFG04, indicating a modest positive association rather than a one-to-one correspondence between $C$ error and velocity error.
@@ -594,6 +608,8 @@ variation. Membrane stresses couple neighboring locations, so a
 change in $C$ can alter velocity beyond the location where it is
 applied. Local velocity error can therefore reflect control
 differences elsewhere as well as those at the same point.
+The sensitivity of the central-square results to the region over which $C$
+is replaced is quantified in Appendix section~\nameref{app:replacement_sensitivity}.
 Future
 work could use spatial sensitivity analysis to examine how
 perturbations to $C$ in different parts of the domain contribute to
@@ -610,9 +626,9 @@ predictor support. The selected predictors therefore contain information that ca
 
 The secondary catchment-scale experiment tests whether the point-wise relationship remains useful when all of PIG is withheld. We evaluate CFG02, the selected ice-product configuration, using the same ice-flow model and evaluation procedure as in the square experiments. The
 spatially uniform-$C$ reference produces a vector velocity RMSE of
-$386.7\,\mathrm{m\,a^{-1}}$, whereas CFG02 produces an RMSE of
-$355.7\,\mathrm{m\,a^{-1}}$. This corresponds to a modest 8\% reduction in
-RMSE relative to the uniform-$C$ reference. The inversion-reference simulation has an RMSE of $61.0\,\mathrm{m\,a^{-1}}$, showing that the transferred point-wise mapping recovers only a small fraction of the improvement obtained with the spatially resolved inversion.
+$384.9\,\mathrm{m\,a^{-1}}$, whereas CFG02 produces an RMSE of
+$354.8\,\mathrm{m\,a^{-1}}$. This corresponds to a modest 8\% reduction in
+RMSE relative to the uniform-$C$ reference. The inversion-reference simulation has an RMSE of $48.1\,\mathrm{m\,a^{-1}}$, showing that the transferred point-wise mapping recovers only a small fraction of the improvement obtained with the spatially resolved inversion.
 
 \begin{figure*}[!t]
 \centering
@@ -648,31 +664,32 @@ of $100$ (dotted), $500$ (dashed), and
 $1000\,\mathrm{m\,a^{-1}}$ (solid). The cyan contour in panel (b) marks an
 inversion-reference velocity error of $100\,\mathrm{m\,a^{-1}}$. Velocity fields are rendered from the
 original $450\,\mathrm{m}$ grid using display interpolation; all
-reported statistics use the original grid values.}
+reported statistics use the original grid values. Both CFG02 and uniform
+$C$ replace the inversion reference only inside the PIG holdout.}
 \label{fig:pig_maps}
 \end{figure*}
 
-CFG02 lowers the local velocity error relative to uniform $C$ over 78.1\%
+CFG02 lowers the local velocity error relative to uniform $C$ over 77.6\%
 of the evaluated PIG area (Fig.~\ref{fig:pig_maps}). The improvement occurs
-across all observed-speed classes. The relative RMSE is 0.81 below $100\,\mathrm{m\,a^{-1}}$, 0.77 between 100 and $500\,\mathrm{m\,a^{-1}}$, 0.87 between 500 and $1000\,\mathrm{m\,a^{-1}}$, and 0.96 above $1000\,\mathrm{m\,a^{-1}}$. The improvement is therefore spatially
+across all observed-speed classes. The relative RMSE is 0.59 below $100\,\mathrm{m\,a^{-1}}$, 0.84 between 100 and $500\,\mathrm{m\,a^{-1}}$, 0.89 between 500 and $1000\,\mathrm{m\,a^{-1}}$, and 0.96 above $1000\,\mathrm{m\,a^{-1}}$. The improvement is therefore spatially
 widespread, but its influence on the catchment-wide statistic is concentrated
 in fast flow. The fastest 10\% of the evaluated area, corresponding to observed speeds
-above approximately $506\,\mathrm{m\,a^{-1}}$, contributes 61.8\% of the
+above approximately $504\,\mathrm{m\,a^{-1}}$, contributes 59.8\% of the
 total squared-error reduction relative to uniform $C$, but still accounts
 for 89.5\% of the CFG02 squared error. In the fastest flow
 ($>1000\,\mathrm{m\,a^{-1}}$), the RMSE remains
-$1388.5\,\mathrm{m\,a^{-1}}$, compared with
-$1443.8\,\mathrm{m\,a^{-1}}$ for uniform $C$. Thus, CFG02 improves much of
+$1390.0\,\mathrm{m\,a^{-1}}$, compared with
+$1448.8\,\mathrm{m\,a^{-1}}$ for uniform $C$. Thus, CFG02 improves much of
 the slow and intermediate-speed catchment interior and parts of the
 fast-flowing trunk, but provides only a modest relative improvement in the
 fastest downstream flow. This spatial concentration explains how CFG02 can
 lower error across most of the catchment while retaining a large
 catchment-wide RMSE.
 
-Locations where the inversion-reference error is at least $100\,\mathrm{m\,a^{-1}}$ comprise 3.9\% of the evaluated PIG area but contain 45.9\% of the CFG02 squared error. The remaining error is not confined to those locations: most locations with CFG02 error above $100\,\mathrm{m\,a^{-1}}$ lie outside regions where the inversion-reference error exceeds $100\,\mathrm{m\,a^{-1}}$. Predictor support alone does not explain the spatial pattern. For CFG02,
+Locations where the inversion-reference error is at least $100\,\mathrm{m\,a^{-1}}$ comprise 3.9\% of the evaluated PIG area but contain 47.1\% of the CFG02 squared error. The remaining error is not confined to those locations: most locations with CFG02 error above $100\,\mathrm{m\,a^{-1}}$ lie outside regions where the inversion-reference error exceeds $100\,\mathrm{m\,a^{-1}}$. Predictor support alone does not explain the spatial pattern. For CFG02,
 marginal support covers 97.5\% of the evaluated PIG area, joint support covers
 93.3\%, and 91.9\% satisfies both criteria. Of the net squared-error reduction
-relative to uniform $C$, 85.6\% occurs within the area satisfying both support
+relative to uniform $C$, 79.8\% occurs within the area satisfying both support
 criteria. CFG02 nevertheless contains both successful and unsuccessful regions
 where predictor support is strong.
 CFG02 has a $C$ RMSE of 0.85 across PIG. Locations with larger absolute differences from reference $C$ also tend to have larger velocity errors, with a Spearman correlation of 0.67. This indicates a relatively strong positive association and is larger than the median within-square correlation of 0.32 for CFG02. The association between training-representation percentile and absolute $C$ error is much weaker. $C$ RMSE increases from 0.742 to 0.877 and 0.898 across the three categories of progressively sparser representation, but the Spearman correlation between representation percentile and absolute $C$ error is only 0.031. This near-zero correlation indicates that having fewer nearby training examples does not correspond to a consistent increase in local $C$ error across PIG.
@@ -698,7 +715,7 @@ only a weak relationship with local velocity error across the square tests
 (Appendix~\ref{app:bedmachine_diagnostics}). Comparisons among BedMachine
 source classes are more limited because eight of the ten central squares
 contain only streamline-diffusion cells. Nevertheless, CFG02 velocity RMSE
-ranges from 3.5 to 135.8~m~a$^{-1}$ across those eight squares, showing that
+ranges from 3.5 to 136.3~m~a$^{-1}$ across those eight squares, showing that
 differences in reconstruction class alone cannot explain the large spatial
 variation in performance. Reconstruction may still matter within a source
 class, for example if smoothing removes local bed variations that could help
@@ -824,7 +841,61 @@ operations; it is not a differentiably smooth effective-pressure law.
 
 Quadratic finite-element basis functions are used. Observed velocities are prescribed along the non-terminus boundaries, while an ocean-pressure traction condition is applied at the termini. In that terminus condition the water-depth magnitude is $d=\max(h-s,0)$ and the normal-stress contribution is proportional to $(\rho_i g h^2-\rho_w g d^2)/2$. Eleven Dirichlet velocity degrees of freedom without a colocated valid velocity pixel were filled from the nearest valid centered MEaSUREs pixel. 
 
-Predicted $C$ is applied only within the common eligible grounded area with $\phi>0.1$. Elsewhere, including through the grounding transition, the reference $C$ is retained. This keeps the geometry, boundary conditions, and grounding treatment identical between the reference simulation and the simulations using MLP-predicted $C$.
+For each square, predicted $C$ is applied only within the complete 130~km
+excluded footprint intersected with the common eligible grounded area where
+$\phi>0.1$. The PIG experiment uses the corresponding catchment mask. The
+uniform-$C$ simulations use identical masks. Elsewhere, including through the
+grounding transition, the reference $C$ is retained. This keeps the geometry,
+boundary conditions, and grounding treatment identical while holding the
+surrounding reference control fixed.
+
+\subsection{Sensitivity to the replacement region}
+\label{app:replacement_sensitivity}
+
+We also compared the controlled design with an earlier calculation in which
+the predicted $C$, or the corresponding uniform-$C$ value, replaced the
+inversion-reference control throughout the common eligible grounded sector.
+In that earlier design, the predicted control was therefore also used in the
+MLP training geography. In the controlled design used for the main results,
+replacement is restricted to the complete 130~km footprint for each square,
+or to the held-out regional geography, intersected with the same common
+eligible grounded mask. Predicted and uniform controls use identical masks,
+and both retain inversion-reference $C$ outside the mask. The complete 40~km
+buffer around each central square is part of the replacement region.
+
+The effects of correcting the observational reference and changing the
+replacement geography were evaluated separately. Replacing the
+mesh-interpolated observational values with the original paired MEaSUREs
+components changed the central-square MLP RMSE by a median of
+$0.07\,\mathrm{m\,a^{-1}}$ and a maximum of
+$0.95\,\mathrm{m\,a^{-1}}$. Restricting replacement to the withheld
+geography then changed the central-square MLP RMSE by a median of
+$0.003\,\mathrm{m\,a^{-1}}$ and a maximum of
+$2.02\,\mathrm{m\,a^{-1}}$. Neither change altered whether a configuration
+improved on uniform $C$ in any square or which configuration had the lowest
+RMSE in a square. Differences were larger over the complete footprints. For
+CFG02 and CFG04, the median relative RMSE changed from 0.54 and 0.82 under
+sector-wide replacement to 0.64 and 0.86 under controlled replacement; both
+configurations improved on uniform $C$ in nine of ten complete footprints in
+both designs. Across these 20 footprint comparisons, the median absolute
+change in relative RMSE was 0.04 and the largest was 0.28. The principal
+central-square findings are therefore robust to the two replacement designs,
+while the complete-footprint results are more sensitive to the surrounding
+control prescription.
+
+The basal-friction control uses continuous quadratic finite elements. The
+replacement mask selects values at the finite-element control points, and
+outside-mask control-point values equal the inversion-reference $C$ exactly.
+Within cells crossed by the geographic boundary, the quadratic basis connects
+inside- and outside-mask values. The transition can therefore be steep but is
+not a literal discontinuity in $C$, and no explicit taper was applied. The
+central square is separated from the footprint boundary by the 40~km buffer.
+All controlled solves converged, but convergence and this separation do not
+show that boundary influence is negligible. The change in modeled velocity
+between the two designs is consistent with spatial coupling in the ice-flow
+model, but it does not isolate a uniquely non-local contribution because the
+surrounding control prescription and the transition at the replacement
+boundary change together.
 
 The inversion was initialized with $C=0$ and run for 300 optimization
 iterations. Figure~\ref{fig:lcurve} shows the L-curve used to select the
@@ -837,7 +908,7 @@ regularization value.
 \begin{figure}
 \centering
 \includegraphics[width=0.82\linewidth]{lcurve_appendix.png}
-\caption{L-curve for the sector-wide inversion. The maximum-curvature criterion selects $r_C\simeq0.014$; smaller $r_C$ corresponds to stronger smoothing in the objective function in Eqn~\ref{eq:objective}. The neighboring candidate near $r_C\simeq0.017$ has similar curvature, indicating a narrow elbow range.}
+\caption{L-curve for the sector-wide inversion. The maximum-curvature criterion selects $r_C\simeq0.014$; smaller $r_C$ corresponds to stronger smoothing in the objective function in Eqn~\ref{eq:objective}. The neighboring candidate near $r_C\simeq0.017$ has similar curvature, indicating a narrow elbow range. The open point at $r_C=0.05$ has finite comparable objective values but reached the iteration limit and was not used in the selection.}
 \label{fig:lcurve}
 \end{figure}
 
@@ -1092,7 +1163,11 @@ $R_C^2$ values of 0.92/$-0.49$, 0.85/$-0.28$, and
 validation rows does not predict spatial transfer to the withheld
 catchment. 
 
-The inter-catchment experiment provides an additional regional test by withholding the complete PIG--Thwaites and Thwaites--Dotson corridors. This tests transfer from the named glacier catchments to the regions between them. For the two corridors together, the holdout $C$ RMSE / $R_C^2$ values are 0.81/$-1.86$, 0.33/0.53, and 0.33/0.52 for CFG04--CFG06. Across both corridors, the median predicted $C$ fields give velocity RMSE values of 484.4, 135.2, and 126.6~m~a$^{-1}$ for CFG04, CFG05, and CFG06, respectively, compared with 620.5~m~a$^{-1}$ for uniform $C$. The two corridors are spatially separate, and the intervening region is not included in the calculation. All three configurations reduce velocity RMSE relative to uniform $C$ over the combined corridor area, with lower errors for CFG05 and CFG06 than for CFG04.
+The inter-catchment experiment provides an additional regional test by withholding the complete PIG--Thwaites and Thwaites--Dotson corridors. This tests transfer from the named glacier catchments to the regions between them. For the two corridors together, the holdout $C$ RMSE / $R_C^2$ values are 0.81/$-1.86$, 0.33/0.53, and 0.33/0.52 for CFG04--CFG06. Across both corridors, the median predicted $C$ fields give velocity RMSE values of 470.3, 119.0, and 109.3~m~a$^{-1}$ for CFG04, CFG05, and CFG06, respectively, compared with 578.4~m~a$^{-1}$ for uniform $C$ and 28.1~m~a$^{-1}$ for the inversion reference. The corresponding relative RMSE values are 0.81, 0.21, and 0.19. The two corridors are spatially separate, and the intervening region is not included in the calculation. All three configurations reduce velocity RMSE relative to uniform $C$ over the combined corridor area, with lower errors for CFG05 and CFG06 than for CFG04.
+For these velocity calculations, all four controls replace the inversion
+reference only inside the combined corridor geography and retain the same
+reference $C$ outside it, matching the controlled comparison used for the
+square and PIG CFG02 results.
 
 Finally, we examine the small number of unusually large reference-$C$ values
 because mean-square loss gives large prediction residuals greater weight.
@@ -1197,7 +1272,7 @@ $C$ error within either the slow- or moderate-flow classes. Only one square
 contributes to the 500--1000~m~a$^{-1}$ class, so there are not enough
 repeated spatial tests to draw the same conclusion for faster flow.
 
-Relative velocity RMSE also does not vary consistently with training representation. In SQ06, CFG02 performs worse than uniform $C$ in the best-represented category (relative velocity RMSE 1.15) but improves on uniform $C$ in the sparsest category (0.95). In SQ05, $C$ RMSE decreases from 0.416 to 0.337 between these categories (Table~\ref{tab:representation_c}), while relative velocity RMSE increases from 0.36 to 0.80. In SQ02--CFG04, the best-represented category has a $C$ RMSE of 0.608 and a relative velocity RMSE of 1.50, whereas the sparsest category has lower $C$ RMSE (0.470) and relative velocity RMSE (1.28). These examples show that sparser training representation does not consistently correspond to larger relative velocity RMSE. They also show that closer agreement with the reference $C$ does not necessarily produce lower relative velocity RMSE.
+Relative velocity RMSE also does not vary consistently with training representation. In SQ06, CFG02 performs worse than uniform $C$ in the best-represented category (relative velocity RMSE 1.15) but improves on uniform $C$ in the sparsest category (0.96). In SQ05, $C$ RMSE decreases from 0.416 to 0.337 between these categories (Table~\ref{tab:representation_c}), while relative velocity RMSE increases from 0.37 to 0.81. In SQ02--CFG04, the best-represented category has a $C$ RMSE of 0.608 and a relative velocity RMSE of 1.45, whereas the sparsest category has lower $C$ RMSE (0.470) and relative velocity RMSE (1.34). These examples show that sparser training representation does not consistently correspond to larger relative velocity RMSE. They also show that closer agreement with the reference $C$ does not necessarily produce lower relative velocity RMSE.
 
 \section{MLP training and statistical comparisons}
 \label{app:training_campaign}
@@ -1225,10 +1300,11 @@ spatial splits and was beyond the scope of this study. The chosen architecture
 should therefore be viewed as a fixed, flexible modeling choice rather than an
 optimized architecture.
 
-Each experiment--configuration pair uses ten reproducible training realizations with different training/validation row assignments, initial weights, and epoch shuffles. We trained 660 MLPs in total. The regional tests use CFG01--CFG03 for PIG and CFG04--CFG06 for the inter-catchment corridors. For each experiment--configuration pair, the ten predicted $C$ fields are combined by taking the median at each mesh vertex. The resulting 66 median $C$ fields are used for the forward simulations reported in this study. The individual realizations are used to assess sensitivity to the training procedure and to construct the median prediction; they are not treated as independent spatial tests or as estimates of predictive uncertainty.
+Each experiment--configuration pair uses ten reproducible training realizations with different training/validation row assignments, initial weights, and epoch shuffles. We trained 660 MLPs in total. The regional tests use CFG01--CFG03 for PIG and CFG04--CFG06 for the inter-catchment corridors. For each experiment--configuration pair, the ten predicted $C$ fields are combined by taking the median at each mesh vertex, giving 66 median fields. The controlled forward evaluation in the main text uses the 60 square fields and the PIG CFG02 field. The individual realizations are used to assess sensitivity to the training procedure and to construct the median prediction; they are not treated as independent spatial tests or as estimates of predictive uncertainty.
 
 For the velocity-error calculations, modeled velocity is interpolated to the
-regular 450~m MEaSUREs observation grid. Squared vector residuals are averaged
+pixel centres of the regular 450~m MEaSUREs observation grid and compared
+with the original paired raster components there. Squared vector residuals are averaged
 over the retained grid points before taking the square root. Because the
 observation grid has uniform spacing, this provides an equal-area approximation
 to the spatial mean rather than an exact finite-element integration.
@@ -1238,8 +1314,9 @@ calculated from finite-element cells in the non-held-out region. Cell means of
 $C$ are weighted by cell area. Geographic membership and the criterion
 $\phi>0.1$ are evaluated at cell centers, with positive thickness and finite
 $C$ also required. The resulting value therefore uses model cells rather than
-observation-grid row means. It is applied over the same common region used for
-the predicted $C$ fields, with inversion-reference $C$ retained elsewhere.
+observation-grid row means. It is applied over the same withheld footprint or
+catchment used for the predicted $C$ field, with inversion-reference $C$
+retained elsewhere.
 
 The ten squares are treated as the independent spatial units for statistical comparison. The PIG and inter-catchment experiments are secondary regional tests and do not add independent units to these comparisons. The spatially uniform-$C$ simulation tests whether predictor-dependent spatial variation reduces velocity RMSE relative to uniform $C$; it is not a comparison with another learning algorithm. Results are reported for every square and summarized using the median and interquartile range across the ten squares. Exact paired sign tests compare predictor configurations chosen in advance. The individual MLP realizations, and the central square and full footprint from the same experiment, are not counted as additional independent units. All 66 median predicted $C$ fields are finite. Predictions were not clipped to the range of the inversion-reference $C$.
 
@@ -1294,12 +1371,12 @@ of its ten within-square correlations.}
 \hline
 Configuration & Median & Minimum & Maximum \\
 \hline
-CFG01 & -0.004 & -0.126 & 0.149 \\
-CFG02 & -0.018 & -0.143 & 0.146 \\
-CFG03 &  0.013 & -0.150 & 0.083 \\
-CFG04 &  0.048 & -0.136 & 0.131 \\
-CFG05 & -0.055 & -0.215 & 0.203 \\
-CFG06 & -0.057 & -0.210 & 0.192 \\
+CFG01 & -0.005 & -0.117 & 0.139 \\
+CFG02 & -0.018 & -0.135 & 0.137 \\
+CFG03 &  0.012 & -0.151 & 0.082 \\
+CFG04 &  0.041 & -0.139 & 0.138 \\
+CFG05 & -0.062 & -0.218 & 0.193 \\
+CFG06 & -0.059 & -0.214 & 0.181 \\
 \hline
 \end{tabular}
 \end{table}
