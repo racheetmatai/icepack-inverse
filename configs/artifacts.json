@@ -40,9 +40,9 @@
     {
       "filename": "06_controlled_replacement_results.tar.gz",
       "profiles": ["paper", "full"],
-      "bytes": 305405825,
-      "sha256": "97a5d613ad5be936e52624019e8fdad4c92bf240ead29ceafae6726d792b3df5",
-      "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources"
+      "bytes": 305116604,
+      "sha256": "9c1413c78266876aebb2d59c0f3306712c2b1c8e1b9d71afafeb80c2c3b18588",
+      "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources. Rebuilt 17 September (later pass) to add the two named PIG spatial-concentration fields; no other content or manuscript value changed."
     }
   ],
   "external_downloads": [

@@ -43,11 +43,18 @@ fixed:
   saved as named fields anywhere, which is why the audit flagged them as
   unsourced; `summarize_corrected_map_fields.py` now saves them explicitly
   as `high_inversion_error_area_fraction` and
-  `high_inversion_error_fraction_of_ml_squared_error` for future runs. The
-  already-archived `corrected_pig_details.json` inside the hash-registered
-  `06_controlled_replacement_results.tar.gz` was deliberately left
-  unmodified to avoid invalidating its registered hash without a full
-  archive rebuild; the manuscript number itself required no change.
+  `high_inversion_error_fraction_of_ml_squared_error`. The manuscript number
+  itself required no change.
+- The archived `corrected_pig_details.json` was subsequently patched with
+  those same two fields (every existing value byte-identical; verified by
+  asserting the new area-fraction field matches the pre-existing
+  `overall.fraction_inversion_error_ge_100` field exactly before writing),
+  `06_controlled_replacement_results.tar.gz` was rebuilt (486 entries, same
+  as before; only that one file's content changed), and
+  `configs/artifacts.json` was updated to the rebuilt archive's hash:
+  305,116,604 bytes, SHA256
+  `9c1413c78266876aebb2d59c0f3306712c2b1c8e1b9d71afafeb80c2c3b18588`,
+  superseding `97a5d613ad...` (305,405,825 bytes).
 
 ## Controlled-replacement addendum — 17 September 2026
 
