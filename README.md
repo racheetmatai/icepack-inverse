@@ -88,6 +88,13 @@ Earthdata account. Their expected SHA-256 hashes are stored in the frozen
 configuration. The remaining exact input rasters, mesh, regional boundaries,
 and frozen design files are included in the Zenodo input archive.
 
+## License
+
+This repository is licensed GPL-3.0-or-later (see `LICENSE`), matching the
+license of Icepack, which it patches (`patches/icepack.patch`) and directly
+builds on. This applies to the code in this repository; it does not set the
+license of the separately staged Zenodo data archives.
+
 ## Citation
 
 Please cite the manuscript and the associated Zenodo record. Repository

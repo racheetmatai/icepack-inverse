@@ -14,6 +14,7 @@ authors:
   - family-names: Porter
     given-names: Dave
 repository-code: "https://github.com/racheetmatai/icepack-inverse"
+license: GPL-3.0-or-later
 version: "1.0.0"
 date-released: "2026-09-16"
 
