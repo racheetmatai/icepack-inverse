@@ -36,6 +36,13 @@
       "bytes": 733110675,
       "sha256": "035cffbc8a53229790b6ab2a36ef144a43d8846fc7e87010527ccce86a2ee7f3",
       "contents": "Analysis-ready reporting, 600 lightweight training histories, training-representation, BedMachine, convergence, spatial-map, and figure-source outputs"
+    },
+    {
+      "filename": "06_controlled_replacement_results.tar.gz",
+      "profiles": ["paper", "full"],
+      "bytes": 305405825,
+      "sha256": "97a5d613ad5be936e52624019e8fdad4c92bf240ead29ceafae6726d792b3df5",
+      "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources"
     }
   ],
   "external_downloads": [

@@ -1,5 +1,35 @@
 # Release verification
 
+## Controlled-replacement addendum — 17 September 2026
+
+- `production_workflow/controlled_replacement/` (construction, execution,
+  evaluation, and integrity-check code for the controlled replacement design)
+  and its two regression-test modules were added to this package.
+- `tests/test_controlled_replacement.py` (4 tests) and
+  `tests/test_public_package.py` (3 tests) pass: stable-row-ID alignment
+  against original-raster observation components, identical ML/uniform
+  replacement masks with exact reference-`C` preservation outside the mask,
+  the near-zero relative-RMSE denominator guard (`checks.relative_rmse`,
+  1e-12 tolerance, returns NaN below it), correct manuscript-scenario
+  selection, the public-package artifact-manifest schema, and the absence of
+  the private-provenance note from the public tree.
+- `06_controlled_replacement_results.tar.gz`
+  (`JOG_REPRODUCIBILITY_RELEASE_20260917_CONTROLLED/`) was hashed and matches
+  its `configs/artifacts.json` entry exactly: 305,405,825 bytes, SHA256
+  `97a5d613ad5be936e52624019e8fdad4c92bf240ead29ceafae6726d792b3df5`.
+- This addendum does not repeat the inversion, MLP training campaign, or
+  L-curve selection; archives 01-05 from the 16 September deposit are
+  unchanged and were not re-verified in this pass.
+- The corrected manuscript (`JOG_CONTROLLED_CORRECTION_FINAL_20260917/`) was
+  separately recompiled with Tectonic 0.17.0 (49 pages, no undefined
+  references or citations) and its clean-extracted Overleaf ZIP was
+  recompiled to the same page count and body text, confirming the packaged
+  PDF is reproducible from the archived source.
+- The Zenodo DOI and release license remain to be assigned before publication;
+  the archive-06 addition has not been uploaded.
+
+## 16 September 2026
+
 The staged package was exported to a clean directory and tested with separately
 extracted archives on 16 September 2026.
 
