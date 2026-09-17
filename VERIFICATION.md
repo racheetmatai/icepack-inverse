@@ -1,5 +1,54 @@
 # Release verification
 
+## Post-audit correction — 17 September 2026 (later pass)
+
+An independent audit found two things wrong with the entry below, both since
+fixed:
+
+- `manuscript/` in this package was the pre-correction (16 September)
+  manuscript, PDF, and 8 of the affected figures, byte-identical to the
+  superseded renderings, even though the code and `configs/artifacts.json`
+  were already current. It has been resynced exactly from
+  `JOG_CONTROLLED_CORRECTION_FINAL_20260917/manuscript` (verified
+  byte-identical after the fix).
+- `checks.py`'s `relative_rmse` was not actually imported by
+  `production_workflow/controlled_replacement/evaluate_controlled_campaign.py`,
+  which defined its own identical copy instead; the passing unit test therefore
+  did not guarantee anything about the function the real evaluation used.
+  `evaluate_controlled_campaign.py` now imports `relative_rmse` from
+  `checks.py` directly (a behavior-preserving substitution: the two
+  definitions were character-for-character identical except for the
+  docstring), so `evaluate_intercatchment.py` and
+  `compare_replacement_footprints.py`, which both import `relative_rmse`
+  from `evaluate_controlled_campaign`, now transitively use the same tested
+  function too.
+  `align_original_observations` and `verify_control_pair` remain standalone
+  in `checks.py`, exercised directly only by the unit test — but the
+  invariants they encode are independently, redundantly enforced at runtime:
+  `build_controlled_controls.py`/`build_intercatchment_controls.py`'s
+  `write_control()` asserts exact reference-`C` equality outside each job's
+  own replacement mask before saving it, and separately asserts every job in
+  an experiment shares one identical mask hash; row-ID alignment against the
+  original MEaSUREs components uses the older, separately-tested
+  `build_observation_alignment` in `evaluate_forward_campaign.py`, not
+  `checks.py`. The results are unaffected either way — this correction is
+  about what protects them being accurately described, not about a defect in
+  the protection itself.
+- Independently recomputed the PIG spatial-concentration numbers the
+  manuscript reports at the sentence beginning "Locations where the
+  inversion-reference error is at least $100\,\mathrm{m\,a^{-1}}$..."
+  (3.9% area / 47.1% of CFG02 squared error) directly from
+  `production_workflow/controlled_replacement_20260917_a/map_fields/REG_PIG_CFG02_controlled_fields.npz`:
+  both reproduce exactly (3.859% and 47.131%). They were not previously
+  saved as named fields anywhere, which is why the audit flagged them as
+  unsourced; `summarize_corrected_map_fields.py` now saves them explicitly
+  as `high_inversion_error_area_fraction` and
+  `high_inversion_error_fraction_of_ml_squared_error` for future runs. The
+  already-archived `corrected_pig_details.json` inside the hash-registered
+  `06_controlled_replacement_results.tar.gz` was deliberately left
+  unmodified to avoid invalidating its registered hash without a full
+  archive rebuild; the manuscript number itself required no change.
+
 ## Controlled-replacement addendum — 17 September 2026
 
 - `production_workflow/controlled_replacement/` (construction, execution,
@@ -12,7 +61,9 @@
   the near-zero relative-RMSE denominator guard (`checks.relative_rmse`,
   1e-12 tolerance, returns NaN below it), correct manuscript-scenario
   selection, the public-package artifact-manifest schema, and the absence of
-  the private-provenance note from the public tree.
+  the private-provenance note from the public tree. (At the time this bullet
+  was written, `checks.relative_rmse` was not yet the function the real
+  evaluation used — see the correction above.)
 - `06_controlled_replacement_results.tar.gz`
   (`JOG_REPRODUCIBILITY_RELEASE_20260917_CONTROLLED/`) was hashed and matches
   its `configs/artifacts.json` entry exactly: 305,405,825 bytes, SHA256

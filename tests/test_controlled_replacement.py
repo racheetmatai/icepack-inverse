@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import unittest
 from pathlib import Path
@@ -47,6 +48,34 @@ class ControlledReplacementChecks(unittest.TestCase):
                               "value": [1, 2]})
         selected = checks.manuscript_rows(table)
         self.assertEqual(selected["value"].tolist(), [2])
+
+    def test_evaluators_import_the_tested_relative_rmse(self) -> None:
+        """Guards against `relative_rmse` being silently re-duplicated.
+
+        An earlier version of evaluate_controlled_campaign.py defined its own
+        copy of relative_rmse instead of importing checks.relative_rmse, so
+        this test (though passing) did not actually cover the function the
+        real evaluation used. evaluate_intercatchment.py and
+        compare_replacement_footprints.py both import relative_rmse from
+        evaluate_controlled_campaign, so fixing the one source fixes all
+        three.
+        """
+        source = (ROOT / "production_workflow/controlled_replacement"
+                  / "evaluate_controlled_campaign.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        imports_from_checks = any(
+            isinstance(node, ast.ImportFrom) and node.module == "checks"
+            and any(alias.name == "relative_rmse" for alias in node.names)
+            for node in ast.walk(tree)
+        )
+        defines_own_copy = any(
+            isinstance(node, ast.FunctionDef) and node.name == "relative_rmse"
+            for node in ast.walk(tree)
+        )
+        self.assertTrue(imports_from_checks,
+                        "evaluate_controlled_campaign.py must import relative_rmse from checks")
+        self.assertFalse(defines_own_copy,
+                         "evaluate_controlled_campaign.py must not redefine relative_rmse locally")
 
 
 if __name__ == "__main__":

@@ -123,7 +123,38 @@ def main() -> None:
         )
         shutil.copy2(lcurve, work / "lcurve_appendix.png")
 
-        sources = [work, target_out]
+        # Replace affected legacy artwork with the verified controlled-
+        # replacement/original-observation products.
+        controlled = artifacts / "production_workflow/controlled_replacement_20260917_a"
+        if not controlled.is_dir():
+            raise FileNotFoundError(
+                "Controlled-replacement results are required for the current manuscript"
+            )
+        controlled_code = workflow / "controlled_replacement"
+        controlled_figures = work / "controlled_figures"
+        controlled_figures.mkdir(parents=True, exist_ok=True)
+        controlled_env = env.copy()
+        controlled_env["JOG_CONTROLLED_MAP_FIELDS"] = str(controlled / "map_fields")
+        controlled_env["JOG_CONTROLLED_FIGURES"] = str(controlled_figures)
+        controlled_env["JOG_CANONICAL_DATASET"] = str(
+            artifacts / "production_runs/gate2_canonical_dataset_20260820_c/canonical_master_dataset.csv.gz"
+        )
+        controlled_env["JOG_CORRECTED_OBSERVATIONS"] = str(
+            controlled / "observation_audit/corrected_observations.csv.gz"
+        )
+        metrics = controlled / "evaluation/velocity_metrics_before_after.csv"
+        run([python, str(controlled_code / "generate_corrected_figure3_square_rmse.py"),
+             str(metrics), str(controlled_figures)], controlled_env)
+        run([python, str(controlled_code / "generate_corrected_figure4b.py"),
+             str(metrics), str(controlled_figures)], controlled_env)
+        run([python, str(controlled_code / "generate_corrected_figure5.py")], controlled_env)
+        run([python, str(controlled_code / "generate_corrected_figure6_velocity_panels.py")], controlled_env)
+        run([python, str(controlled_code / "generate_corrected_inversion_panels.py")], controlled_env)
+        run([python, str(controlled_code / "generate_corrected_figure1.py")], controlled_env)
+        shutil.copy2(controlled / "lcurve/lcurve_appendix_extended.png",
+                     work / "lcurve_appendix.png")
+
+        sources = [controlled_figures, work, target_out]
         for name in INTRODUCTION:
             copy_required(name, sources, figures / "introduction_methods" / name)
         for name in RESULTS:
@@ -131,26 +162,37 @@ def main() -> None:
         for name in APPENDIX:
             copy_required(name, sources, figures / "appendix" / name)
 
-    run(
-        [
-            sys.executable,
-            str(repo / "scripts/verify_paper_outputs.py"),
-            "--reference",
-            str(repo / "manuscript/figures"),
-            "--candidate",
-            str(figures),
-        ],
-        env,
-    )
-
     import pandas as pd
-    verified_tables = []
-    archived = artifacts / 'production_workflow/final_figures_20260830_a'
-    for name in ('table1_predictors_and_configurations.csv',
-                 'table2_primary_performance.csv',
-                 'table3_high_support_low_skill_examples.csv'):
-        pd.testing.assert_frame_equal(pd.read_csv(work / name), pd.read_csv(archived / name))
-        verified_tables.append(name)
+
+    verified_tables: list[str] = []
+    try:
+        run(
+            [
+                sys.executable,
+                str(repo / "scripts/verify_paper_outputs.py"),
+                "--reference",
+                str(repo / "manuscript/figures"),
+                "--candidate",
+                str(figures),
+            ],
+            env,
+        )
+
+        archived = artifacts / 'production_workflow/final_figures_20260830_a'
+        for name in ('table1_predictors_and_configurations.csv',
+                     'table2_primary_performance.csv',
+                     'table3_high_support_low_skill_examples.csv'):
+            pd.testing.assert_frame_equal(pd.read_csv(work / name), pd.read_csv(archived / name))
+            verified_tables.append(name)
+    except Exception as error:  # noqa: BLE001 - report the failure, don't crash silently
+        report = {
+            'passed': False,
+            'error': f'{type(error).__name__}: {error}',
+            'tables_matching_archived_values': verified_tables,
+            'figure_presence_verified': False,
+        }
+        (output / 'reproduction_verification.json').write_text(json.dumps(report, indent=2) + '\n')
+        raise
     report = {'passed': True, 'tables_matching_archived_values': verified_tables,
               'figure_presence_verified': True,
               'rendering': 'Run compare_figure_rendering.py for visual comparison.'}

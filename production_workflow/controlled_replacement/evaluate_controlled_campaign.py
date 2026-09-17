@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest, spearmanr
 
+from checks import relative_rmse
 from evaluate_forward_campaign import build_object, build_observation_alignment, interpolate_velocity
 from production_amundsen import manifest_identifier, sha256_file
 
@@ -48,11 +49,6 @@ def interpolate_control(object_, values: np.ndarray, lookup: np.ndarray) -> np.n
 def rmse(predicted: np.ndarray, observed: np.ndarray, mask: np.ndarray) -> float:
     delta = predicted[mask] - observed[mask]
     return float(np.sqrt(np.mean(np.sum(delta * delta, axis=1))))
-
-
-def relative_rmse(numerator: float, denominator: float, tolerance: float = 1.0e-12) -> float:
-    """Return the RMSE ratio, or NaN for a numerically negligible baseline."""
-    return float("nan") if abs(denominator) <= tolerance else float(numerator / denominator)
 
 
 def population_mask(frame: pd.DataFrame, experiment: str) -> np.ndarray:

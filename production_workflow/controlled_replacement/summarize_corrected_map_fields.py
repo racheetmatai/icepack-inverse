@@ -17,6 +17,11 @@ DATASET = WORKSPACE / "production_workflow/gate2_results/gate2_canonical_dataset
 SUPPORT = WORKSPACE / "production_workflow/gate2_results/gate2_distribution_diagnostics_20260820_c/point_support_categories.npz"
 REPRESENTATION = WORKSPACE / "production_workflow/training_representation_diagnostic_20260909_a/point_diagnostics.csv.gz"
 
+# Matches the manuscript's PIG spatial-concentration statement: the fraction
+# of PIG area where inversion-reference velocity error is at least this
+# value, and the fraction of CFG02 squared error contained within it.
+INVERSION_CONTOUR_LEVEL_M_PER_A = 100.0
+
 
 def rmse(values: np.ndarray) -> float:
     return float(np.sqrt(np.mean(np.square(values))))
@@ -157,6 +162,11 @@ pig_details = {
     "fastest_10_percent_uniform_rmse_m_per_a": rmse(pig["uniform_error"][fast]),
     "both_supported_area_fraction": float(np.mean(both_supported)),
     "supported_fraction_total_squared_error_reduction": float(reduction[both_supported].sum() / positive_total),
+    "high_inversion_error_area_fraction": float(np.mean(pig["inversion_error"] >= INVERSION_CONTOUR_LEVEL_M_PER_A)),
+    "high_inversion_error_fraction_of_ml_squared_error": float(
+        np.sum(np.square(pig["model_error"])[pig["inversion_error"] >= INVERSION_CONTOUR_LEVEL_M_PER_A])
+        / np.sum(np.square(pig["model_error"]))
+    ),
 }
 (ROOT / "corrected_pig_details.json").write_text(
     json.dumps(pig_details, indent=2, sort_keys=True) + "\n", encoding="utf-8"
