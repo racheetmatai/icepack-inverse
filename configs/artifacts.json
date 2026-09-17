@@ -40,9 +40,9 @@
     {
       "filename": "06_controlled_replacement_results.tar.gz",
       "profiles": ["paper", "full"],
-      "bytes": 305116604,
-      "sha256": "9c1413c78266876aebb2d59c0f3306712c2b1c8e1b9d71afafeb80c2c3b18588",
-      "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources. Rebuilt 17 September (later pass) to add the two named PIG spatial-concentration fields; no other content or manuscript value changed."
+      "bytes": 305119872,
+      "sha256": "552be2eedb2ef73ffc257bb89e28d37fe75b2c7dd6d0d266a07f9a7fc93f87fe",
+      "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources. Rebuilt 17 September (later pass) to add named traceability for Table 6, the square-maps exceedance percentages, and Table 2's uniform-C row (square_maps_table2_traceability.json, table6_traceability/); every pre-existing numeric value reproduced to at most 1e-13 floating-point noise, no manuscript value changed."
     }
   ],
   "external_downloads": [

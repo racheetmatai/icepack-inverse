@@ -72,6 +72,60 @@ for configuration in ("CFG02", "CFG04"):
 summary = pd.DataFrame(rows)
 summary.to_csv(ROOT / "corrected_spatial_summary.csv", index=False)
 
+# Named generator for two manuscript items that previously had none: the
+# square-maps paragraph's three exceedance percentages (fraction of central-
+# square area where velocity error, and separately inversion-reference
+# error, exceeds INVERSION_CONTOUR_LEVEL_M_PER_A) and Table 2's Uniform C
+# row (median/IQR of uniform-C RMSE across the ten squares).
+exceedance = {}
+for configuration in ("CFG02", "CFG04"):
+    with np.load(MAPS / f"{configuration}_ten_square_controlled_fields.npz", allow_pickle=False) as data:
+        central = data["central_square"].astype(bool)
+        model = data["model_error"][central].astype(float)
+        inversion = data["inversion_error"][central].astype(float)
+    exceedance[configuration] = {
+        "rows": int(central.sum()),
+        "model_error_exceedance_fraction": float(np.mean(model >= INVERSION_CONTOUR_LEVEL_M_PER_A)),
+        "inversion_error_exceedance_fraction": float(np.mean(inversion >= INVERSION_CONTOUR_LEVEL_M_PER_A)),
+    }
+
+velocity_metrics = pd.read_csv(ROOT / "evaluation/velocity_metrics_before_after.csv")
+controlled_squares = velocity_metrics[
+    (velocity_metrics["scenario"] == "controlled_original_measures")
+    & (velocity_metrics["experiment"].str.startswith("SQ"))
+]
+uniform_per_square = controlled_squares.groupby("experiment")["uniform_velocity_rmse_m_per_a"].first()
+if controlled_squares.groupby("experiment")["uniform_velocity_rmse_m_per_a"].nunique().max() != 1:
+    raise RuntimeError("uniform-C RMSE is not identical across configurations for some square")
+uniform_values = uniform_per_square.to_numpy(float)
+table2_uniform_row = {
+    "n_squares": int(len(uniform_values)),
+    "median_rmse_m_per_a": float(np.median(uniform_values)),
+    "iqr_25_m_per_a": float(np.percentile(uniform_values, 25)),
+    "iqr_75_m_per_a": float(np.percentile(uniform_values, 75)),
+}
+
+traceability = {
+    "schema": "jog-square-maps-table2-traceability-v1",
+    "status": "complete",
+    "addresses": "manuscript items previously reproducible only by hand: the three exceedance percentages in the square-maps paragraph, and Table 2's Uniform C row",
+    "square_maps_exceedance_percentages": exceedance,
+    "table2_uniform_c_row": table2_uniform_row,
+    "manuscript_check": {
+        "expected": "13.0% / 22.8% / 0.13% exceedance; Uniform C row 44.9, 25.0-117.8",
+        "computed": (
+            f"{exceedance['CFG02']['model_error_exceedance_fraction']:.1%} / "
+            f"{exceedance['CFG04']['model_error_exceedance_fraction']:.1%} / "
+            f"{exceedance['CFG02']['inversion_error_exceedance_fraction']:.2%}; "
+            f"Uniform C row {table2_uniform_row['median_rmse_m_per_a']:.1f}, "
+            f"{table2_uniform_row['iqr_25_m_per_a']:.1f}-{table2_uniform_row['iqr_75_m_per_a']:.1f}"
+        ),
+    },
+}
+(ROOT / "square_maps_table2_traceability.json").write_text(
+    json.dumps(traceability, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+print(json.dumps(traceability, indent=2, sort_keys=True))
+
 # Recompute the velocity portion of the existing training-representation
 # diagnostic without repeating any neighbor searches.
 representation = pd.read_csv(

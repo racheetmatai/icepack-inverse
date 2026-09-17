@@ -70,8 +70,19 @@ def tables(root: Path, output: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         vector_RMSE_q25_m_per_a=("vector_rmse_m_per_a", lambda x: x.quantile(.25)),
         vector_RMSE_q75_m_per_a=("vector_rmse_m_per_a", lambda x: x.quantile(.75)),
         P_exp_median_percent=("P_exp_percent", "median"),
-        squares_better_than_uniform=("P_exp_percent", lambda x: int((x > 0).sum())),
     ).reset_index()
+    # squares_better_than_uniform is computed directly from the RMSE
+    # comparison (the active criterion; equivalent to relative_rmse < 1), not
+    # from P_exp_percent > 0. Both are mathematically equivalent (P_exp is a
+    # monotonic rescaling of the same MSE ratio), but the retired P_exp
+    # metric must not be the literal derivation of an actively reported
+    # statistic. See production_workflow/controlled_replacement/checks.py and
+    # evaluate_controlled_campaign.py for the same criterion used elsewhere.
+    better_than_uniform = (
+        squares.assign(better=squares["vector_rmse_m_per_a"] < squares["uniform_vector_rmse_m_per_a"])
+        .groupby("configuration")["better"].sum().astype(int)
+    )
+    aggregate["squares_better_than_uniform"] = aggregate["configuration"].map(better_than_uniform)
     aggregate.to_csv(output / "square_equal_weight_summary.csv", index=False)
     pivot = squares.pivot(index="experiment", columns="configuration", values="vector_rmse_m_per_a")
     contrast_rows = []

@@ -1,5 +1,49 @@
 # Release verification
 
+## Second post-audit correction — 17 September 2026 (later pass)
+
+A second, separate audit raised three items; all three were checked
+independently rather than taken on trust.
+
+- **Table 2's "Better than uniform" counts derived from the retired P_exp
+  metric.** The code that actually feeds the current Table 2
+  (`evaluate_controlled_campaign.py`) already computed this directly from
+  RMSE, not P_exp. But a legacy, unreferenced function in
+  `summarize_forward_evaluation.py` (not called by any other script — dead
+  code) did derive the same statistic from `P_exp_percent > 0`. Fixed: it
+  now derives `squares_better_than_uniform` directly from
+  `vector_rmse_m_per_a < uniform_vector_rmse_m_per_a`. Verified
+  behavior-preserving: recomputed both ways side by side and the six
+  per-configuration counts are identical (8, 8, 6, 7, 9, 9).
+- **Three numbers with no dedicated generator.** All three were
+  independently reproduced exactly before any code change (Table 6's
+  SQ01/CFG01 cell, the square-maps paragraph's three exceedance
+  percentages, and Table 2's Uniform C row); see the entry below for how.
+  Closed the gap by adding named generators:
+  `production_workflow/generate_table6_validation_c_diagnostics.py`
+  (aggregates the 600 relevant `validation_predictions.csv.gz` files;
+  reproduced all 60 Table 6 cells exactly) and two new fields written by
+  `production_workflow/controlled_replacement/summarize_corrected_map_fields.py`
+  to a new `square_maps_table2_traceability.json`
+  (`square_maps_exceedance_percentages`, `table2_uniform_c_row`; reproduced
+  13.0%/22.8%/0.13% and 44.9/25.0-117.8 exactly).
+- Rerunning `summarize_corrected_map_fields.py` to add those fields also
+  regenerated `corrected_spatial_summary.csv`,
+  `corrected_representation_velocity_categories.csv`,
+  `corrected_pig_speed_classes.csv`, and `corrected_pig_details.json`. Every
+  value in all four was diffed against the pre-rerun archived copies: the
+  maximum absolute difference was 1.1e-13 (floating-point summation-order
+  noise between numpy/pandas builds), not a real change.
+- `06_controlled_replacement_results.tar.gz` was rebuilt again (491 entries,
+  was 486; the 5 new entries are the traceability additions above) and
+  `configs/artifacts.json` updated to the new hash: 305,119,872 bytes, SHA256
+  `552be2eedb2ef73ffc257bb89e28d37fe75b2c7dd6d0d266a07f9a7fc93f87fe`,
+  superseding `9c1413c7...` (305,116,604 bytes).
+- All 8 regression tests still pass.
+- No manuscript text or numerical value changed in this pass (the L266
+  appendix-figure addition from the same audit round is recorded separately
+  in the manuscript's own `CHANGELOG.md`).
+
 ## Post-audit correction — 17 September 2026 (later pass)
 
 An independent audit found two things wrong with the entry below, both since
