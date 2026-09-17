@@ -1,5 +1,24 @@
 # Change log
 
+## Appendix figure addition — 17 September 2026 (post-audit pass)
+
+- Added Appendix Figure 9 ("The modeled domain and the eligible region used
+  for training and for every reported metric"), closing reviewer comment
+  R-DET-25a (`review_text.txt` L266): "Metrics are only reported when
+  phi > 0.1, but that region is not shown anywhere... There should be a
+  figure explicitly showing the region." The tracked response
+  (`REVIEW_TRACKER.md`) had added descriptive text but never the requested
+  figure; every existing map already restricted display to the eligible
+  region alone, so the excluded fringe was never shown for contrast.
+- The figure is built from the frozen 5 km support grid
+  (`frozen_design/amundsen_input_support_grid_5km.npz`) every other figure
+  already masks by: no new computation, inversion, or simulation.
+- Added one main-text cross-reference at the first statement of the
+  $\phi>0.1$ criterion.
+- Recompiled (50 pages, was 49); clean-extraction ZIP rebuild verified
+  identical. No other manuscript text, equation, citation, label, or
+  numerical value changed.
+
 ## Code and data availability correction — 17 September 2026 (later pass)
 
 - Corrected the Code and data availability statement, which cited a separate
