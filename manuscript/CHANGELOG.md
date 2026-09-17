@@ -1,5 +1,18 @@
 # Change log
 
+## Code and data availability correction — 17 September 2026 (later pass)
+
+- Corrected the Code and data availability statement, which cited a separate
+  `racheetmatai/icepack-mlp` repository for model-training code. That
+  repository holds only the legacy notebook-based training this project's
+  own docs call formally superseded; the accepted training implementation
+  (`icepack-mlp/production_training/`) already lives inside
+  `racheetmatai/icepack-inverse`, alongside the inversion and forward-solve
+  code, since the reproducibility-package consolidation. Now cites a single
+  repository. No other text, equation, citation, label, or numerical value
+  changed. Recompiled (49 pages, no undefined references); clean-extraction
+  ZIP rebuild verified identical.
+
 ## Controlled-replacement correction — 17 September 2026
 
 - Evaluated modeled velocities against the original paired MEaSUREs raster
