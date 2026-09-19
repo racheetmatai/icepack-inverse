@@ -484,7 +484,7 @@ SQ09 & CFG02 & 96.4 & 62.7  & 54.8  & 1.14\\
 \end{table}
 
 
-Predictor support indicates whether similar predictor combinations are represented in the training region, but does not distinguish between densely and sparsely sampled parts of predictor space. We therefore examined whether more sparsely represented predictor were associated with errors in the predicted $C$ for CFG02 and CFG04 (Appendix section~\nameref{app:training_representation}). For CFG02, $C$ RMSE increased with sparser representation in seven of the ten squares, but the overall relationship was weak. The median within-square Spearman correlation between training-representation density percentile and absolute $C$ error was only 0.069, and the median $C$ RMSE differed by only 0.004 across the three representation categories. CFG04 showed no similar pattern, with a median correlation between sparser representation percentile and absolute $C$ error of $-0.052$. Sparse training representation is therefore associated with larger $C$ RMSE in some CFG02 experiments, but the relationship is weak and is not shared by CFG04.
+Predictor support indicates whether similar predictor combinations are represented in the training region, but does not distinguish between densely and sparsely sampled parts of predictor space. We therefore examine whether more sparsely represented predictor combinations are associated with errors in the predicted $C$ for CFG02 and CFG04 (Appendix section~\nameref{app:training_representation}). For CFG02, $C$ RMSE increases with sparser representation in seven of the ten squares, but the overall relationship is weak. The median within-square Spearman correlation between training-representation density percentile and absolute $C$ error is only 0.069, and the median $C$ RMSE differs by only 0.004 across the three representation categories. CFG04 shows no similar pattern, with a median correlation between sparser representation percentile and absolute $C$ error of $-0.052$. Sparse training representation is therefore associated with larger $C$ RMSE in some CFG02 experiments, but the relationship is weak and is not shared by CFG04.
 
 Training representation also does not show a consistent correspondence with modeled velocity performance, as illustrated by the square-level examples in Appendix section~\nameref{app:training_representation}. In some squares, modeled velocity has lower RMSE than uniform $C$ in sparsely represented categories but not in better-represented categories. The same Appendix examples also show that closer agreement with the inversion-reference $C$ does not consistently correspond to lower relative RMSE. Training representation therefore does not by itself explain the failures to improve modeled velocity relative to uniform $C$.
 \subsection{Spatial patterns of success and failure}
@@ -1421,7 +1421,7 @@ locations. Performance also varies among squares using the same
 method, so differences between source classes cannot alone account
 for the observed spatial variation. We did not test source class as an additional predictor or quantify how much along-flow smoothing changes the predictor gradients and modeled velocity.
 
-\section{Predicting where transfer succeeds}
+\subsection{Predicting where transfer succeeds}
 \label{app:transfer_predictability}
 
 The preceding diagnostics examine predictor support, training representation,

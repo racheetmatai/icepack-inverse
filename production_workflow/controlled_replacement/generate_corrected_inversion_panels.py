@@ -89,7 +89,7 @@ def draw(kind: str, region: dict[str, np.ndarray], values: dict[str, np.ndarray]
                          vmax=np.nanpercentile(array.compressed(), 99.5)),
         )
         stem = "figure3a_observed_speed"
-        label = r"m a$^{-1}$"
+        label = r"Observed speed (m a$^{-1}$)"
     else:
         image = ax.imshow(
             array, origin="lower", extent=extent, cmap="inferno",

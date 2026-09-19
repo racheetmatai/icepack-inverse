@@ -52,6 +52,15 @@
 - Two unreferenced legacy PDFs (`figure2_end_to_end_workflow.pdf`,
   `figure5b_pig_holdout.pdf`) were removed from `manuscript/figures/appendix`;
   the manuscript does not include them. No archive changed.
+- Later the same day: Figure 3a's colorbar label changed from "m a^-1" to
+  "Observed speed (m a^-1)" to match the other figures
+  (`generate_corrected_inversion_panels.py`); the panel was regenerated from
+  the clean-room unpack and replaces the manuscript copy. The archive-06
+  `figures/` folder still holds the earlier label; the script is
+  authoritative. Manuscript text: one Results paragraph on training
+  representation put in the present tense (with a missing word restored), and
+  "Predicting where transfer succeeds" made a subsection. Figure and table
+  numbering unchanged; 52 pages.
 
 ## Deposit and manuscript finalization — 18-19 September 2026
 
