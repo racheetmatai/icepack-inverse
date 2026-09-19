@@ -49,22 +49,16 @@ def main() -> None:
     axis.plot(accepted["misfit"], accepted["unweighted_roughness"],
               color="#3b6ea8", linewidth=1.5, zorder=1)
     axis.scatter(accepted["misfit"], accepted["unweighted_roughness"],
-                 color="#3b6ea8", s=34, zorder=2, label="valid converged point")
+                 color="#3b6ea8", s=34, zorder=2, label=r"candidate $r_C$")
     selected = accepted.loc[(accepted["reg_c"] - 0.01414213562).abs().idxmin()]
     axis.scatter([selected["misfit"]], [selected["unweighted_roughness"]],
                  marker="*", color="#c43b3b", edgecolor="black", linewidth=0.6,
                  s=190, zorder=4, label=r"selected $r_C=0.014142$")
     metrics = candidate["metrics"]
-    axis.scatter([metrics["misfit"]], [metrics["unweighted_roughness"]],
-                 facecolors="none", edgecolors="#3b6ea8", linewidths=1.4,
-                 s=46, zorder=3)
     for _, point in accepted.iterrows():
         axis.annotate(f"{float(point['reg_c']):.5g}",
                       (point["misfit"], point["unweighted_roughness"]),
                       xytext=(4, 4), textcoords="offset points", fontsize=7)
-    axis.annotate(f"{float(candidate['reg_c']):.5g}",
-                  (metrics["misfit"], metrics["unweighted_roughness"]),
-                  xytext=(4, 4), textcoords="offset points", fontsize=7)
     axis.set_xscale("log"); axis.set_yscale("log")
     axis.set_xlabel("Observation-mean velocity misfit")
     axis.set_ylabel("Unweighted roughness")
@@ -78,7 +72,7 @@ def main() -> None:
     record = {
         "accepted_points": accepted[["reg_c", "misfit", "unweighted_roughness",
                                       "native_termination"]].to_dict("records"),
-        "added_unconverged_point": {
+        "validated_unconverged_point_not_plotted": {
             "reg_c": candidate["reg_c"], "misfit": metrics["misfit"],
             "unweighted_roughness": metrics["unweighted_roughness"],
             "native_termination": candidate["native_termination"],

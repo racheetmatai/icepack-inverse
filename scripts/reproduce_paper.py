@@ -35,6 +35,7 @@ APPENDIX = [
     "regional_target_distributions.png",
     "square_target_distributions.png",
     "figure_appendix_eligible_region_map.png",
+    "figure_appendix_eligible_region_map.pdf",
     "figure_appendix_transfer_predictability_a.pdf",
     "figure_appendix_transfer_predictability_b.pdf",
 ]
@@ -154,7 +155,17 @@ def main() -> None:
         run([python, str(controlled_code / "generate_corrected_figure6_velocity_panels.py")], controlled_env)
         run([python, str(controlled_code / "generate_corrected_inversion_panels.py")], controlled_env)
         run([python, str(controlled_code / "generate_corrected_figure1.py")], controlled_env)
-        shutil.copy2(controlled / "lcurve/lcurve_appendix_extended.png",
+        # Rebuild the L-curve from the accepted points and the saved
+        # unconverged candidate (validated but not plotted).
+        gate1 = artifacts / "production_runs/gate1_lcurve_selection_bundle_20260819_a"
+        lcurve_out = work / "lcurve"
+        run([python, str(controlled_code / "extend_lcurve_figure.py"),
+             "--accepted-table", str(gate1 / "lcurve_points.csv"),
+             "--unconverged-manifest", str(
+                 gate1 / "excluded_evidence/gate1_lcurve_v2_20260814_a/points"
+                 / "regc_0p05_e7039c84_attempt01/point_manifest.json"),
+             "--output", str(lcurve_out)], env)
+        shutil.copy2(lcurve_out / "lcurve_appendix_extended.png",
                      work / "lcurve_appendix.png")
 
         # Appendix figures added after the controlled-replacement release:

@@ -104,14 +104,15 @@ def draw(kind: str, region: dict[str, np.ndarray], values: dict[str, np.ndarray]
     base.add_antarctica_locator(ax, region["outline"])
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{stem}.pdf"
-    fig.savefig(path, bbox_inches="tight", pad_inches=0.04)
-    fig.savefig(OUT / f"{stem}.png", dpi=300, bbox_inches="tight", pad_inches=0.04)
+    fig.savefig(path)
+    fig.savefig(OUT / f"{stem}.png", dpi=300)
     plt.close(fig)
     return path
 
 
 def main() -> None:
     base.style()
+    plt.rcParams.update({"axes.labelsize": 14.0, "xtick.labelsize": 12.5, "ytick.labelsize": 12.5})
     region, values = aggregate()
     outputs = [draw(kind, region, values) for kind in ("speed", "error")]
     record = {

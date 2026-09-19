@@ -28,11 +28,30 @@
   byte.
 - `tests/test_public_package.py` requires the four new or changed entry points.
   All 8 package tests pass.
-- Known gap, not addressed here: Figures 3, 5a, 7 and the L-curve were
-  regenerated on 18 September (larger labels, no tight bounding box,
-  unconverged L-curve point removed), but the generator scripts in this
-  package were not updated with them, so `reproduce_paper.py` still produces
-  the earlier versions of those four figures.
+- 18 September figure styling now in the generators: the label-size,
+  bounding-box and L-curve changes made to Figures 3, 5a, 7 and the L-curve on
+  18 September are now in the package scripts
+  (`generate_revision_figures_and_tables.py`,
+  `generate_pig_cfg02_spatial_diagnostic.py`, and in `controlled_replacement/`
+  `extend_lcurve_figure.py`, `generate_corrected_figure4b.py`,
+  `generate_corrected_figure6_velocity_panels.py`,
+  `generate_corrected_inversion_panels.py`). `reproduce_paper.py` now rebuilds
+  the L-curve from `lcurve_points.csv` and the saved unconverged-candidate
+  manifest in the archived selection bundle instead of copying a prebuilt PNG.
+  The record key for that candidate is now
+  `validated_unconverged_point_not_plotted` (the point is checked but not drawn).
+- Clean-room check: archives 01, 04, 05, 06 and 07 as deposited were unpacked
+  into an empty directory in the Icepack container and `reproduce_paper.py`
+  was run end to end. It finished and the presence check passed (21 of 21
+  files). Rendered-pixel comparison with `manuscript/figures`: 16 files
+  identical, including the L-curve, Figures 3a-c, 4a, 4b, 5 and the appendix
+  figures. Figure 1a/1b and the PIG panels (6a-c) differ only by anti-aliasing
+  and, for 1a, a 2-pixel canvas width; the manuscript copies were rendered with
+  Matplotlib 3.11.1 and 3.10.9, the container has 3.7.2. Side-by-side renders
+  show the same content.
+- Two unreferenced legacy PDFs (`figure2_end_to_end_workflow.pdf`,
+  `figure5b_pig_holdout.pdf`) were removed from `manuscript/figures/appendix`;
+  the manuscript does not include them. No archive changed.
 
 ## Deposit and manuscript finalization — 18-19 September 2026
 

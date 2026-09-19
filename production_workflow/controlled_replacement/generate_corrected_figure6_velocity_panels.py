@@ -138,8 +138,8 @@ def draw(kind: str, x_edges: np.ndarray, y_edges: np.ndarray,
 
 def main() -> None:
     base.style()
-    plt.rcParams.update({"axes.labelsize": 12.5, "xtick.labelsize": 10.5,
-                         "ytick.labelsize": 10.5})
+    plt.rcParams.update({"axes.labelsize": 14.5, "xtick.labelsize": 12.5,
+                         "ytick.labelsize": 12.5})
     x_edges, y_edges, grids = grid_fields()
     outputs = [draw(kind, x_edges, y_edges, grids) for kind in ("absolute", "difference")]
     record = {

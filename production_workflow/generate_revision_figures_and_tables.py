@@ -97,11 +97,14 @@ def style() -> None:
     })
 
 
-def save(fig: plt.Figure, stem: str) -> list[Path]:
+def save(fig: plt.Figure, stem: str, tight: bool = True) -> list[Path]:
     paths = []
     for suffix in ("png", "pdf", "svg"):
         path = OUT / f"{stem}.{suffix}"
-        fig.savefig(path, bbox_inches="tight", pad_inches=0.05)
+        if tight:
+            fig.savefig(path, bbox_inches="tight", pad_inches=0.05)
+        else:
+            fig.savefig(path)
         paths.append(path)
     plt.close(fig)
     return paths
@@ -371,9 +374,10 @@ def figure3() -> list[Path]:
         ("figure3b_inversion_reference_c", draw_c),
         ("figure3c_inversion_velocity_residual", draw_error),
     ):
-        panel, axis = plt.subplots(figsize=(4.6, 4.45), constrained_layout=True)
-        drawer(panel, axis, False)
-        paths.extend(save(panel, stem))
+        with plt.rc_context({"axes.labelsize": 14.0, "xtick.labelsize": 12.5, "ytick.labelsize": 12.5}):
+            panel, axis = plt.subplots(figsize=(4.6, 4.45), constrained_layout=True)
+            drawer(panel, axis, False)
+            paths.extend(save(panel, stem, tight=False))
     return paths
 
 
@@ -426,22 +430,23 @@ def figure4() -> list[Path]:
     axes[1].set_yticklabels([])
     paths = save(fig, "figure4_input_support")
 
-    support_fig, support_ax = plt.subplots(figsize=(4.7, 5.0), constrained_layout=True)
-    support_im = support_ax.imshow(100 * support_matrix.to_numpy(), aspect="auto", cmap="viridis", vmin=80, vmax=100)
-    for i in range(10):
-        for j in range(6):
-            value = 100 * support_matrix.iloc[i, j]
-            support_ax.text(j, i, f"{value:.0f}", ha="center", va="center", fontsize=7.2,
-                            color="white" if value < 95 else "black")
-            if value < 95:
-                support_ax.add_patch(Rectangle((j-.5, i-.5), 1, 1, fill=False,
-                                               edgecolor="#C51B7D", lw=1.25))
-    support_ax.set_xticks(range(6), CONFIGS, rotation=45, ha="right")
-    support_ax.set_yticks(range(10), squares)
-    support_ax.set_ylabel("Independent held-out square")
-    support_cb = support_fig.colorbar(support_im, ax=support_ax, shrink=.9, pad=.02)
-    support_cb.set_label("Held-out area (%)")
-    paths.extend(save(support_fig, "figure4a_input_support"))
+    with plt.rc_context({"axes.labelsize": 14.0, "xtick.labelsize": 12.5, "ytick.labelsize": 12.5}):
+        support_fig, support_ax = plt.subplots(figsize=(4.7, 5.0), constrained_layout=True)
+        support_im = support_ax.imshow(100 * support_matrix.to_numpy(), aspect="auto", cmap="viridis", vmin=80, vmax=100)
+        for i in range(10):
+            for j in range(6):
+                value = 100 * support_matrix.iloc[i, j]
+                support_ax.text(j, i, f"{value:.0f}", ha="center", va="center", fontsize=7.2,
+                                color="white" if value < 95 else "black")
+                if value < 95:
+                    support_ax.add_patch(Rectangle((j-.5, i-.5), 1, 1, fill=False,
+                                                   edgecolor="#C51B7D", lw=1.25))
+        support_ax.set_xticks(range(6), CONFIGS, rotation=45, ha="right")
+        support_ax.set_yticks(range(10), squares)
+        support_ax.set_ylabel("Independent held-out square")
+        support_cb = support_fig.colorbar(support_im, ax=support_ax, shrink=.9, pad=.02)
+        support_cb.set_label("Held-out area (%)")
+        paths.extend(save(support_fig, "figure4a_input_support"))
 
     skill_fig, skill_ax = plt.subplots(figsize=(4.7, 5.0), constrained_layout=True)
     skill_im = skill_ax.imshow(ratio_matrix.to_numpy(), aspect="auto", cmap="RdBu_r", norm=norm)

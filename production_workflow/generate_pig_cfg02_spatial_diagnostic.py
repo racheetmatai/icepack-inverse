@@ -601,7 +601,7 @@ def panel_figure(kind: str, cplot: dict, x_edges, y_edges, grids) -> plt.Figure:
 
 def save_figure(cplot: dict, frame: pd.DataFrame) -> None:
     base.style()
-    plt.rcParams.update({"axes.labelsize": 12.5, "xtick.labelsize": 10.5, "ytick.labelsize": 10.5})
+    plt.rcParams.update({"axes.labelsize": 14.5, "xtick.labelsize": 12.5, "ytick.labelsize": 12.5})
     OUT.mkdir(parents=True, exist_ok=True)
     x_edges, y_edges, grids = native_display_grids(frame)
     kinds = ["C", "absolute", "difference"]

@@ -37,7 +37,7 @@ if matrix.isna().any().any():
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans", "font.size": 10.5,
-    "axes.labelsize": 12, "xtick.labelsize": 10.5, "ytick.labelsize": 10.5,
+    "axes.labelsize": 14, "xtick.labelsize": 12.5, "ytick.labelsize": 12.5,
     "pdf.fonttype": 42,
 })
 fig, ax = plt.subplots(figsize=(4.7, 5.0), constrained_layout=True)
