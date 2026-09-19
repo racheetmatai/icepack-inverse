@@ -1,5 +1,43 @@
 # Change log
 
+## Transfer-predictability appendix — 19 September 2026
+
+- New appendix section "Predicting where transfer succeeds" with Fig. 13 (two
+  panels), responding to the reviewer's question of how a user would know
+  where a point-wise prediction is useful. A random forest classifier is
+  trained to predict, row by row, whether the predicted C gives lower local
+  velocity error than uniform C (and, more strictly, halves it), using observed
+  speed alone, the twelve predictors, or both. Squares: leave-one-square-out
+  over all six configurations. PIG: CFG02, trained on the ten central squares
+  with the 18,409 rows inside PIG removed.
+- Result: the combined classifier is not consistently better than observed
+  speed alone (higher AUC in 23 of 50 square tests), is below AUC 0.5 in 17
+  of 50 (25 of 48 for the stricter criterion), and does not transfer to PIG
+  (AUC 0.32 with speed, 0.55 without).
+- One sentence added in "Interpreting the point-wise relationship" pointing to
+  the new section. One reference added (Breiman, 2001).
+- No inversion, MLP training or forward simulation was run. Per-row errors for
+  CFG01, CFG03, CFG05 and CFG06 were exported by interpolating the saved
+  controlled-replacement velocities onto the observation rows; re-exporting
+  CFG02 and CFG04 the same way reproduced the archived arrays exactly.
+- Recompiled: 52 pages (was 49), no undefined references. Figures 1-12 keep
+  their numbers.
+
+## Figures, joint-support text and Zenodo DOI — 18 September 2026
+
+Recorded here for completeness; made in a separate session (see
+`README_FOR_NEXT_LLM.md`). Figure 3, 5a and 7 panels regenerated with larger
+axis labels; the unconverged L-curve point removed from Fig. 8, its caption
+and the text; the joint-support appendix text corrected to state the 40 km
+separation as a square exclusion box and to describe the two stages
+(twelve-predictor square selection and per-configuration reporting); Figure 5
+float placement and Figure 3 subfigure widths adjusted; Code and data
+availability given the Zenodo DOI 10.5281/zenodo.22839669. In the same pass a
+truncated equation reference (`\ref{eq}`, rendered "Eqn ??") was restored to
+`eq:functional_relationship`, and two cited entries missing from the
+repository bibliography (Meierbachtol and others, 2015; Larour and others,
+2012) were restored.
+
 ## Appendix figure addition — 17 September 2026 (post-audit pass)
 
 - Added Appendix Figure 9 ("The modeled domain and the eligible region used

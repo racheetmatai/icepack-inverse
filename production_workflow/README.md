@@ -267,3 +267,23 @@ python production_workflow/tools/verify_split_manifests.py \
 
 Accepted manifest ID:
 `sha256-json-v1-b838631dfde2849f84ee2165749fe9ce44c01e71513e53fb66afe1d8785281b8`.
+
+## Transfer predictability
+
+`analyze_transfer_predictability.py` tests whether the twelve predictors can
+indicate in advance where the predicted `C` improves modeled velocity. For
+every observation-grid row in a withheld region the label is
+`e_ML < e_uniform` ("improves") or `e_ML < 0.5 e_uniform` ("halves"). A random
+forest classifier with fixed settings and seed predicts the label from
+observed speed alone, the twelve predictors, or both, and is scored by AUC on
+a region it did not see: leave-one-square-out over the ten central squares for
+all six configurations, and a squares-to-PIG test for CFG02 with PIG rows
+removed from training. Every quoted number is saved under a named field in
+`transfer_predictability_summary.json`.
+
+Its input per-row fields are produced by
+`controlled_replacement/export_map_fields_all_configs.py`, a variant of
+`export_corrected_map_fields.py` that takes `--configs` instead of the fixed
+CFG02/CFG04 pair. The figure is drawn by
+`generate_appendix_transfer_predictability_figure.py`. The accepted results
+are in archive 07 under `production_workflow/transfer_predictability_20260919_a/`.

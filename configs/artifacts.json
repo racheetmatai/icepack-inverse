@@ -59,6 +59,16 @@
       "bytes": 305119872,
       "sha256": "552be2eedb2ef73ffc257bb89e28d37fe75b2c7dd6d0d266a07f9a7fc93f87fe",
       "contents": "The 76 controlled replacement solves, corrected original-MEaSUREs evaluation, replacement-region sensitivity results, inter-catchment update, and affected figure sources. Rebuilt 17 September (later pass) to add named traceability for Table 6, the square-maps exceedance percentages, and Table 2's uniform-C row (square_maps_table2_traceability.json, table6_traceability/); every pre-existing numeric value reproduced to at most 1e-13 floating-point noise, no manuscript value changed."
+    },
+    {
+      "filename": "07_transfer_predictability.tar.gz",
+      "profiles": [
+        "paper",
+        "full"
+      ],
+      "bytes": 295283616,
+      "sha256": "142ea126842d21787b3f53552b3840e56f3e0c1c22974af1c186ae8651f08dc0",
+      "contents": "Transfer-predictability analysis (appendix 'Predicting where transfer succeeds', Fig. 13): per-row error fields for all six configurations over the ten square footprints, random-forest classifier results for the squares and PIG, figure sources, and the scripts as run. Reads the PIG CFG02 field from archive 06."
     }
   ],
   "external_downloads": [

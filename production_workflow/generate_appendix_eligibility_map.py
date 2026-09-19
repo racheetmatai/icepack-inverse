@@ -28,11 +28,12 @@ import numpy as np
 from matplotlib.colors import ListedColormap, BoundaryNorm
 
 ROOT = Path(__file__).resolve().parent.parent
-PW = ROOT / "production_workflow"
-sys.path.insert(0, str(PW))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generate_revision_figures_and_tables as base  # noqa: E402
 
-DESIGN = PW / "frozen_design"
+# base.DESIGN honours JOG_ARTIFACT_ROOT in the packaged workflow, so the
+# frozen grid is found in an unpacked artifact directory as well as here.
+DESIGN = base.DESIGN
 OUT = ROOT / "manuscript/figures/appendix"
 
 
@@ -50,6 +51,11 @@ def support_grid() -> dict[str, np.ndarray]:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=OUT,
+                        help="directory for the figure files (default: manuscript/figures/appendix)")
+    out = parser.parse_args().output
     base.style()
     s = support_grid()
     r = base.region_context()
@@ -89,11 +95,11 @@ def main() -> None:
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=1,
               frameon=True, framealpha=0.95, borderaxespad=0.0, fontsize=9.0)
 
-    OUT.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
     stem = "figure_appendix_eligible_region_map"
     paths = []
     for suffix in ("png", "pdf", "svg"):
-        path = OUT / f"{stem}.{suffix}"
+        path = out / f"{stem}.{suffix}"
         fig.savefig(path, bbox_inches="tight", pad_inches=0.05)
         paths.append(path)
     plt.close(fig)
@@ -106,7 +112,7 @@ def main() -> None:
         "grid_cells_5km": {"inside_modeled_domain": n_inside, "excluded_from_metrics": n_excluded, "eligible": n_eligible},
         "outputs": {path.name: sha256(path) for path in paths},
     }
-    (OUT / f"{stem}_manifest.json").write_text(
+    (out / f"{stem}_manifest.json").write_text(
         json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(record, indent=2, sort_keys=True))
 

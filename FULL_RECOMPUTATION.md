@@ -57,6 +57,40 @@ analysis, not the manuscript scenario.
 The public artifact manifest identifies the exact accepted outputs for each
 stage. Verification must pass before a downstream stage is run.
 
+## 4. Transfer predictability
+
+This stage tests whether the predictors can indicate in advance where the
+predicted `C` improves on uniform `C`. It runs no solve. First export per-row
+errors for all six configurations from the saved controlled-replacement
+velocities (Icepack environment, because the fields are interpolated onto the
+observation rows):
+
+```bash
+python production_workflow/controlled_replacement/export_map_fields_all_configs.py \
+  --repo-root <repo> --config production_workflow/amundsen_production_config.json \
+  --adoption <gate1 adoption json> --dataset <canonical_master_dataset.csv.gz> \
+  --corrected-observations <controlled run>/observation_audit/corrected_observations.csv.gz \
+  --predictions <gate3 full-mesh ensemble predictions> \
+  --new-root <controlled run> --output <map fields directory> \
+  --configs CFG01 CFG02 CFG03 CFG04 CFG05 CFG06
+```
+
+Then train and score the classifiers (ordinary Python with scikit-learn), and
+draw the appendix figure:
+
+```bash
+python production_workflow/analyze_transfer_predictability.py \
+  --map-fields <map fields directory> \
+  --pig-fields <controlled run>/map_fields/REG_PIG_CFG02_controlled_fields.npz \
+  --dataset <canonical_master_dataset.csv.gz> --output <results directory>
+python production_workflow/generate_appendix_transfer_predictability_figure.py \
+  --results <results directory> --output <figure directory>
+```
+
+The accepted outputs are in archive 07. Re-exporting CFG02 and CFG04 reproduces
+the archive-06 arrays exactly, which is a useful check that the export is set up
+correctly.
+
 ## Expected scale
 
 - 1,530,992 common eligible observation rows.

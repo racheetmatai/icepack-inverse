@@ -1,5 +1,14 @@
 # Canonical Journal of Glaciology manuscript
 
+## Current package — 19 September 2026
+
+Compile `manuscript.tex` as the root document (52 pages). The package is
+self-contained: class, bibliography style, bibliography, and all 20 active
+figure files. Since the 17 September release it adds the appendix section
+"Predicting where transfer succeeds" with Fig. 13, one sentence referring to it
+in "Interpreting the point-wise relationship", and the Zenodo DOI in the Code
+and data availability statement. See `CHANGELOG.md` for details.
+
 ## Controlled-replacement correction — 17 September 2026
 
 This candidate preserves the 15 September author-approved package and applies

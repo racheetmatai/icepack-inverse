@@ -705,7 +705,11 @@ predicted $C$ improves modeled velocity. The results show that these questions
 can have different answers. High predictor support can coexist with poor
 velocity performance, and sparser training representation does not consistently
 produce larger $C$ errors. Agreement with the reference $C$ is also related to,
-but does not determine, the resulting velocity error. The PIG experiment shows
+but does not determine, the resulting velocity error. Nor can the predictors,
+taken together, indicate in advance where the predicted $C$ will improve on
+uniform $C$: a classifier trained on all twelve predictors is not consistently
+better than one using observed speed alone and does not transfer to PIG
+(Appendix~\nameref{app:transfer_predictability}). The PIG experiment shows
 that the same distinctions remain important when the held-out region is
 expanded from a 50~km square to an entire glacier catchment.
 
@@ -1416,5 +1420,99 @@ these tests cannot separate its effect from other differences between
 locations. Performance also varies among squares using the same
 method, so differences between source classes cannot alone account
 for the observed spatial variation. We did not test source class as an additional predictor or quantify how much along-flow smoothing changes the predictor gradients and modeled velocity.
+
+\section{Predicting where transfer succeeds}
+\label{app:transfer_predictability}
+
+The preceding diagnostics examine predictor support, training representation,
+agreement with the reference $C$, and the BedMachine reconstruction one at a
+time. Here we test whether the predictors, taken together, can indicate in
+advance where the predicted $C$ improves modeled velocity. This is the
+information a user would need to decide where a point-wise prediction can be
+relied upon.
+
+For each observation-grid row in a withheld region, we recorded whether the
+predicted $C$ gives lower local velocity error than uniform $C$,
+$e_{\mathrm{ML}}<e_{\mathrm{uniform}}$, using the local vector-error magnitude
+defined in the Methods. We also used a stricter criterion,
+$e_{\mathrm{ML}}<0.5\,e_{\mathrm{uniform}}$, which requires the predicted $C$
+to at least halve the local error. We then trained a random forest classifier
+to predict each outcome. A random forest combines many decision trees fitted to
+random subsets of the data and can represent nonlinear relationships among many
+inputs without specifying their form \citep{breiman2001random}. We used three
+sets of inputs: observed speed alone, the twelve predictors, and the twelve
+predictors together with observed speed. Observed speed is included because it
+is available to any user from the velocity map. If the predictors contain
+additional information about where transfer succeeds, the combined classifier
+should outperform the classifier that uses observed speed alone. The same
+classifier settings were used for every test.
+
+Each classifier was evaluated on a region it had not seen. For the squares, we
+trained on the central squares of nine tests and evaluated on the central
+square of the tenth, repeating this for every square and configuration. Every
+training row therefore comes from a predicted $C$ field produced without that
+location, as in the evaluated square. For PIG, we trained on the ten central
+squares, excluding 18,409 rows that lie inside PIG, and evaluated CFG02 over
+the complete catchment. We summarize performance with the area under the
+receiver operating characteristic curve (AUC), which measures how well the
+classifier ranks locations that meet the criterion above those that do not. An
+AUC of 0.5 indicates no skill, values below 0.5 indicate a reversed ranking,
+and a value of 1 indicates perfect separation.
+
+In 10 of the 60 square tests (12 for the stricter criterion), the outcome was
+the same at every evaluated row, so it could not be separated within the
+square. In SQ04, for example, the predicted $C$ improved on uniform $C$ at
+every row for all six configurations. These tests are omitted from the AUC
+summary; in them, success or failure is a property of the whole square rather
+than of individual locations.
+
+For the improvement criterion, the median AUC across the remaining 50 square
+tests was 0.57 using observed speed alone, 0.59 using the twelve predictors,
+and 0.61 using both (Fig.~\ref{fig:transfer_predictability}a). The combined
+classifier had a higher AUC than the speed-only classifier in 23 of the 50
+tests, and its AUC was below 0.5 in 17. For the stricter criterion, the median
+AUCs were 0.52, 0.42, and 0.48, respectively, and the combined classifier had
+an AUC below 0.5 in 25 of 48 tests (Fig.~\ref{fig:transfer_predictability}b).
+
+The classifiers also failed to transfer to PIG. For the improvement criterion,
+the AUC was 0.55 using the twelve predictors, whereas the two classifiers that
+include observed speed had AUCs of 0.35 and 0.32. This reversal arises because
+the relationship between speed and success differs between the two settings.
+In the training squares, the predicted $C$ improves on uniform $C$ less often
+in faster flow, and no training row is faster than 455~m~a$^{-1}$. In PIG, it
+improves on uniform $C$ more often in faster flow, and 11\% of the evaluated
+area is faster than this. For the stricter criterion, the three AUCs at PIG
+ranged from 0.47 to 0.52.
+
+The predictors therefore do not provide a reliable way to identify in advance
+where the predicted $C$ will improve modeled velocity. The combined classifier
+is not consistently better than one using observed speed alone, often ranks
+locations worse than chance, and does not transfer from the squares to PIG.
+Together with the tests of predictor support and training representation, this
+indicates that the available predictors, individually or together, do not show
+where the point-wise relationship will transfer successfully.
+
+\begin{figure*}
+\centering
+\begin{subfigure}[t]{0.49\textwidth}
+\includegraphics[width=\linewidth]{figure_appendix_transfer_predictability_a.pdf}
+\caption{Predicted $C$ improves on uniform $C$.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.49\textwidth}
+\includegraphics[width=\linewidth]{figure_appendix_transfer_predictability_b.pdf}
+\caption{Predicted $C$ halves the local error.}
+\end{subfigure}
+\caption{Ability of a random forest classifier to predict where the predicted
+$C$ improves on uniform $C$. Each point is the AUC for one withheld square and
+configuration when the classifier is trained on the central squares of the
+other nine tests; colour identifies the configuration. Stars show the PIG CFG02
+test, for which the classifier is trained on all ten central squares with rows
+inside PIG removed. Horizontal bars mark medians across the square tests and
+the dashed line marks no skill (AUC 0.5). Panel (a) uses
+$e_{\mathrm{ML}}<e_{\mathrm{uniform}}$ and panel (b) uses
+$e_{\mathrm{ML}}<0.5\,e_{\mathrm{uniform}}$. Tests in which the criterion was
+met at every row or at none are omitted.}
+\label{fig:transfer_predictability}
+\end{figure*}
 
 \end{document}

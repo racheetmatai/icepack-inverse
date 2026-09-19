@@ -34,6 +34,9 @@ APPENDIX = [
     "method_overview.pdf",
     "regional_target_distributions.png",
     "square_target_distributions.png",
+    "figure_appendix_eligible_region_map.png",
+    "figure_appendix_transfer_predictability_a.pdf",
+    "figure_appendix_transfer_predictability_b.pdf",
 ]
 
 
@@ -153,6 +156,19 @@ def main() -> None:
         run([python, str(controlled_code / "generate_corrected_figure1.py")], controlled_env)
         shutil.copy2(controlled / "lcurve/lcurve_appendix_extended.png",
                      work / "lcurve_appendix.png")
+
+        # Appendix figures added after the controlled-replacement release:
+        # the eligible-region map (frozen 5 km grid) and the
+        # transfer-predictability figure (archived classifier results).
+        run([python, str(workflow / "generate_appendix_eligibility_map.py"),
+             "--output", str(work)], env)
+        predictability = artifacts / "production_workflow/transfer_predictability_20260919_a"
+        if not predictability.is_dir():
+            raise FileNotFoundError(
+                "Transfer-predictability results (archive 07) are required for the current manuscript"
+            )
+        run([python, str(workflow / "generate_appendix_transfer_predictability_figure.py"),
+             "--results", str(predictability / "results"), "--output", str(work)], env)
 
         sources = [controlled_figures, work, target_out]
         for name in INTRODUCTION:

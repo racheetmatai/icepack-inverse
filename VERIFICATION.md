@@ -1,5 +1,39 @@
 # Release verification
 
+## Transfer-predictability addition — 19 September 2026
+
+- New analysis for the appendix section "Predicting where transfer succeeds"
+  (manuscript Fig. 13): `production_workflow/analyze_transfer_predictability.py`,
+  `production_workflow/generate_appendix_transfer_predictability_figure.py`,
+  and `production_workflow/controlled_replacement/export_map_fields_all_configs.py`.
+  Accepted outputs are in the new archive 07,
+  `07_transfer_predictability.tar.gz` (295,283,616 bytes, SHA256
+  `142ea126842d21787b3f53552b3840e56f3e0c1c22974af1c186ae8651f08dc0`),
+  registered in `configs/artifacts.json`. Archives 01–06 are unchanged.
+- Export check: per-row fields for all six configurations were exported in the
+  Icepack container by interpolating the saved controlled-replacement
+  velocities. Re-exporting CFG02 and CFG04 reproduced the archive-06 arrays
+  exactly (maximum absolute difference 0; row-ID and boolean arrays identical).
+  The domain outline and three geophysics rasters needed by the export were
+  checked against the SHA256 values in `amundsen_production_config.json`
+  before use.
+- Reproducibility check: the formal analysis run reproduced the preliminary
+  run's square AUCs exactly (fixed seed), and the packaged figure script
+  reproduced the workspace artwork byte for byte.
+- `scripts/reproduce_paper.py` now regenerates both appendix figures added
+  since the controlled-replacement release: the eligible-region map (Fig. 9,
+  previously missing from the pipeline) and Fig. 13. The eligible-region
+  script now takes its design grid from the base figure module, so it honours
+  `JOG_ARTIFACT_ROOT`; regenerating it reproduces the published PNG byte for
+  byte.
+- `tests/test_public_package.py` requires the four new or changed entry points.
+  All 8 package tests pass.
+- Known gap, not addressed here: Figures 3, 5a, 7 and the L-curve were
+  regenerated on 18 September (larger labels, no tight bounding box,
+  unconverged L-curve point removed), but the generator scripts in this
+  package were not updated with them, so `reproduce_paper.py` still produces
+  the earlier versions of those four figures.
+
 ## Deposit and manuscript finalization — 18-19 September 2026
 
 - **Zenodo DOI assigned: `10.5281/zenodo.22839669`.** Recorded in
