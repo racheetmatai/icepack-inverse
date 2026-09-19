@@ -23,6 +23,9 @@ class PublicPackageTests(unittest.TestCase):
             "scripts/unpack_artifacts.py",
             "scripts/reproduce_paper.py",
             "production_workflow/run_production.sh",
+            "production_workflow/controlled_replacement/build_controlled_controls.py",
+            "production_workflow/controlled_replacement/build_intercatchment_controls.py",
+            "production_workflow/controlled_replacement/evaluate_controlled_campaign.py",
             "icepack-mlp/production_training/train.py",
         ]
         for name in required:

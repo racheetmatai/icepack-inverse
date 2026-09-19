@@ -36,7 +36,7 @@ Correspondence: Racheet Matai
 \maketitle
 % BEGIN INLINED SOURCE: pass3_abstract.tex
 \begin{abstract}
-Accurate projections of ice-sheet contributions to sea-level rise are hindered by uncertainties in basal-sliding parameterizations. Although inverse methods can calibrate basal friction to reproduce observed velocities, the controls on inversion-derived friction remain poorly understood. We test whether surface, bed, and geophysical observables can define a consistent point-wise relationship with the inversion-derived basal-friction control $C$ across the Amundsen Sea sector of West Antarctica. Using a sector-wide Icepack inversion as the reference, we train multilayer perceptrons (MLPs) in ten experiments, each with a spatially separated 50~km square and surrounding buffer withheld from training and validation. Each predicted $C$ field is tested in an Icepack forward simulation against observed velocity. The two ice-product configurations improve on a spatially uniform-$C$ reference in eight of ten squares, while the combined configurations do so in nine of ten. Performance varies among locations, adding predictors does not consistently improve performance, and failures occur even where marginal and joint predictor support is high. The tested local predictors produce friction controls that improve modeled velocity in most withheld squares, but the learned relationships are not consistently successful across locations. These experiments highlight the limitations of constructing point-wise basal-friction parameterizations from these observables alone.
+Accurate projections of ice-sheet contributions to sea-level rise are hindered by uncertainties in basal-sliding parameterizations. Although inverse methods can calibrate basal friction to reproduce observed velocities, the controls on inversion-derived friction remain poorly understood. We test whether surface, bed, and geophysical observables can define a consistent point-wise relationship with the inversion-derived basal-friction control across the Amundsen Sea sector of West Antarctica. Using a sector-wide inversion for the basal-friction control as the reference, we train neural-network regression models in ten experiments, each with a spatially separated 50~km square and buffer withheld from training and validation. Each friction-control field is tested in a forward simulation against observed velocity. Depending on predictor configuration, the friction fields reduce modeled-velocity error relative to a spatially uniform friction reference in six to nine of the ten squares. Performance varies among locations, adding predictors does not consistently improve performance, and failures occur even where marginal and joint predictor support is high. Although the tested local predictors improve velocity in most withheld squares, modeled-velocity errors remain substantially larger than for the inversion reference. These results indicate that the considered surface, bed, and geophysical observables are insufficient to define a consistently successful point-wise parameterization of inversion-derived basal friction.
 \end{abstract}
 % END INLINED SOURCE: pass3_abstract.tex
 \end{frontmatter}
@@ -56,9 +56,11 @@ C(\mathbf{x}) \approx f\!\left(\mathbf{z}(\mathbf{x})\right),
 \end{equation}
 where $\mathbf{z}(\mathbf{x})$ contains locally measured or inferred quantities that may influence basal resistance or serve as proxies for unresolved basal conditions. Equation~\ref{eq:functional_relationship} is a testable point-wise approximation at the model-grid scale, not a physical sliding law. We test it by fitting the relationship outside a held-out region and asking whether the predicted $C$ improves modeled velocity within that region, particularly where similar predictor values are well represented in the training data.
 
-We divide the candidate predictors into two groups. The ice-product group describes ice geometry, its gradients, driving stress, and surface air temperature. The geophysical-product group describes bed geometry, bed--surface gradient alignment, geothermal heat flux, and gravity and magnetic anomalies. Ice thickness controls overburden pressure and normal stress at the bed, while surface slope governs driving stress; together, variations in thickness and surface elevation gradient impose systematic constraints on basal drag (\citealp{macayeal1989large}; \citealp[Sections 7.2--7.4 and 8.2]{cuffey2010physics}). Surface air temperature provides a large-scale upper thermal boundary condition that influences englacial and basal thermal state over long timescales. Where basal ice reaches the pressure-melting point, basal water pressure can reduce effective pressure and frictional resistance (\citealp[Chapters~6--7]{cuffey2010physics}; \citealp{iken1981effect,dawson2022ice}).
+We divide the candidate predictors into two groups. The ice-product group describes ice geometry, its gradients, driving stress, and surface air temperature. The geophysical-product group describes bed geometry, bed--surface gradient alignment, geothermal heat flux, and gravity and magnetic anomalies. Ice thickness controls overburden pressure and normal stress at the bed, while surface slope governs driving stress; together, variations in thickness and surface elevation gradient impose systematic constraints on basal drag (\citealp{macayeal1989large}; \citealp[Sections 7.2--7.4 and 8.2]{cuffey2010physics}). Surface air temperature provides the upper thermal boundary condition and influences the englacial and basal thermal state of the ice sheet \citep{meierbachtol2015thermal, larour2012continental}. 
+% Where basal ice reaches the pressure-melting point, basal water pressure can reduce effective pressure and frictional resistance (\citealp[Chapters~6--7]{cuffey2010physics}; \citealp{iken1981effect,dawson2022ice}).
 
-Geophysical factors can affect basal drag through bed topography and substrate composition. Bed gradients characterize topographic variation that can contribute to form drag, while deformable till can reduce resistance and enable sliding \citep{cuffey2010physics,tulaczyk2000basal,boulton2001sediment,hoffman2022impact}. Inferred friction can also depend on assumptions about ice rheology and subglacial hydrology \citep{rathmann2022inferred,mcarthur2023basal}.
+Geophysical factors can affect basal drag through bed topography and substrate composition. Bed gradients characterize topographic variation that can contribute to form drag, while deformable till can reduce resistance and enable sliding \citep{cuffey2010physics,tulaczyk2000basal,boulton2001sediment,hoffman2022impact}. 
+%Inferred friction can also depend on assumptions about ice rheology and subglacial hydrology \citep{rathmann2022inferred,mcarthur2023basal}.
 Gravity disturbances reflect subsurface density variations associated with bedrock and sedimentary structure \citep{hackney2003geodetic}. Gravity data can therefore constrain broad bed geometry where direct measurements are sparse \citep{boghosian2015resolving,kennedy2020gravity}. Bedrock lithology can influence sediment characteristics, while deformable sediment can reduce basal resistance \citep{crompton2016correlations,boulton2001sediment}. Gravity measurements cannot resolve the thin (centimeter to meter scale) sediment layers that affect sliding, but larger density contrasts can identify sedimentary basins; such sediment bodies can influence ice-stream onset \citep{kennedy2020gravity,peters2006subglacial}. Magnetic anomalies reflect contrasts in crustal magnetization \citep{golynsky2018new}. In concert with gravity and radar data, they can help infer subglacial geology \citep{jordan2023geological} and regional thermal structure \citep{martos2017heat,reading2022antarctic}, thereby providing indirect context for basal drag. Geothermal heat flux supplies heat at the bed and can influence whether basal ice reaches the pressure-melting point. Where basal ice is at the melting point, additional heat can support basal meltwater production and thereby influence basal resistance \citep{dawson2022ice,kang2021evaluation}.
 
 Previous studies have compared inferred basal resistance with radar, seismic,
@@ -71,53 +73,42 @@ parameters and radar-derived basal reflectivity over Thwaites Glacier, while
 \citet{kyrke2017can} found only weak kilometer-scale association between basal
 drag and seismic acoustic impedance along Pine Island Glacier (PIG).
 
-These studies, together with our understanding of basal processes, suggest that
-the relationship between basal conditions and basal resistance may be complex
-and nonlinear, involving thermo-mechanical feedbacks, subglacial hydrology, and
-spatially variable bed properties. Following the field inversion and machine
-learning approach of \citet{parish2016paradigm}, we use machine learning to fit
-the proposed nonlinear relationship between the selected observables and the
-inversion-derived friction control $C$.
+These studies, together with our understanding of basal processes, suggest that the relationship between basal conditions and basal resistance may be complex and nonlinear, involving thermo-mechanical feedbacks, subglacial hydrology, and spatially variable bed properties. Following the field inversion and machine learning (FIML) approach of \citet{parish2016paradigm}, we use nonlinear regression with a multilayer perceptron (MLP) as a flexible representation of $f$ in Eqn~\ref{eq:functional_relationship} to relate the selected observables to the inversion-derived friction control $C$.
 
-We use a multilayer perceptron (MLP) as a flexible nonlinear representation of $f$ in Eqn~\ref{eq:functional_relationship}. The point-wise architecture asks whether the values of the selected observables at a location contain enough information to determine the inversion control there without prescribing a particular functional form. Observed velocity is deliberately excluded from the predictor set. Because changing $C$ changes the modeled velocity, including velocity as an input would introduce a self-consistency problem and would make the inferred relationship depend directly on the velocity used to evaluate it.
+ The point-wise architecture asks whether the values of the selected observables at a location contain enough information to determine the inversion control there without prescribing a particular functional form. Observed velocity is deliberately excluded from the predictor set because changing $C$ changes the modeled velocity, including velocity as an input would introduce a self-consistency problem and would make the inferred relationship depend directly on the velocity used to evaluate it.
 
-Recent machine-learning studies in glaciology have addressed related but distinct inverse and constitutive problems. \citet{jouvet2023inversion} inverted a convolutional emulator of Stokes flow, while \citet{jouvet2023ice} and \citet{cheng2024forward} incorporated ice-flow physics into learned forward or inverse models. \citet{wang2025deep} used remote sensing and physics-informed deep learning to infer spatially varying ice-shelf rheology. These approaches use spatial structure or governing equations to reproduce ice-flow fields or solve inverse problems. Here, machine learning is used only to fit the local relationship in Eqn~\ref{eq:functional_relationship}.
+Recent machine-learning studies in glaciology have addressed related but distinct inverse and constitutive problems. \citet{jouvet2023inversion} inverted a convolutional emulator of Stokes flow, while \citet{jouvet2023ice} and \citet{cheng2024forward} incorporated ice-flow physics into learned forward or inverse models. \citet{wang2025deep} used remote sensing and physics-informed deep learning to infer spatially varying ice-shelf rheology. These approaches use spatial structure or governing equations to reproduce ice-flow fields or solve inverse problems. In contrast, the present study uses machine learning only as a flexible function approximator for $f(\cdot)$ in Eq.~\ref{eq:functional_relationship} to address a different question: can commonly available surface, bed, and geophysical observables contain sufficient information to define a transferable point-wise mapping for inversion-derived basal friction.
 % END INLINED SOURCE: pass1_intro.tex
 % BEGIN INLINED SOURCE: pass2_intro_addendum.tex
 
-We evaluate that hypothesis in ten spatially separated 50~km squares across the
-Amundsen Sea sector. Each square and its surrounding buffer are excluded from
-MLP training and validation. The predicted $C$ field is then used in a forward ice-flow simulation, and the resulting velocity is compared with observed velocity. All experiments use the same sector-wide reference inversion, constructed using observed velocity from the complete sector. The square experiments therefore test whether a point-wise relationship fitted elsewhere in the sector remains useful in a withheld location. We compare six predictor configurations and quantify how well the withheld predictor values are represented in the training data. We also withhold all of Pine Island Glacier in a secondary catchment-scale test. Because inversion-derived $C$ is not necessarily unique \citep{macayeal1993tutorial}, modeled velocity provides the primary evaluation, while direct agreement with the reference $C$ is treated as secondary (Appendix section~\nameref{app:target_distributions}).
+% We evaluate that hypothesis in ten spatially separated 50~km squares across the
+% Amundsen Sea sector. Each square and its surrounding buffer are excluded from
+% MLP training and validation. The predicted $C$ field is then used in a forward ice-flow simulation, and the resulting velocity is compared with observed velocity. All experiments use the same sector-wide reference inversion, constructed using observed velocity from the complete sector. The square experiments therefore test whether a point-wise relationship fitted elsewhere in the sector remains useful in a withheld location. We compare six predictor configurations and quantify how well the withheld predictor values are represented in the training data. We also withhold all of Pine Island Glacier in a secondary catchment-scale test. Because inversion-derived $C$ is not necessarily unique \citep{macayeal1993tutorial}, modeled velocity provides the primary evaluation, while direct agreement with the reference $C$ is treated as secondary (Appendix section~\nameref{app:target_distributions}).
+
+
+
 % END INLINED SOURCE: pass2_intro_addendum.tex
 % BEGIN INLINED SOURCE: pass1_methods.tex
+
 \section{Methods}
 
-The experiment links a sector-wide basal-friction inversion with spatially withheld tests of the learned relationships (Fig.~\ref{fig:method_overview}). The inversion provides the reference $C$ used to train the MLPs outside each excluded region. Predicted $C$ is then supplied to Icepack, and the resulting modeled velocity is compared with observations in the withheld region.
+%The experiment links a sector-wide basal-friction inversion with spatially withheld tests of the learned relationships (Fig.~\ref{fig:method_overview}). The inversion provides the reference $C$ used to train the MLPs outside each excluded region. Predicted $C$ is then supplied to Icepack, and the resulting modeled velocity is compared with observations in the withheld region.
+We evaluate this hypothesis using spatially withheld tests across the Amundsen Sea sector (Fig.~\ref{fig:method_overview}). The models are evaluated in ten spatially separated 50~km squares, each with a surrounding buffer excluded from the training and validation datasets. A sector-wide basal-friction inversion, constructed using observed velocity from the complete sector, provides the reference $C$ used to train the models outside each excluded region. The regression predicted friction field is then used in a forward ice-flow simulation within the withheld region, and the resulting modeled velocity is compared with observations. These experiments test whether a point-wise relationship fitted elsewhere in the sector remains useful in a withheld location. We compare six predictor configurations, quantify how well the withheld predictor values are represented in the training data, and perform a secondary catchment-scale test by withholding Pine Island Glacier. Because inversion-derived $C$ is not necessarily unique \citep{macayeal1993tutorial}, modeled velocity provides the primary evaluation, while direct agreement with the reference $C$ is treated as secondary (Appendix section~\nameref{app:target_distributions}).
 
-\begin{figure*}
+
+\begin{figure}
 \centering
 \includegraphics[width=\textwidth]{method_overview.pdf}
-\caption{Steps in the spatial-transfer experiment. Each experiment--configuration pair uses one modeled velocity field obtained from the vertex-wise median of ten predicted basal-friction controls. Predicted $C$ replaces reference $C$ only within the withheld footprint or catchment, intersected with the eligible grounded area; reference $C$ is retained elsewhere. Observed velocity enters the inversion and the final velocity comparison, but is not an MLP predictor.}
+\caption{Steps in the spatial-transfer experiment.}
 \label{fig:method_overview}
-\end{figure*}
+\end{figure}
 
 \subsection{Study region and observations}
 
-The study domain covers the Pine Island, Thwaites, and Dotson--Crosson drainage systems in the Amundsen Sea sector of West Antarctica (Fig.~\ref{fig:study_region}). The catchment outlines were delineated manually, with lateral boundaries following glacier velocity flowlines. PIG, Thwaites, and Dotson are geographic labels; they do not imply that each catchment contains one basal regime. Two non-overlapping inter-catchment corridors complete the five-region division used for regional comparisons. %Catchment membership is defined by the catchment meshes. Where meshes overlap, a location is assigned to the catchment in which it lies farthest from the boundary.
+The study domain covers the Pine Island, Thwaites, and Dotson--Crosson drainage systems in the Amundsen Sea sector of West Antarctica (Fig.~\ref{fig:study_region}). The catchment outlines were delineated manually, with lateral boundaries following glacier velocity flowlines. PIG, Thwaites, and Dotson are geographic labels; they do not imply that each catchment contains one basal regime. Two non-overlapping inter-catchment corridors complete the five-region division used for regional comparisons. 
+%Catchment membership is defined by the catchment meshes. Where meshes overlap, a location is assigned to the catchment in which it lies farthest from the boundary.
 
-\begin{figure*}
-\centering
-\begin{subfigure}[t]{0.545\textwidth}
-\includegraphics[width=\linewidth]{figure1a_observed_speed_and_regions.pdf}
-\caption{Observed speed and regional partition.}
-\end{subfigure}\hfill
-\begin{subfigure}[t]{0.445\textwidth}
-\includegraphics[width=\linewidth]{figure1b_holdout_geometry.pdf}
-\caption{Primary squares and excluded footprints.}
-\end{subfigure}
-\caption{Study region and experimental geometry. Panel (a) shows observed MEaSUREs speed over the eligible part of the Amundsen Sea sector, with the PIG, Thwaites, and Dotson regions and the two inter-catchment corridors. Panel (b) shows the ten 50~km primary evaluation squares (solid) and their 130~km excluded footprints (dashed). Each footprint includes a 40~km buffer on every side of the central square and is excluded from MLP training and validation.}
-\label{fig:study_region}
-\end{figure*}
+
 
 Velocity is taken from the Making Earth System Data Records for Use in Research Environments (MEaSUREs) Phase-Based Antarctica Ice Velocity Map, derived from satellite radar interferometry \citep{https://doi.org/10.5067/pz3nj5rxrh10}. Surface elevation, ice thickness and bed elevation are taken from BedMachine Antarctica, version~2 \citep{https://doi.org/10.5067/e1ql9hfq7a8m,morlighem2020bedmachine}. BedMachine combines direct observations with reconstruction that uses ice velocity in some regions. The ice-product predictors therefore
 represent available geometry products, some of which already incorporate
@@ -129,6 +120,20 @@ thickness variations along flow than across flow
 
 Surface air temperature and geothermal heat flux follow the products distributed with Quantarctica \citep{matsuoka2018quantarctica,comiso2000variability,an2015temperature}. Magnetic anomaly is taken from the 5~km EPSG:3031 ADMAP-2S grid \citep{eagles2024admap}, and gravity disturbance from the oriented EPSG:3031 AntGG2021 gravity-anomaly grid \citep{scheinert2024antgg}. %NetCDF and GeoTIFF products are sampled at raster cell centers before interpolation to the finite-element mesh. 
 Interpolation to the model grid does not add spatial information beyond that contained in the original products, whose native resolutions and processing differ.
+
+\begin{figure}
+\centering
+\begin{subfigure}[t]{0.534\textwidth}
+\includegraphics[width=\linewidth]{figure1a_observed_speed_and_regions.pdf}
+\caption{Observed speed and regional partition.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.464\textwidth}
+\includegraphics[width=\linewidth]{figure1b_holdout_geometry.pdf}
+\caption{Primary squares and excluded footprints.}
+\end{subfigure}
+\caption{Study region and holdout design. Panel (a) shows observed MEaSUREs speed over the eligible part of the Amundsen Sea sector, with the PIG, Thwaites, and Dotson regions and the two inter-catchment corridors. Panel (b) shows the ten 50~km primary evaluation squares (solid) and their 130~km excluded footprints (dashed). Each footprint includes a 40~km buffer on every side of the central square and is excluded from training and validation datasets.}
+\label{fig:study_region}
+\end{figure}
 
 \subsection{Ice-flow model and basal-friction inversion}
 
@@ -169,7 +174,7 @@ $r_C \simeq 0.014$ using a maximum-curvature criterion
 \includegraphics[width=\linewidth]{figure3a_observed_speed.pdf}
 \caption{Observed speed.}
 \end{subfigure}\hfill
-\begin{subfigure}[t]{0.32\textwidth}
+\begin{subfigure}[t]{0.335\textwidth}
 \includegraphics[width=\linewidth]{figure3b_inversion_reference_c.pdf}
 \caption{Inversion-reference $C$.}
 \end{subfigure}\hfill
@@ -177,15 +182,15 @@ $r_C \simeq 0.014$ using a maximum-curvature criterion
 \includegraphics[width=\linewidth]{figure3c_inversion_velocity_residual.pdf}
 \caption{Velocity-vector residual.}
 \end{subfigure}
-\caption{Sector-wide inversion used to construct the learning target. The inversion field is one regularized solution for the stated data, model equations, sliding law, boundary conditions, and regularization, and provides the reference $C$ for the learning experiments. The black line is the model-domain boundary.}
+\caption{Sector-wide inversion used to construct the learning target. The inversion field is one regularized solution for the stated data, model equations, sliding law, boundary conditions, and regularization, and provides the reference $C$ for the learning experiments.}
 \label{fig:definitive_inversion}
 \end{figure*}
 
-\subsection{Learning dataset and predictor configurations}
+\subsection{Dataset and predictor configurations}
 
-We construct a common learning dataset by collocating the mesh-interpolated predictors with the inversion-reference $C$ on the observation grid. Each row contains the predictors and reference $C$ at one observation-grid location. Eligible rows are required to have finite values for all twelve predictors and both velocity components, with $\phi>0.1$ to exclude floating ice and the immediate grounding transition. The same eligibility criteria are used for all predictor configurations and experiments. This eligible region, mapped against the complete modeled domain, is shown in Appendix Figure~\ref{fig:eligible_region_map}. Observed velocity is not included as a predictor; the twelve predictors and their six configurations (CFG01--CFG06) are summarized in Table~\ref{tab:configurations}. Gradient construction and exact row counts are given in Appendix section~\nameref{app:predictor_population}.
+We construct a dataset on the observation grid, with each row containing the predictors and inversion-reference $C$ at one location. Eligible rows are required to have finite values for all predictors and both velocity components, with $\phi>0.1$ to exclude floating ice and the immediate grounding transition. The same eligibility criteria are used for all predictor configurations and experiments. This eligible region, mapped against the complete modeled domain, is shown in Appendix Figure~\ref{fig:eligible_region_map}. The twelve predictors and their six configurations (CFG01--CFG06) are summarized in Table~\ref{tab:configurations}. Gradient construction and exact row counts are given in Appendix section~\nameref{app:predictor_population}.
  
-The additional predictor in CFG06 measures bed--surface gradient alignment,
+The one additional predictor in CFG06 relative to CFG05 measures bed--surface gradient alignment,
 \begin{equation}
 \label{eq:alignment}
 a_{bs}=
@@ -196,7 +201,7 @@ a_{bs}=
 where $\epsilon_b=5.4\times10^{-3}$ and
 $\epsilon_s=1.5\times10^{-4}$~m~m$^{-1}$. When both gradients are large
 relative to these values, $a_{bs}$ approaches $\cos\theta_{bs}$. The added terms prevent the alignment from becoming unstable where either gradient is very small. This predictor describes relative alignment
-without using velocity direction. The choice of $\epsilon_b$ and $\epsilon_s$
+without using velocity direction. The surface gradient defines the local driving-stress direction, so comparison with the bed gradient provides a measure of whether bed slopes are oriented along or across the driving direction, without using observed velocity. The choice of $\epsilon_b$ and $\epsilon_s$
 is described in Appendix section~\nameref{app:predictor_population}.
 
 \begin{table*}
@@ -230,7 +235,7 @@ CFG01 contains all ice-product predictors and CFG02 the selected ice-product sub
 
 The primary experiment uses ten 50~km squares distributed across the study
 region (Fig.~\ref{fig:study_region}b). For each square, the complete 130~km
-footprint is excluded from MLP training and validation, leaving a 40~km buffer
+footprint is excluded from the training and validation datasets, leaving a 40~km buffer
 on every side of the central evaluation square. The ten excluded footprints do
 not overlap. Following the rationale of spatially separated evaluation \citep{roberts2017crossvalidation,valavi2019blockcv}, the buffer reduces dependence on nearby spatially correlated training rows. It does not remove the
 dependence introduced by the common sector-wide inversion or by non-local ice
@@ -242,45 +247,34 @@ given in Appendix section~\nameref{app:buffer}.
 Candidate square locations were selected using spatial separation and
 predictor-support criteria so that the withheld predictor values were generally
 well represented in the remaining training region. Support was assessed using
-both marginal and joint criteria. No criterion based on the inversion-reference $C$ or modeled velocity errors was used in square selection. The
-distribution of inversion-reference $C$ was examined only afterward because the reference field is one regularized, non-unique inversion solution, and a different predicted $C$ may still reproduce the observed velocity.
-Modeled velocity errors were excluded to avoid selecting held-out regions based on how well the model ultimately performed.
-
-Marginal support requires every included predictor at a held-out point to lie
+both marginal and joint criteria. Marginal support requires every included predictor at a held-out point to lie
 within the 1st--99th percentile range of the corresponding eligible non-held-out
 rows. Joint support asks whether the complete predictor combination has a
 sufficiently close analogue in the remaining training region. We report the area fraction satisfying both criteria and retain every held-out point in the modeled velocity evaluation regardless of support. Details of the joint-support
 transformation and distance threshold are given in Appendix section~\nameref{app:predictor_population}. A separate regional experiment withholds the two inter-catchment corridors and is reported in Appendix section~\nameref{app:target_distributions}.
 
+No criterion based on the inversion-reference $C$ or modeled velocity errors was used in square selection. The
+distribution of inversion-reference $C$ was examined only afterward because the reference field is one regularized, non-unique inversion solution, and a different predicted $C$ may still reproduce the observed velocity.
+Modeled velocity error was not used in selecting the held-out regions, so the test locations were chosen independently of their eventual forward-model performance.
+
+
 \subsubsection{Catchment-scale transfer test}
 
-In addition to the ten compact spatial tests, we retained Pine Island
+In addition to the ten spatial tests, we retained Pine Island
 Glacier (PIG) as one catchment-scale transfer test chosen before its results were examined. This tests whether a point-wise relationship
 learned elsewhere in the Amundsen Sea sector can be transferred across an
 entire glacier catchment. All eligible PIG rows were excluded
-from MLP training and validation, while the remaining grounded sector,
+from the training and validation dataset, while the remaining grounded sector,
 including Thwaites, Dotson--Crosson, and the two inter-catchment corridors,
 provided the training and validation rows. Predictor support in PIG was evaluated using the same marginal and joint
-criteria as the square experiments and without using the inversion control
+criteria as the square experiments and without using $C$
 or velocity errors. 
 
 \subsection{Model fitting and repeated realizations}
 
-A point-wise regression model provides a direct way to test whether the
-inversion-derived friction control can be expressed as a local function of the
-available predictors, without introducing additional spatial information from
-neighboring locations. We use a MLP as a
-flexible nonlinear representation of $f(\cdot)$ in
-Eqn~\ref{eq:functional_relationship}. More spatially structured architectures,
-such as convolutional or graph neural networks, could use information from
-neighboring locations, but would test a different hypothesis from the local
-relationship considered here.
-
-The MLP contains ten hidden layers of 200 units and predicts the
-inversion-reference $C$ from the selected predictor configuration. Inputs and
+We use an MLP as a flexible nonlinear representation of $f(\cdot)$ in Eqn~\ref{eq:functional_relationship} to test whether inversion-derived friction can be expressed as a local function of the available predictors. The model uses no information from neighboring locations; spatially structured approaches, such as convolutional or graph neural networks, would therefore test a different hypothesis. The MLP contains ten hidden layers of 200 units and predicts the reference \(C\) using the predictors in each configuration. Inputs and
 targets are robustly scaled using medians and interquartile ranges calculated
-from the training rows only. The network architecture, optimization settings,
-model-selection procedure, and training and validation histories are given in Appendix
+from the training data only. Further details of the network implementation, training procedure, repeated realizations, and training and validation histories are given in Appendix
 section~\nameref{app:training_campaign}.
 
 For each square experiment, the eligible rows remaining after removal of the
@@ -302,7 +296,7 @@ configurations to support direct comparison. The spread among realizations
 reflects sensitivity to these training choices rather than calibrated predictive
 uncertainty or independent spatial variability. The primary prediction is the
 vertex-wise median of the ten predicted $C$ fields, which is then evaluated in
-a separate Icepack forward simulation.
+a separate forward simulation.
 
 \subsection{Forward simulations and measures of performance}
 
@@ -314,10 +308,8 @@ common eligible grounded mask. The inversion-reference $C$ is retained
 everywhere outside that footprint. The corresponding uniform-$C$ simulation
 uses the identical replacement mask, so the two simulations differ only in
 the spatial pattern of $C$ inside the excluded footprint. The PIG experiment
-uses the same procedure over the withheld catchment. This controlled
-evaluation comprises 60 square simulations using predicted $C$, one PIG
-simulation using predicted $C$, ten square-specific uniform-$C$ simulations,
-and one PIG uniform-$C$ simulation.
+uses the same procedure over the withheld catchment. 
+%This controlled evaluation comprises 60 square simulations using predicted $C$, one PIG simulation using predicted $C$, ten square-specific uniform-$C$ simulations, and one PIG uniform-$C$ simulation.
 
 The primary measure of performance is vector velocity RMSE (hereafter velocity RMSE) against the original paired MEaSUREs velocity components at their regular 450~m pixel centres over the evaluation area $A$. Modeled velocity is evaluated at the same locations. This evaluation is distinct from the mesh-interpolated observation field used by the solver for inversion and boundary conditions. The spatial average below is approximated using the mean squared vector residual at these equally spaced points (Appendix section~\nameref{app:training_campaign}):
 \begin{equation}
@@ -340,18 +332,12 @@ e(\mathbf{x}) =
 \left\|\mathbf{u}(\mathbf{x})-\mathbf{u}_{\mathrm{obs}}(\mathbf{x})\right\|.
 \]
 
-The spatially uniform-$C$ reference provides a predictor-free baseline
-analogous to a mean-only model. It uses a single control value equal to the
-finite-element-area-weighted mean inversion-reference $C$ over the eligible
-non-held-out region. For squared error in $C$, this mean is the best-fitting
-constant over that region, while containing no predictor-dependent spatial
-variation. Because $C_b\propto\exp(C)$, averaging $C$ corresponds to a
+The spatially uniform-$C$ reference provides a simple baseline using a single control value with no spatial variation from the predictors. This value is the finite-element-area-weighted mean inversion-reference $C$ outside the withheld region and is applied uniformly within the withheld region. Because $C_b\propto\exp(C)$, averaging $C$ corresponds to a
 geometric mean of $C_0\exp(C)$ before multiplication by the grounding ramp
 $\phi$. The constant is not fitted to held-out velocity and is applied over
-the same withheld replacement region as the predicted field, while the
+the same withheld replacement region as the MLP predicted field, while the
 inversion-reference $C$ is retained outside that region in both simulations.
-The comparison therefore asks whether spatial variation in $C$ inferred from the predictors improves modeled velocity beyond what is obtained from a single representative friction control. We also report relative RMSE,
-$\mathrm{RMSE}_{\mathrm{ML}}/\mathrm{RMSE}_{\mathrm{uniform}}$; values below
+The comparison therefore asks whether spatial variation in $C$ inferred from the predictors improves modeled velocity beyond what is obtained from a single representative friction control. We also report $ RMSE_{relative} = \mathrm{RMSE}_{\mathrm{ML}}/\mathrm{RMSE}_{\mathrm{uniform}}$; values below
 one indicate improvement over the uniform-$C$ reference.
 
 The ten held-out squares are the independent spatial tests. For each predictor
@@ -381,17 +367,18 @@ observations, including those in the test squares.}
 \label{fig:performance}
 \end{figure*}
 
-The local observables often produce a $C$ that improves modeled velocity
-relative to the spatially uniform-$C$ reference, but performance varies
-substantially among locations. Figure~\ref{fig:performance} shows the velocity
+Figure~\ref{fig:performance} shows the velocity
 RMSE for each held-out square, including the inversion and uniform-$C$
-references. The two ice-product configurations have the lowest median RMSE
+references. The local observables often produce a $C$ that improves modeled velocity
+relative to the spatially uniform-$C$ reference, but performance varies
+substantially among locations.  The two ice-product configurations have the lowest median RMSE
 values across the squares, 32.9~m~a$^{-1}$ for CFG01 and
 32.5~m~a$^{-1}$ for CFG02, and each improves on uniform $C$ in eight of ten
-squares (Table~\ref{tab:performance_summary}). CFG05 and CFG06, which combine the selected ice-product and geophysical-product
-predictors, improve on uniform $C$ in nine squares, while CFG03 and CFG04, the
-all- and selected-geophysical configurations, improve on uniform $C$ in six and
-seven squares, respectively.
+squares (Table~\ref{tab:performance_summary}). CFG03 and CFG04, the
+all and selected-geophysical configurations, improve on uniform $C$ in six and
+seven squares, respectively, while, CFG05 and CFG06, which combine the selected ice-product and geophysical-product
+predictors, improve on uniform $C$ in nine squares. The median RMSE is taken across the ten squares for each control separately, so the middle square for a configuration need not be the middle square for uniform $C$. The improvement counts and the relative RMSE compare the two controls within the same square. Because the squares differ widely in difficulty, CFG05 and CFG06 have a higher median RMSE than uniform 
+$C$ while still giving lower RMSE than uniform $C$ in nine of the ten squares. In SQ04, for example, CFG05 lowers RMSE from 35.1 to 9.8~m~a$^{-1}$; that improvement moves SQ04 to the lowest value in the CFG05 distribution and therefore out of its median.
 
 The inversion-reference solution has a substantially lower median RMSE of
 13.2~m~a$^{-1}$. This is not a withheld benchmark, because the inversion was
@@ -405,8 +392,7 @@ predictors contain information relevant to the effective friction control.
 
 \begin{table*}
 \caption{Velocity RMSE against observed MEaSUREs velocity in the ten central
-squares. Values are the median and interquartile range across squares.
-Relative RMSE uses the corresponding square-specific uniform-$C$ reference. The inversion reference was fitted using sector-wide observations,
+squares. Values are the median and interquartile range across squares; the median RMSE in each row is taken over that row's own ten squares and is not a paired comparison. Relative RMSE and the improvement counts compare each configuration with its square-specific uniform $C$ reference within the same square. The inversion reference was fitted using sector-wide observations,
 including those inside the test squares, and therefore represents the fitted
 reference rather than a withheld prediction. RMSE is in
 $\mathrm{m\,a^{-1}}$.}
@@ -465,7 +451,7 @@ generally high (Fig.~\ref{fig:support_skill}a). Marginal support covers more
 than 94\% of each primary square, while lower joint support is concentrated
 mainly in SQ08. High support, however, does not guarantee good modeled velocity performance. Figure~\ref{fig:support_skill}b shows performance relative to uniform $C$; a relative RMSE greater than one means that the predicted control performs worse than the uniform-$C$ reference. SQ07--CFG03, for example, has 99.4\% support by both criteria but a relative RMSE of 2.33, while SQ02--CFG04 has 97.3\% support and a relative RMSE of 1.44 (Table~\ref{tab:supported_failures}). These failures cannot be explained solely by individual predictors falling outside their training ranges or by the absence of a nearby multivariable match under the adopted definition.
 
-\begin{figure*}
+\begin{figure*}[!t]
 \centering
 \begin{subfigure}[t]{0.49\textwidth}
 \includegraphics[width=\linewidth]{figure4a_input_support.pdf}
@@ -475,7 +461,7 @@ mainly in SQ08. High support, however, does not guarantee good modeled velocity 
 \includegraphics[width=\linewidth]{figure4b_relative_velocity_skill.pdf}
 \caption{RMSE relative to uniform $C$.}
 \end{subfigure}
-\caption{Predictor support and modeled velocity performance in the ten spatial tests for six predictor configurations. Panel (a) gives the percentage of each held-out area satisfying both marginal and joint support; magenta outlines mark values below the 95\% criterion. Panel (b) gives relative RMSE; magenta outlines mark cases that do not improve on the spatially uniform-$C$ reference. Marginal bounds use eligible non-held-out rows, while joint matches use the 5~km reference grid within the training region.}
+\caption{Predictor support and modeled velocity performance in the ten spatial tests for six predictor configurations. Panel (a) gives the percentage of each held-out area satisfying both marginal and joint support (values rounded); magenta outlines mark values below the 95\% criterion. Panel (b) gives relative RMSE; magenta outlines mark cases that do not improve on the spatially uniform-$C$ reference. Marginal bounds use eligible non-held-out rows, while joint matches use the 5~km reference grid within the training region.}
 \label{fig:support_skill}
 \end{figure*}
 
@@ -498,7 +484,7 @@ SQ09 & CFG02 & 96.4 & 62.7  & 54.8  & 1.14\\
 \end{table}
 
 
-Predictor support indicates whether similar predictor combinations are represented in the training region, but does not distinguish between densely and sparsely sampled parts of predictor space. We therefore examined whether training representation was associated with errors in the predicted $C$ for CFG02 and CFG04 (Appendix section~\nameref{app:training_representation}). For CFG02, $C$ RMSE increased with sparser representation in seven of the ten squares, but the overall relationship was weak. The median within-square Spearman correlation between training-representation percentile and absolute $C$ error was only 0.069, and the median $C$ RMSE differed by only 0.004 across the three representation categories. CFG04 showed no similar pattern, with a median correlation between representation percentile and absolute $C$ error of $-0.052$. Sparse training representation is therefore associated with larger $C$ RMSE in some CFG02 experiments, but the relationship is weak and is not shared by CFG04.
+Predictor support indicates whether similar predictor combinations are represented in the training region, but does not distinguish between densely and sparsely sampled parts of predictor space. We therefore examined whether more sparsely represented predictor were associated with errors in the predicted $C$ for CFG02 and CFG04 (Appendix section~\nameref{app:training_representation}). For CFG02, $C$ RMSE increased with sparser representation in seven of the ten squares, but the overall relationship was weak. The median within-square Spearman correlation between training-representation density percentile and absolute $C$ error was only 0.069, and the median $C$ RMSE differed by only 0.004 across the three representation categories. CFG04 showed no similar pattern, with a median correlation between sparser representation percentile and absolute $C$ error of $-0.052$. Sparse training representation is therefore associated with larger $C$ RMSE in some CFG02 experiments, but the relationship is weak and is not shared by CFG04.
 
 Training representation also does not show a consistent correspondence with modeled velocity performance, as illustrated by the square-level examples in Appendix section~\nameref{app:training_representation}. In some squares, modeled velocity has lower RMSE than uniform $C$ in sparsely represented categories but not in better-represented categories. The same Appendix examples also show that closer agreement with the inversion-reference $C$ does not consistently correspond to lower relative RMSE. Training representation therefore does not by itself explain the failures to improve modeled velocity relative to uniform $C$.
 \subsection{Spatial patterns of success and failure}
@@ -523,7 +509,7 @@ $1.8\,\mathrm{km}$ bin means for legibility; all statistics were calculated from
 \label{fig:square_maps}
 \end{figure}
 
-Figure~\ref{fig:square_maps} compares CFG02, the selected ice-product configuration, with CFG04, the selected geophysical-product configuration. The two ice-product configurations have nearly identical summary performance, so CFG02 is used to represent that predictor group without repeating a visually similar map. Each square comes from a separate set of MLPs for which the complete 130~km footprint was excluded from training and validation; the panels therefore assemble ten separately withheld predictions rather than one sector-wide prediction. In every simulation, the predicted and uniform controls replace the inversion reference only inside the corresponding footprint. Across the central 50~km squares, CFG02 has lower velocity RMSE than CFG04 in eight of ten tests. Over the complete 130~km footprints, both configurations improve on uniform $C$ in nine of ten tests, with median relative RMSEs of 0.64 for CFG02 and 0.86 for CFG04. Across the ten central 50~km squares, velocity error exceeds $100\,\mathrm{m\,a^{-1}}$ over 13.0\% for CFG02 and 22.8\% for CFG04, compared with only 0.13\% for the inversion-reference solution. Thus, although the predicted controls often improve on uniform $C$, regions of large absolute velocity error remain much more extensive than for the fitted inversion-reference control.  %Panels (c, d) show the absolute errors that remain, while panels (e, f) show where predicting spatial variation in $C$ reduces or increases local error relative to uniform $C$.
+Figure~\ref{fig:square_maps} compares CFG02, the selected ice-product configuration, with CFG04, the selected geophysical-product configuration. The two ice-product configurations have nearly identical summary performance, so CFG02 is used to represent that predictor group without repeating a visually similar map and CFG04 is used to represent the geophysical predictor group. For each square a separate set of MLPs were trained for which the complete 130~km footprint was excluded from training and validation; the panels therefore assemble ten separately withheld predictions rather than one sector-wide prediction. In every simulation, the predicted and uniform controls replace the inversion reference only inside the corresponding footprint. Across the central 50~km squares, CFG02 has lower velocity RMSE than CFG04 in eight of ten tests. Over the complete 130~km footprints, both configurations improve on uniform $C$ in nine of ten tests, with median relative RMSEs of 0.64 for CFG02 and 0.86 for CFG04. Across the ten central 50~km squares, velocity error exceeds $100\,\mathrm{m\,a^{-1}}$ over 13.0\% for CFG02 and 22.8\% for CFG04, compared with only 0.13\% for the inversion-reference solution. Thus, although the predicted controls often improve on uniform $C$, regions of large absolute velocity error remain much more extensive than for the fitted inversion-reference control also observed in Table ~\ref{tab:performance_summary}.  %Panels (c, d) show the absolute errors that remain, while panels (e, f) show where predicting spatial variation in $C$ reduces or increases local error relative to uniform $C$.
 
 The maps show that the advantage of the ice-product configuration occurs
 across several distinct flow settings. In the fast PIG test SQ01, the
@@ -551,9 +537,9 @@ therefore coexist with improvements relative to the uniform control.
 The inversion-reference velocity error is also elevated in this part of
 SQ05, indicating that some of the mismatch remains even with the fitted
 reference $C$. Over the complete footprint, however, the velocity RMSEs
-are $539.5$ and $546.2\,\mathrm{m\,a^{-1}}$ for CFG02 and CFG04, compared
+are $539.5$ and $546.2\,\mathrm{m\,a^{-1}}$ for CFG02 and CFG04 respectively, compared
 with $77.1\,\mathrm{m\,a^{-1}}$ for the inversion reference. The predicted
-controls therefore introduce substantial additional error.
+controls therefore introduce substantial additional error over the reference control.
 
 Although CFG02 performs better than CFG04 in most squares, the relative
 performance of the two predictor groups varies by location. In SQ02,
@@ -575,22 +561,36 @@ $e_{\mathrm{ML}}-e_{\mathrm{uniform}}$ is positive at every evaluated
 point for CFG02 and negative at every evaluated point for CFG04.
 CFG04 also has the lower central-square $C$ RMSE in SQ09
 (0.49 versus 0.74). These examples show that neither predictor group
-performs better at every location. The central 50~km square remains
-the primary withheld-region test, while the complete 130~km footprint
-is used only as a secondary spatial diagnostic.
+performs better at every location. %The central 50~km square remains the primary withheld-region test, while the complete 130~km footprint is used only as a secondary spatial diagnostic.
 
-In SQ06, both configurations are slightly worse than uniform $C$ in the
-central Thwaites square (ratios of 1.07 and 1.04), despite simultaneous
-predictor support exceeding 98\%. Local error is lower than uniform $C$
-over only 12.6\% of the central square for CFG02 and 22.6\% for CFG04.
-Over the complete footprint, however, the ratios decrease to 0.62 and
+In SQ06, both configurations are slightly worse than uniform \(C\) in the
+central Thwaites square, with relative RMSEs of 1.07 for CFG02 and 1.04 for
+CFG04, despite simultaneous predictor support exceeding 98\%. Local error is
+lower than uniform $C$ over only 12.6\% of the central square for CFG02 and
+22.6\% for CFG04. Over the complete footprint the RSME ratios decrease to 0.62 and
 0.79, and local error reductions cover 54.1\% and 59.5\% of the evaluated
-area, respectively. The difference maps therefore show how improvements
-around the central square can accompany poorer performance within it.
-Similarly, CFG04 changes from a ratio of 1.24 in central SQ07 to 0.80
-over the complete footprint. In contrast, the CFG04 failure in SQ02
-and the CFG02 failure in SQ09 remain even when the full footprints
-are evaluated. SQ08 presents a different case: the uniform-$C$ error is already only 15.9~m~a$^{-1}$, compared with 12.3~m~a$^{-1}$ for the inversion-reference simulation, leaving relatively little scope for improvement. CFG02 and CFG04 give RMSE values of 14.5 and 15.8~m~a$^{-1}$, respectively. Although local error is lower than for uniform $C$ over 75.0\% and 71.3\% of the central square, the median local reductions are only $4.3$ and $5.0\,\mathrm{m\,a^{-1}}$. In this case, widespread negative values in panels (e, f) represent small absolute gains, and the larger residuals elsewhere limit the reduction in RMSE.
+area. CFG04 changes in the same direction in SQ07, from a ratio of 1.24 in the
+central square to 0.80 over the complete footprint. In other squares the
+result does not depend on the area evaluated: the CFG04 failure in SQ02 and
+the CFG02 failure in SQ09 remain over the complete footprints, with ratios of
+1.91 and 1.20. The complete footprint includes the 40~km buffer, which lies
+closer to the training rows than the central square does, but the change
+between the two areas does not follow one direction: across the ten squares
+and these two configurations, the complete-footprint relative RMSE is lower
+than the central-square value in nine cases and higher in eleven. The complete
+footprint also covers a larger and more varied area than the central square,
+so the comparison changes with the ice included rather than with distance from
+the training rows.
+
+SQ08 presents a different case: the uniform-$C$ error is already only
+15.9~m~a$^{-1}$, compared with 12.3~m~a$^{-1}$ for the inversion-reference
+simulation, leaving relatively little scope for improvement. CFG02 and CFG04
+give RMSE values of 14.5 and 15.8~m~a$^{-1}$, respectively. Although local
+error is lower than for uniform $C$ over 75.0\% and 71.3\% of the central
+square, the median local reductions are only $4.3$ and
+$5.0\,\mathrm{m\,a^{-1}}$. In this case, widespread negative values in panels
+(e, f) represent small absolute gains, and the larger residuals elsewhere
+limit the reduction in RMSE.
 
 As discussed above, agreement with the inversion-reference $C$ and velocity performance coincide in SQ02 and SQ09. In fact, when comparing CFG02 with CFG04 within each of the ten central squares, the configuration with lower $C$ RMSE also has lower velocity RMSE. The size of the improvement in velocity RMSE from one configuration to the other, however, does not follow directly from the magnitude of the control error. Over
 the complete SQ06 footprint, CFG02 and CFG04 have nearly identical
@@ -692,7 +692,7 @@ marginal support covers 97.5\% of the evaluated PIG area, joint support covers
 relative to uniform $C$, 79.8\% occurs within the area satisfying both support
 criteria. CFG02 nevertheless contains both successful and unsuccessful regions
 where predictor support is strong.
-CFG02 has a $C$ RMSE of 0.85 across PIG. Locations with larger absolute differences from reference $C$ also tend to have larger velocity errors, with a Spearman correlation of 0.67. This indicates a relatively strong positive association and is larger than the median within-square correlation of 0.32 for CFG02. The association between training-representation percentile and absolute $C$ error is much weaker. $C$ RMSE increases from 0.742 to 0.877 and 0.898 across the three categories of progressively sparser representation, but the Spearman correlation between representation percentile and absolute $C$ error is only 0.031. This near-zero correlation indicates that having fewer nearby training examples does not correspond to a consistent increase in local $C$ error across PIG.
+CFG02 has a $C$ RMSE of 0.85 across PIG. Locations with larger absolute differences from reference $C$ also tend to have larger velocity errors, with a Spearman correlation of 0.67. This indicates a relatively strong positive association and is larger than the median within-square correlation of 0.32 for CFG02. The association between sparse training representation percentile and absolute $C$ error is much weaker. $C$ RMSE increases from 0.742 to 0.877 and 0.898 across the three categories of progressively sparser representation, but the Spearman correlation between representation percentile and absolute $C$ error is only 0.031. This near-zero correlation indicates that having fewer nearby training examples does not correspond to a consistent increase in local $C$ error across PIG.
 
 
 
@@ -712,7 +712,7 @@ expanded from a 50~km square to an entire glacier catchment.
 The spatial differences in performance are not simply explained by the
 BedMachine diagnostics considered here. Reported bed-elevation uncertainty has
 only a weak relationship with local velocity error across the square tests
-(Appendix~\ref{app:bedmachine_diagnostics}). Comparisons among BedMachine
+(Appendix~\nameref{app:bedmachine_diagnostics}). Comparisons among BedMachine
 source classes are more limited because eight of the ten central squares
 contain only streamline-diffusion cells. Nevertheless, CFG02 velocity RMSE
 ranges from 3.5 to 136.3~m~a$^{-1}$ across those eight squares, showing that
@@ -757,7 +757,7 @@ with poor velocity performance. Agreement with the reference $C$ is also only
 partly related to velocity performance. Local $C$ error and velocity error are
 positively associated, but the relationship is not one-to-one, and closer
 agreement with $C$ does not translate proportionally into better velocity
-performance. Under the framework considered here---the Amundsen Sea sector, the selected data products, a point-wise MLP, and a shallow-shelf/Weertman inversion---the tested surface, bed, and geophysical observables yield fitted controls that improve modeled velocity in most test regions. More broadly, the results show that such parameterizations should be tested in spatially held-out regions and evaluated through modeled velocity, rather than only through agreement with reference $C$. The same framework can be used to
+performance. Under the framework considered here, the Amundsen Sea sector, the selected data products, a point-wise MLP, and a shallow-shelf/Weertman inversion, the tested surface, bed, and geophysical observables yield fitted controls that improve modeled velocity in most test regions. More broadly, the results show that such parameterizations should be tested in spatially held-out regions and evaluated through modeled velocity, rather than only through agreement with reference $C$. The same framework can be used to
 test other predictors and methods that use information from neighboring
 locations. The tested local observables do not support a single point-wise
 relationship with inversion-derived $C$ that is consistently successful
@@ -768,7 +768,7 @@ across locations.
 % BEGIN INLINED SOURCE: pass1_backmatter.tex
 \section*{Code and data availability}
 \begin{sloppypar}
-The inversion, velocity-simulation, and model-training code is available at \url{https://github.com/racheetmatai/icepack-inverse}.
+The inversion, velocity-simulation, and model-training code is available at \url{https://github.com/racheetmatai/icepack-inverse}. The reproduction artifacts, comprising the scientific inputs, the frozen experiment design, the canonical dataset and exact splits, the trained models, the friction-control fields and forward-simulation outputs, and the figure sources, are archived at Zenodo (\url{https://doi.org/10.5281/zenodo.22839669}). BedMachine Antarctica and the MEaSUREs velocity mosaic are not redistributed there; they remain available from NSIDC and are identified by exact checksum in the code repository.
 \end{sloppypar}
 
 \section*{Conflicts of interest}
@@ -903,12 +903,14 @@ regularization parameter. The maximum-curvature criterion selected
 $r_C\simeq0.014$ from the refined candidates. The adjacent candidate,
 $r_C\simeq0.017$, had curvature within approximately 4\% of the selected
 value, indicating a narrow elbow range rather than a uniquely resolved
-regularization value.
+regularization value. We also tried values of $r_C$ on either side of this
+range, both smaller and larger, but those inversions either did not converge
+or did not return valid results, so they are not shown.
 
 \begin{figure}
 \centering
 \includegraphics[width=0.82\linewidth]{lcurve_appendix.png}
-\caption{L-curve for the sector-wide inversion. The maximum-curvature criterion selects $r_C\simeq0.014$; smaller $r_C$ corresponds to stronger smoothing in the objective function in Eqn~\ref{eq:objective}. The neighboring candidate near $r_C\simeq0.017$ has similar curvature, indicating a narrow elbow range. The open point at $r_C=0.05$ has finite comparable objective values but reached the iteration limit and was not used in the selection.}
+\caption{L-curve for the sector-wide inversion. The maximum-curvature criterion selects $r_C\simeq0.014$; smaller $r_C$ corresponds to stronger smoothing in the objective function in Eqn~\ref{eq:objective}. The neighboring candidate near $r_C\simeq0.017$ has similar curvature, indicating a narrow elbow range.}
 \label{fig:lcurve}
 \end{figure}
 
@@ -952,11 +954,11 @@ MEaSUREs source flag to be positive retains 2,294,138 paired-velocity pixels;
 1,622,598 of these lie inside the computational mesh. All twelve predictors
 are finite at those mesh-contained rows. Applying $\phi>0.1$ leaves 1,530,992
 common eligible rows, which are used by every predictor configuration. No
-additional rows are removed for individual configurations. Figure~\ref{fig:eligible_region_map} maps this eligible region against the complete modeled domain.
+additional rows are removed for individual configurations. Figure~\ref{fig:eligible_region_map} maps this eligible region against the complete modeled domain. The inversion-reference $C$ is interpolated from the model mesh to these observation-grid locations.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.82\linewidth]{figure_appendix_eligible_region_map.png}
+\includegraphics[width=0.35\linewidth]{figure_appendix_eligible_region_map.png}
 \caption{The modeled domain and the eligible region used for training and
 for every reported metric. The excluded fringe (orange, 6.0\% of the modeled
 domain by 5~km grid cell) is where $\phi\leq0.1$ or no paired MEaSUREs
@@ -1026,13 +1028,20 @@ eligible non-held-out rows.
 
 Joint support evaluates the full combination of predictor values. Predictor values on a fixed 5~km grid covering the sector are first converted to rank-based normal scores by matching their ranks to standard-normal quantiles \citep{beasley2009rank}. We then use principal component analysis (PCA; \citealp{jolliffe2016principal}) to reduce the predictor space while retaining at least 99\% of the variance of the transformed predictors, and scale the retained components to unit variance. The same transformation is used for all spatial experiments.
 
-To define the joint-support criterion used in square selection and later
-evaluation, we use this grid to establish what counts as a sufficiently similar
-predictor combination. For each grid point, we calculate the distance in
-transformed predictor space to the most similar point located at least 40~km
-away geographically. The 95th percentile of these distances defines the
-joint-support threshold for that predictor configuration. For each held-out
+To define the joint-support criterion, we use this grid to establish what counts
+as a sufficiently similar predictor combination. For each grid point, we
+calculate the distance in transformed predictor space to the most similar point
+located at least 40~km away in both grid directions, matching the square shape
+of the 40~km buffer. The 95th percentile of these distances defines the
+joint-support threshold. For each held-out
 point, we then find the most similar 5~km reference-grid point within the corresponding training region. The held-out point satisfies the joint criterion when this distance does not exceed the threshold.
+
+The same construction is applied at two stages, using different predictor sets.
+Square selection used all twelve predictors, so a candidate square had to be
+supported in the full predictor space; this is a stricter requirement than the
+one applied to any individual configuration. The support values reported for
+each configuration use only that configuration's predictors and therefore have
+their own thresholds.
 
 Reported predictor support is the area fraction satisfying both the marginal and joint criteria. All held-out points are retained in the modeled velocity evaluation regardless of support.
 

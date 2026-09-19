@@ -1,5 +1,9 @@
 cff-version: 1.2.0
 message: "Please cite the associated manuscript and Zenodo record."
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22839669"
+    description: "Reproduction artifacts archived at Zenodo"
 title: "Point-wise inference of basal friction in the Amundsen Sea sector"
 type: software
 authors:

@@ -1,5 +1,44 @@
 # Release verification
 
+## Deposit and manuscript finalization — 18-19 September 2026
+
+- **Zenodo DOI assigned: `10.5281/zenodo.22839669`.** Recorded in
+  `configs/artifacts.json` (replacing `TO_BE_ASSIGNED`) and in the
+  manuscript's Code and data availability statement. The record holds the six
+  archives listed in that manifest; all six were checksum-verified against
+  `SHA256SUMS.txt` on the author's machine before upload.
+- **Joint-support threshold construction is now shipped.**
+  `production_workflow/compute_joint_support_thresholds.py` rebuilds each
+  cutoff from the frozen 5 km grid alone and checks it against
+  `frozen_design/five_region_partition_and_support.json`. All seven — the
+  twelve-predictor selection screen and the six predictor configurations —
+  reproduce to floating-point round-off, largest relative difference 5.3e-15,
+  with matching PCA component counts. Previously
+  `describe_heldout_distributions.py` only consumed `joint_q95_cutoff` and no
+  shipped code produced it, so a referee could not verify the construction.
+- **Separation metric identified and documented.** The frozen cutoffs
+  reproduce only with `max(|dx|, |dy|) >= 40 km`, a square exclusion box
+  matching the buffer geometry, not a Euclidean radius (Euclidean gives 0.5321
+  for CFG02 against the frozen 0.5344). The appendix wording was corrected to
+  match.
+- **Appendix joint-support text corrected.** It described one criterion where
+  the frozen design has two applications of the same construction: selection
+  used all twelve predictors (8 components, cutoff 1.5733833091912042), while
+  the support reported per configuration uses that configuration's predictors
+  and its own cutoff. Science unaffected — selection was the stricter bar.
+- **`configs/artifacts.json` archive 04 description rescoped** to
+  original-campaign output, pointing to archive 06 for the
+  controlled-replacement solves and corrected evaluations. Description string
+  only; no code reads it, and the archive's `sha256` and `bytes` are
+  unchanged. `tests/test_public_package.py` passes (3/3).
+- **Figures.** Figures 3, 5a and 7 regenerated with larger axis labels and
+  without `bbox_inches="tight"`, so Figure 3's three panels now share one
+  canvas (331.2 x 320.4 pt each). The unconverged L-curve point was removed
+  from the figure, its caption and the text.
+- **Still open:** the release license remains to be decided, and the Journal
+  of Glaciology article DOI has yet to be added to the Zenodo record as a
+  related identifier.
+
 ## Second post-audit correction — 17 September 2026 (later pass)
 
 A second, separate audit raised three items; all three were checked

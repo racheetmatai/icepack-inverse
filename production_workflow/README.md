@@ -212,6 +212,37 @@ python production_workflow/tools/verify_heldout_distributions.py \
 Accepted manifest ID:
 `sha256-json-v1-a27e564c9b5456ae52fbbe917e5aa6dbe30a9e24591f4d573d69292a988d3bca`.
 
+## Joint-support threshold construction
+
+The joint-support distance cutoffs consumed above are recorded in
+`frozen_design/five_region_partition_and_support.json`. They are rebuilt from
+inputs alone by:
+
+```bash
+source /home/firedrake/firedrake/bin/activate
+cd /home/firedrake/icepack/icepack-inverse
+python production_workflow/compute_joint_support_thresholds.py \
+  --reference-grid production_workflow/frozen_design/amundsen_input_support_grid_5km.npz \
+  --support-evidence production_workflow/frozen_design/five_region_partition_and_support.json \
+  --output production_runs/<immutable-threshold-id>
+```
+
+For each predictor set the script applies the frozen rank-Gaussian and whitened
+PCA transform to the eligible 5 km grid, takes each grid point's smallest
+transformed-space distance to another eligible grid point separated by at least
+40 km (separation measured as the larger of the two axis offsets), and uses the
+95th percentile of those distances as the threshold. It recomputes the
+twelve-predictor selection screen and all six predictor configurations, checks
+each against the frozen record, writes nothing into `frozen_design/`, and exits
+non-zero on any mismatch. All seven thresholds reproduce to floating-point
+round-off (largest relative difference 5.3e-15).
+
+The selection screen and the reported per-configuration support are two
+distinct applications of the same construction: selection used all twelve
+predictors (8 components, cutoff 1.5733833091912042), while the support
+reported for each configuration uses only that configuration's predictors and
+its own cutoff.
+
 ## Exact split manifests
 
 The accepted row-partition bundle is `gate2_split_manifests_20260820_a`.

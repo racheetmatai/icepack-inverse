@@ -20,7 +20,8 @@ Two supported routes are provided:
 2. **Recompute the experiment.** Starting from the scientific inputs, repeat
    the inversion and L-curve selection, build the canonical dataset and
    spatial splits, train 660 MLPs, construct 66 vertex-wise median-`C` fields,
-   run the 66 primary Icepack simulations, and rebuild the analyses.
+   run the 76 controlled Icepack simulations used for velocity comparisons,
+   and rebuild the analyses.
 
 The first route is intended for most readers. The second requires a Firedrake
 environment, CUDA-capable training resources, and substantial runtime.
@@ -29,6 +30,8 @@ environment, CUDA-capable training resources, and substantial runtime.
 
 - `production_workflow/`: inversion, dataset, prediction, Icepack simulation,
   evaluation, diagnostics, and figure-generation code.
+- `production_workflow/controlled_replacement/`: construction, execution,
+  evaluation, and integrity checks for the controlled replacement design.
 - `icepack-mlp/production_training/`: reproducible CUDA MLP training code.
 - `cuda_transfer_tools/`: bundle verification and restartable campaign tools.
 - `configs/`: frozen configuration and artifact metadata.
@@ -80,6 +83,11 @@ The full workflow is described in `FULL_RECOMPUTATION.md`. In outline:
 
 Every stage is restartable and verifies input identities before reusing an
 existing result.
+
+The manuscript scenario replaces the inversion-reference control only inside
+each withheld geography and evaluates modeled velocity against the original
+paired MEaSUREs raster components. The earlier sector-wide replacement is
+retained as a separately named sensitivity analysis.
 
 ## External inputs
 
