@@ -62,6 +62,21 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## Author language pass — 23 September 2026
+
+- The author ran the manuscript through Grammarly and returned a Word file.
+  The language changes were merged into `manuscript.tex`: mainly
+  passive-to-active rewrites of the authors' own procedural statements, plus
+  small wording, punctuation and US-spelling fixes.
+- Verified mechanically against the pre-pass file: citations (79), labels and
+  cross-references (101), figure includes (20), environments (61) and all
+  headings are identical. The only numeric difference is "Forty kilometres"
+  becoming "40 km". Clauses the Word conversion had dropped were kept.
+  Manuscript is now 51 pages.
+- Four suggestions were rejected as inaccurate or overclaiming; they are
+  listed in commit 134761f.
+- No figure, archive or analysis changed.
+
 ## Deposit and manuscript finalization — 18-19 September 2026
 
 - **Zenodo DOI assigned: `10.5281/zenodo.22839669`.** Recorded in
