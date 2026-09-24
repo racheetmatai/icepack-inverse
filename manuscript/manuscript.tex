@@ -110,7 +110,7 @@ The study domain covers the Pine Island, Thwaites, and Dotson--Crosson drainage 
 
 
 
-Velocity is taken from the Making Earth System Data Records for Use in Research Environments (MEaSUREs) Phase-Based Antarctica Ice Velocity Map, derived from satellite radar interferometry \citep{https://doi.org/10.5067/pz3nj5rxrh10}. Surface elevation, ice thickness and bed elevation are taken from BedMachine Antarctica, version~2 \citep{https://doi.org/10.5067/e1ql9hfq7a8m,morlighem2020bedmachine}. BedMachine combines direct observations with reconstruction that uses ice velocity in some regions. The ice-product predictors therefore
+We take the velocity from the Making Earth System Data Records for Use in Research Environments (MEaSUREs) Phase-Based Antarctica Ice Velocity Map, derived from satellite radar interferometry \citep{https://doi.org/10.5067/pz3nj5rxrh10}. Surface elevation, ice thickness, and bed elevation are taken from BedMachine Antarctica, version~2 \citep{https://doi.org/10.5067/e1ql9hfq7a8m,morlighem2020bedmachine}. BedMachine combines direct observations with reconstruction that uses ice velocity in some regions. The ice-product predictors therefore
 represent available geometry products, some of which already incorporate
 velocity information, although velocity itself is not used as a predictor. BedMachine uses different methods to reconstruct ice thickness between
 observations. Most of our test regions (detailed in the following sections) lie in regions mapped
@@ -118,7 +118,7 @@ using streamline-diffusion interpolation, which favors smoother
 thickness variations along flow than across flow
 \citep{morlighem2020bedmachine}.
 
-Surface air temperature and geothermal heat flux follow the products distributed with Quantarctica \citep{matsuoka2018quantarctica,comiso2000variability,an2015temperature}. Magnetic anomaly is taken from the 5~km EPSG:3031 ADMAP-2S grid \citep{eagles2024admap}, and gravity disturbance from the oriented EPSG:3031 AntGG2021 gravity-anomaly grid \citep{scheinert2024antgg}. %NetCDF and GeoTIFF products are sampled at raster cell centers before interpolation to the finite-element mesh. 
+Surface air temperature and geothermal heat flux follow the products distributed with Quantarctica \citep{matsuoka2018quantarctica,comiso2000variability,an2015temperature}. The magnetic anomaly is taken from the 5~km EPSG:3031 ADMAP-2S grid \citep{eagles2024admap}, and the gravity disturbance from the oriented EPSG:3031 AntGG2021 gravity-anomaly grid \citep{scheinert2024antgg}. %NetCDF and GeoTIFF products are sampled at raster cell centers before interpolation to the finite-element mesh. 
 Interpolation to the model grid adds no spatial information beyond what the original products contain, and their native resolutions and processing differ.
 
 \begin{figure}
@@ -734,7 +734,7 @@ The authors declare no conflicts of interest.
 We used generative AI tools to assist with language revision and consistency checking. The authors reviewed all scientific decisions, analyses, interpretations, and the final text.
 
 \section*{Acknowledgements}
-We acknowledge funding from the US National Science Foundation through the Learning the Earth with Artificial Intelligence and Physics Science and Technology Center (Award 2019625).
+We acknowledge funding from the US National Science Foundation through the Learning the Earth with Artificial Intelligence and Physics Science and Technology Center (Award 2019625). We thank Gunter Leguy (NCAR) for his valuable comments on the manuscript.
 % END INLINED SOURCE: pass1_backmatter.tex
 % END INLINED SOURCE: pass3_body.tex
 
@@ -1130,11 +1130,19 @@ $R_C^2$ values of 0.92/$-0.49$, 0.85/$-0.28$, and
 validation rows does not predict spatial transfer to the withheld
 catchment. 
 
-The inter-catchment experiment provides an additional regional test by withholding the complete PIG--Thwaites and Thwaites--Dotson corridors. This tests transfer from the named glacier catchments to the regions between them. For the two corridors together, the holdout $C$ RMSE / $R_C^2$ values are 0.81/$-1.86$, 0.33/0.53, and 0.33/0.52 for CFG04--CFG06. Across both corridors, the median predicted $C$ fields give velocity RMSE values of 470.3, 119.0, and 109.3~m~a$^{-1}$ for CFG04, CFG05, and CFG06, respectively, compared with 578.4~m~a$^{-1}$ for uniform $C$ and 28.1~m~a$^{-1}$ for the inversion reference. The corresponding relative RMSE values are 0.81, 0.21, and 0.19. The two corridors are spatially separate, and the calculation excludes the intervening region. All three configurations reduce velocity RMSE relative to uniform $C$ over the combined corridor area, with lower errors for CFG05 and CFG06 than for CFG04.
+The inter-catchment experiment provides an additional regional test by withholding the complete PIG--Thwaites and Thwaites--Dotson corridors. This tests transfer from the named glacier catchments to the regions between them. We trained CFG04--CFG06 for this experiment, so it is not directly comparable with the six-configuration comparison in the ten central squares. For the two corridors together, the holdout $C$ RMSE / $R_C^2$ values are 0.81/$-1.86$, 0.33/0.53, and 0.33/0.52 for CFG04--CFG06. Across both corridors, the median predicted $C$ fields give velocity RMSE values of 470.3, 119.0, and 109.3~m~a$^{-1}$ for CFG04, CFG05, and CFG06, respectively, compared with 578.4~m~a$^{-1}$ for uniform $C$ and 28.1~m~a$^{-1}$ for the inversion reference. The corresponding relative RMSE values are 0.81, 0.21, and 0.19. The two corridors are spatially separate, and the calculation excludes the intervening region. All three configurations reduce velocity RMSE relative to uniform $C$ over the combined corridor area, with lower errors for CFG05 and CFG06 than for CFG04. This ordering is the reverse of the ten central squares, where CFG04 has a lower median velocity RMSE than CFG05 and CFG06 (Table~\ref{tab:performance_summary}), giving a further example of the relative performance of the predictor configurations changing with the held-out region.
 For these velocity calculations, all four controls replace the inversion
 reference only inside the combined corridor geography and retain the same
 reference $C$ outside it, matching the controlled comparison used for the
-square and PIG CFG02 results.
+square and PIG CFG02 results. These are the most favourable holdout
+conditions tested here: 98.9\% of the held-out corridor $C$ values fall
+within the training-and-validation 1st--99th-percentile interval, compared
+with 85.4\% for PIG (Table~\ref{tab:target_distributions}), and the withheld
+corridors are bounded on both sides by catchments that remain in the training
+and validation dataset. The corridor values therefore indicate what the
+point-wise mapping achieves under favourable conditions rather than general
+transferability, and even there the predicted controls leave velocity RMSE
+about four times that of the inversion reference.
 
 Finally, we examine the small number of unusually large reference-$C$ values
 because mean-square loss weights large prediction residuals more heavily.
