@@ -62,6 +62,60 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## Transfer-predictability reporting changed to counts - 25 September 2026
+
+- The appendix section "Predicting where transfer succeeds" now reports how
+  many held-out rows the classifier labels correctly, against the number
+  obtained by predicting whichever outcome is more common in that region. It
+  previously reported the area under the ROC curve. The experiment is
+  unchanged: same leave-one-square-out folds, same two success criteria, same
+  three input sets, same classifier settings and seed. Only the reported
+  quantity differs, and the conclusion is unchanged.
+- Reason: AUC is fragile here. In 90 of 360 folds more than 99% of the
+  held-out rows carry one outcome, so the ranking score rests on a handful of
+  points and ranged from 0.04 to 1.00 within that group; and the metric is
+  hard to read for a non-specialist audience.
+- What the counts show, published classifier, 294 scored folds: 1,967,017 of
+  3,626,370 held-out rows labelled correctly (54.2%); median 51.4% against
+  77.5% for the more-common-outcome rule, which the classifier exceeds in 32
+  of 294 folds. PIG: 30.8-36.4% against 77.6% (improvement criterion) and
+  64.2-90.8% against 92.0% (halving criterion), never exceeding the rule.
+- Three checks were run before changing the text, all in archive 07 under
+  `results/`:
+  1. Capacity. A deliberately larger forest (400 trees, unlimited depth,
+     minimum leaf 5) and a gradient-boosted model with early stopping on a
+     validation split from the training squares give the same answer; across
+     all 360 folds held-out AUC is 0.50-0.56 for every model, and a
+     label-permutation control sits at 0.49.
+  2. Decision cut-off. Choosing it on rows held out from the training squares,
+     as a user could, beats the more-common-outcome rule in 29 of 294 folds;
+     even the best possible cut-off for each withheld square, chosen in
+     hindsight, does so in only 122 of 294.
+  3. Goodness of fit. The same classifier labels 98.7% of its training rows
+     and 98.3% of rows held out at random from within the training squares
+     correctly, so the failure is one of spatial transfer, not of fitting.
+- New entry points, all in `production_workflow/`:
+  `analyze_transfer_predictability_counts.py`,
+  `check_transfer_classifier_thresholds.py`,
+  `check_transfer_classifier_fit.py` and
+  `generate_appendix_transfer_counts_figure.py`. `scripts/reproduce_paper.py`
+  now builds Fig. 13 with the last of these, and the package tests require all
+  four. All 8 tests pass.
+- Figure 13 replaced. Regenerating it from the packaged script reproduces the
+  manuscript files exactly (rendered output identical; the PDF bytes differ
+  only in the embedded timestamp).
+- Archive 07 rebuilt: 295,660,673 bytes, SHA256
+  `2f3586d3351b4c2d4fc6ce0c5fddb1fc33d269c93fa87c6d230e7ee564b2e94f`,
+  recorded in `configs/artifacts.json` and the deposit's `SHA256SUMS.txt`. The
+  per-row input fields are unchanged; the earlier AUC results and figures are
+  kept in `auc_legacy/`, and every fold's AUC remains a column in
+  `results/counts_folds.csv`. Archives 01-06 are untouched. The deposit was
+  not yet published, so the file was replaced rather than versioned.
+- Manuscript: the appendix subsection, its figure, and one sentence in
+  "Interpreting the point-wise relationship". Nothing else changed - citations,
+  labels, cross-references, figure includes, environments and headings are
+  identical to the previous version. 52 pages.
+
 ## Author language pass — 23 September 2026
 
 - The author ran the manuscript through Grammarly and returned a Word file.

@@ -28,7 +28,11 @@ class PublicPackageTests(unittest.TestCase):
             "production_workflow/controlled_replacement/evaluate_controlled_campaign.py",
             "production_workflow/controlled_replacement/export_map_fields_all_configs.py",
             "production_workflow/analyze_transfer_predictability.py",
+            "production_workflow/analyze_transfer_predictability_counts.py",
+            "production_workflow/check_transfer_classifier_thresholds.py",
+            "production_workflow/check_transfer_classifier_fit.py",
             "production_workflow/generate_appendix_transfer_predictability_figure.py",
+            "production_workflow/generate_appendix_transfer_counts_figure.py",
             "production_workflow/generate_appendix_eligibility_map.py",
             "icepack-mlp/production_training/train.py",
         ]

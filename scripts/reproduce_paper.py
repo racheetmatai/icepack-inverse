@@ -178,7 +178,7 @@ def main() -> None:
             raise FileNotFoundError(
                 "Transfer-predictability results (archive 07) are required for the current manuscript"
             )
-        run([python, str(workflow / "generate_appendix_transfer_predictability_figure.py"),
+        run([python, str(workflow / "generate_appendix_transfer_counts_figure.py"),
              "--results", str(predictability / "results"), "--output", str(work)], env)
 
         sources = [controlled_figures, work, target_out]
