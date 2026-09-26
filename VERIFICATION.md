@@ -62,6 +62,47 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## Second and third audits - 26 September 2026
+
+- No result, table value or conclusion changed. Every number recomputed during
+  the audits reproduced from the archives (Tables 2, 3, 5, 6 and 9, about 70
+  square-level values, the Appendix A sensitivities, the support, PIG,
+  training-convergence, L2, classifier and L-curve values). Table 6 was rebuilt
+  from all 600 runs' raw validation predictions.
+- Manuscript text corrected: the speed quarters in the classifier appendix are
+  now computed on the rows used to train the PIG classifier (98.5, 86.4, 48.3
+  and 52.1% by quarter; PIG 51.3 to 93.8%); the corridor comparison now agrees
+  with the paired square results; "about four times" is limited to CFG05 and
+  CFG06; the training-history text describes Fig. 12 as drawn (training MSE
+  above validation MSE after the early epochs, from batch normalization); the
+  inversion misfit uses the original pixel values; the joint-support separation
+  is "at least 40 km along at least one grid axis"; the r_C values outside the
+  L-curve range are described as run; predictors are stated to be
+  finite-element fields on the model mesh (169-330 control points per central
+  square), also in the Table 4 caption; the early-stopping threshold, the
+  strain-rate floor (1e-5 a^-1), the 95% square-selection rule, the classifier
+  settings and the power of the sign tests are stated; Eqn 4 carries a
+  velocity scale U = 1 m a^-1 so both terms are dimensionless (numerically
+  identical to the implementation); the median is taken at each control point.
+  The response letter's sentence on predictor resolution was updated to match.
+  54 pages; citations, labels, figure includes, environments and headings
+  unchanged.
+- `analyze_transfer_predictability_counts.py` now writes the square tests to
+  `counts_folds.csv`, the PIG tests to `counts_pig.csv` (which the Fig. 13
+  script reads) and a `counts_summary.json` with the `published_model` block;
+  previously it wrote PIG rows into `counts_folds.csv` and pooled the two
+  forests in its summary. Its `summarize()` reproduces the archived
+  `counts_summary.json` exactly. Archive 07 is unchanged.
+- `FULL_RECOMPUTATION.md` section 4 now documents the counts pipeline instead
+  of the superseded AUC scripts.
+- Figures redrawn with the package generators in the tested container
+  environment (Matplotlib 3.7.2) from the deposited archives: Fig. 1 ("control
+  point"), Fig. 2 (en dashes in the corridor labels; region legend in panel b),
+  Fig. 3b (drawn on the model's quadratic mesh instead of as dots; colorbar
+  "Inversion-reference C"), Fig. 7b/c (legend clear of the trunk; colorbar
+  label and minus signs as in Fig. 6), Fig. 8 (axes labelled dimensionless),
+  and Figs. 10-12 (titles removed from the artwork). All 8 package tests pass.
+
 ## Discussion: random versus spatial holdout as a test of the hypothesis - 26 September 2026
 
 - One paragraph added to "Interpreting the point-wise relationship". It states

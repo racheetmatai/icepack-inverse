@@ -113,46 +113,63 @@ def main() -> None:
         pd.DataFrame(rows).to_csv(a.output / "counts_folds.csv", index=False)
         print(f"done {config}", flush=True)
 
+    out = pd.DataFrame(rows)
+    out.to_csv(a.output / "counts_folds.csv", index=False)
+
     # PIG: train on the ten central squares with rows inside PIG removed
     pig = load_fields(a.pig_fields, predictors)
     squares = load_fields(a.map_fields / "CFG02_ten_square_controlled_fields.npz", predictors)
     squares = squares[squares.central]
     train = squares[~squares.row_id.isin(set(pig.row_id))]
+    pig_rows = []
     for label in LABELS:
         for fs, cols in FEATURESETS.items():
             for model_name, params in MODELS.items():
-                rows.append({"test": "REG_PIG", "configuration": "CFG02", "label": label,
-                             "features": fs, "model": model_name,
-                             **fold(train, pig, label, cols, params)})
-    out = pd.DataFrame(rows)
-    out.to_csv(a.output / "counts_folds.csv", index=False)
+                pig_rows.append({"test": "REG_PIG", "configuration": "CFG02", "label": label,
+                                 "features": fs, "model": model_name,
+                                 **fold(train, pig, label, cols, params)})
+    pig_out = pd.DataFrame(pig_rows)
+    pig_out.to_csv(a.output / "counts_pig.csv", index=False)
 
-    sq = out[out.test != "REG_PIG"]
-    scored = sq[sq.correct.notna()]
-    summary = {
-        "folds_total": int(len(sq)),
-        "folds_uniform_outcome": int(sq.uniform_outcome.sum()),
-        "folds_scored": int(len(scored)),
-        "points_scored": int(scored.test_rows.sum()),
-        "points_correct": int(scored.correct.sum()),
-        "overall_accuracy": float(scored.correct.sum() / scored.test_rows.sum()),
-        "median_accuracy": float(scored.accuracy.median()),
-        "median_majority_rule_accuracy": float(scored.majority_rule_accuracy.median()),
-        "folds_beating_majority": int(scored.beats_majority.sum()),
-        "median_f1_macro": float(scored.f1_macro.median()),
-        "median_auc_archived_only": float(scored.auc.median()),
-    }
+    summary = summarize(out)
     (a.output / "counts_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
     print(json.dumps(summary, indent=2, sort_keys=True))
+    scored = out[out.correct.notna()]
     print("\nby model and feature set (medians over scored folds):")
     print(scored.groupby(["model", "features"])[
         ["accuracy", "majority_rule_accuracy", "f1_macro"]].median().round(3).to_string())
     print("\nfolds beating the majority rule, by model and feature set:")
     print(scored.groupby(["model", "features"]).beats_majority.sum().to_string())
     print("\nPIG:")
-    print(out[out.test == "REG_PIG"][
-        ["label", "features", "model", "test_rows", "correct", "accuracy",
-         "majority_rule_accuracy", "beats_majority"]].round(3).to_string(index=False))
+    print(pig_out[["label", "features", "model", "test_rows", "correct", "accuracy",
+                   "majority_rule_accuracy", "beats_majority"]].round(3).to_string(index=False))
+
+
+def summarize(folds: pd.DataFrame) -> dict:
+    """Summarize the square folds. The paper reports the published classifier;
+    the larger ("deep") forest is a capacity check and is counted only in the
+    fold totals."""
+    scored = folds[folds.correct.notna()]
+    published = scored[scored.model == "published"]
+    return {
+        "folds_total": int(len(folds)),
+        "folds_uniform_outcome": int(folds.uniform_outcome.astype(bool).sum()),
+        "folds_scored": int(len(scored)),
+        "published_model": {
+            "folds_scored": int(len(published)),
+            "points_scored": int(published.test_rows.sum()),
+            "points_correct": int(published.correct.sum()),
+            "overall_accuracy": float(published.correct.sum() / published.test_rows.sum()),
+            "median_accuracy": float(published.accuracy.median()),
+            "median_majority_rule_accuracy": float(published.majority_rule_accuracy.median()),
+            "folds_beating_majority": int(published.beats_majority.astype(bool).sum()),
+            "median_f1_macro": float(published.f1_macro.median()),
+            "median_auc_archived_only": float(published.auc.median()),
+        },
+        "models": sorted(folds.model.unique().tolist()),
+        "note": ("accuracy is the fraction of held-out rows labelled correctly; the majority "
+                 "rule predicts whichever outcome is more common in that region"),
+    }
 
 
 if __name__ == "__main__":

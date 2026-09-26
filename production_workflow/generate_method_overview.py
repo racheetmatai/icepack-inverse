@@ -25,7 +25,7 @@ steps = [
      ['Use reference C as the target outside the excluded region.',
       'Do not supply observed velocity as an MLP predictor.']),
     ('Combine predicted C and simulate velocity',
-     ['Take the median of ten predictions at each mesh vertex.',
+     ['Take the median of ten predictions at each mesh control point.',
       'Use this C field in one Icepack simulation.']),
     ('Evaluate velocity in the withheld region',
      ['Compare modeled velocity with observed velocity.',

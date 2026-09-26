@@ -60,8 +60,9 @@ def main() -> None:
                       (point["misfit"], point["unweighted_roughness"]),
                       xytext=(4, 4), textcoords="offset points", fontsize=7)
     axis.set_xscale("log"); axis.set_yscale("log")
-    axis.set_xlabel("Observation-mean velocity misfit")
-    axis.set_ylabel("Unweighted roughness")
+    # Both are dimensionless terms of the objective (misfit scaled by U = 1 m/a).
+    axis.set_xlabel("Velocity misfit (dimensionless)")
+    axis.set_ylabel("Unweighted roughness (dimensionless)")
     axis.grid(True, which="both", alpha=0.22)
     axis.legend(frameon=False)
     png = args.output / "lcurve_appendix_extended.png"

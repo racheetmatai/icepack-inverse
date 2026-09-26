@@ -247,12 +247,10 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
     for axis in axes[-1, :]: axis.set_xlabel("Inversion-reference C")
     for axis in axes[:, 0]: axis.set_ylabel("Density")
     handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.suptitle("Inversion-reference C distributions for the ten withheld squares\n"
-                 "C from the sector-wide reference inversion",
-                 fontsize=14, y=.99)
+    # No title in the artwork; the manuscript caption describes the figure.
     fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False,
-               bbox_to_anchor=(.5, .89))
-    fig.tight_layout(rect=(0, 0, 1, .82))
+               bbox_to_anchor=(.5, .995))
+    fig.tight_layout(rect=(0, 0, 1, .93))
     square_path = output / "square_target_distributions.png"
     fig.savefig(square_path, dpi=300, facecolor="white"); fig.savefig(square_path.with_suffix(".svg"))
     plt.close(fig)
@@ -274,10 +272,9 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
                        f"{100 * metrics['heldout_inside_training_q01_q99_fraction']:.1f}%")
         axis.set_xlabel("Inversion-reference C"); axis.grid(alpha=.16)
     axes[0].set_ylabel("Density")
-    fig.suptitle("Inversion-reference C distributions for regional experiments", fontsize=14, y=.99)
     fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=2, frameon=False,
-               bbox_to_anchor=(.5, .90))
-    fig.tight_layout(rect=(0, 0, 1, .82))
+               bbox_to_anchor=(.5, .995))
+    fig.tight_layout(rect=(0, 0, 1, .91))
     region_path = output / "regional_target_distributions.png"
     fig.savefig(region_path, dpi=300, facecolor="white"); fig.savefig(region_path.with_suffix(".svg"))
     plt.close(fig)

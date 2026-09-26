@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as mtri
 from matplotlib.colors import BoundaryNorm, ListedColormap, LogNorm, TwoSlopeNorm
 from matplotlib.lines import Line2D
-from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Polygon, Rectangle
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Patch, Polygon, Rectangle
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
@@ -230,7 +230,7 @@ def figure1() -> list[Path]:
     extent = [x[0] - 2.5, x[-1] + 2.5, y[0] - 2.5, y[-1] + 2.5]
     speed = np.ma.masked_where(~r["eligible"] | ~np.isfinite(v["speed"]), v["speed"])
     labels = {1: "Pine Island", 2: "Thwaites", 3: "Dotson",
-              4: "PIG--Thwaites\ncorridor", 5: "Thwaites--Dotson\ncorridor"}
+              4: "PIG–Thwaites\ncorridor", 5: "Thwaites–Dotson\ncorridor"}
     base = np.ma.masked_where(~r["eligible"], r["region_codes"])
     cmap = ListedColormap(["#6baed6", "#9ecae1", "#74c476", "#fdae6b", "#fdd0a2"])
 
@@ -267,10 +267,19 @@ def figure1() -> list[Path]:
         add_antarctica_locator(ax, r["outline"])
         if show_title:
             ax.set_title("Ten held-out 50 km squares and 130 km exclusion footprints")
-        ax.plot([], [], color="#7A0019", lw=1.2, label="Evaluation square")
-        ax.plot([], [], color="0.35", lw=0.55, ls="--", label="Training-exclusion footprint")
-        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.10), ncol=2,
-                  frameon=True, framealpha=0.95, borderaxespad=0.0)
+        region_names = ["Pine Island", "Thwaites", "Dotson",
+                        "PIG–Thwaites corridor", "Thwaites–Dotson corridor"]
+        handles = [
+            Line2D([], [], color="#7A0019", lw=1.2, label="Evaluation square"),
+            Line2D([], [], color="0.35", lw=0.55, ls="--", label="Training-exclusion footprint"),
+        ] + [
+            Patch(facecolor=color, alpha=0.55, edgecolor="none", label=name)
+            for color, name in zip(cmap.colors, region_names)
+        ]
+        # A figure-level "outside" legend, so constrained layout reserves room
+        # for it below the axis label instead of overlapping it.
+        ax.figure.legend(handles=handles, loc="outside lower center", ncol=2,
+                         frameon=True, framealpha=0.95, fontsize=9.0)
 
     paths: list[Path] = []
     fig, axes = plt.subplots(1, 2, figsize=(11.4, 5.2), constrained_layout=True)
@@ -281,7 +290,7 @@ def figure1() -> list[Path]:
     fig_a, ax_a = plt.subplots(figsize=(5.9, 5.2), constrained_layout=True)
     draw_region_panel(fig_a, ax_a, False)
     paths.extend(save(fig_a, "figure1a_observed_speed_and_regions"))
-    fig_b, ax_b = plt.subplots(figsize=(5.6, 5.2), constrained_layout=True)
+    fig_b, ax_b = plt.subplots(figsize=(5.6, 6.1), constrained_layout=True)
     draw_holdout_panel(ax_b, False)
     paths.extend(save(fig_b, "figure1b_holdout_geometry"))
     return paths
@@ -323,6 +332,43 @@ def figure2() -> list[Path]:
     return save(fig, "figure2_end_to_end_workflow")
 
 
+def quadratic_mesh_triangulation(coords_km: np.ndarray) -> mtri.Triangulation:
+    """Draw a quadratic (CG2) field on the model mesh itself.
+
+    Each mesh triangle is split into four using its edge-midpoint control
+    points, so the rendering follows the mesh boundaries and holes and shows
+    every control-point value without gaps.
+    """
+    import meshio
+    from scipy.spatial import cKDTree
+
+    mesh_path = ARTIFACT_ROOT / "amundsen.msh"
+    if not mesh_path.is_file():
+        mesh_path = ROOT / "amundsen.msh"
+    mesh = meshio.read(mesh_path)
+    points = np.asarray(mesh.points[:, :2], dtype=float) / 1000.0
+    cells = np.asarray(mesh.cells_dict["triangle"], dtype=np.int64)
+    tree = cKDTree(coords_km)
+
+    def lookup(xy: np.ndarray) -> np.ndarray:
+        distance, index = tree.query(xy)
+        if np.max(distance) > 1e-6:
+            raise RuntimeError("A mesh node does not coincide with a control point")
+        return index
+
+    corners = points[cells]
+    vertices = lookup(corners.reshape(-1, 2)).reshape(-1, 3)
+    midpoints = np.stack([(corners[:, 0] + corners[:, 1]) / 2,
+                          (corners[:, 1] + corners[:, 2]) / 2,
+                          (corners[:, 2] + corners[:, 0]) / 2], axis=1)
+    mids = lookup(midpoints.reshape(-1, 2)).reshape(-1, 3)
+    v0, v1, v2 = vertices.T
+    m01, m12, m20 = mids.T
+    sub = np.concatenate([np.c_[v0, m01, m20], np.c_[v1, m12, m01],
+                          np.c_[v2, m20, m12], np.c_[m01, m12, m20]])
+    return mtri.Triangulation(coords_km[:, 0], coords_km[:, 1], sub)
+
+
 def figure3() -> list[Path]:
     r, v = region_context(), aggregate_velocity_grid()
     coords = np.load(GATE1 / "state_coordinates.npy") / 1000
@@ -347,12 +393,13 @@ def figure3() -> list[Path]:
         finish_map(ax)
 
     def draw_c(fig: plt.Figure, ax: plt.Axes, show_title: bool) -> None:
-        im = ax.scatter(coords[:, 0], coords[:, 1], c=cfield, s=1.4, cmap="magma",
-                        vmin=np.quantile(finite_c, .01), vmax=np.quantile(finite_c, .99),
-                        rasterized=True, linewidths=0)
+        triangulation = quadratic_mesh_triangulation(coords)
+        im = ax.tripcolor(triangulation, cfield, shading="gouraud", cmap="magma",
+                          vmin=np.quantile(finite_c, .01), vmax=np.quantile(finite_c, .99),
+                          rasterized=True)
         if show_title:
             ax.set_title("Inversion reference $C$")
-        cb = fig.colorbar(im, ax=ax, shrink=.88, pad=.02); cb.set_label("Icepack $C$")
+        cb = fig.colorbar(im, ax=ax, shrink=.88, pad=.02); cb.set_label("Inversion-reference $C$")
         finish_map(ax)
 
     def draw_error(fig: plt.Figure, ax: plt.Axes, show_title: bool) -> None:

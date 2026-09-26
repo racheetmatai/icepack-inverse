@@ -82,9 +82,10 @@ def finish(ax, x_edges: np.ndarray, y_edges: np.ndarray, grids: dict[str, np.nda
             [0], [0], color=INVERSION_COLOR, lw=1.1,
             path_effects=[pe.Stroke(linewidth=2.0, foreground="0.08"), pe.Normal()],
         )
-        ax.legend([handle], [r"Inversion: 100 m a$^{-1}$"], loc="lower left",
-                  bbox_to_anchor=(0.018, 0.018), frameon=True, fancybox=False,
-                  edgecolor="0.45", handlelength=1.8, borderpad=0.25, fontsize=8.6)
+        # Lower right lies outside the catchment, so the legend hides no data.
+        ax.legend([handle], ["Inversion error:\n" r"100 m a$^{-1}$"], loc="lower right",
+                  bbox_to_anchor=(0.982, 0.018), frameon=True, fancybox=False,
+                  edgecolor="0.45", handlelength=1.4, borderpad=0.3, fontsize=8.2)
     ax.set_xlim(x_edges[0] - 5, x_edges[-1] + 5)
     ax.set_ylim(y_edges[0] - 5, y_edges[-1] + 5)
     ax.set_aspect("equal")
@@ -120,9 +121,9 @@ def draw(kind: str, x_edges: np.ndarray, y_edges: np.ndarray,
         )
         cbar = fig.colorbar(image, ax=ax, orientation="horizontal", shrink=0.84,
                             pad=0.10, aspect=28, extend="both")
-        cbar.set_label("ML - uniform-$C$ error " r"(m a$^{-1}$; symlog)")
+        cbar.set_label("ML minus uniform-$C$ local error\n" r"(m a$^{-1}$; symmetric log scale)")
         cbar.set_ticks([-1000, -100, -10, 0, 10, 100, 1000])
-        cbar.set_ticklabels(["-1000", "-100", "-10", "0", "10", "100", "1000"])
+        cbar.set_ticklabels(["−1000", "−100", "−10", "0", "10", "100", "1000"])
         finish(ax, x_edges, y_edges, grids, contour_color="0.35", inversion=False)
         name = "figure6c_pig_cfg02_uniform_comparison"
     else:

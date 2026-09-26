@@ -176,13 +176,8 @@ def main() -> None:
         title="Median; shading = 10th–90th percentile",
         title_fontsize=8,
     )
-    fig.suptitle(
-        "Training histories for the ten withheld squares "
-        "(100 MLPs per configuration)",
-        y=0.995,
-        fontsize=12,
-    )
-    fig.tight_layout(rect=(0, 0, 1, 0.965))
+    # No title in the artwork; the manuscript caption describes the figure.
+    fig.tight_layout()
 
     OUTPUT.mkdir(parents=True, exist_ok=True)
     for suffix in ("pdf", "png", "svg"):

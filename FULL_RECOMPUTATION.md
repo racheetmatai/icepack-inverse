@@ -75,17 +75,34 @@ python production_workflow/controlled_replacement/export_map_fields_all_configs.
   --configs CFG01 CFG02 CFG03 CFG04 CFG05 CFG06
 ```
 
-Then train and score the classifiers (ordinary Python with scikit-learn), and
-draw the appendix figure:
+Then train and score the classifiers (ordinary Python with scikit-learn), run
+the two checks the appendix reports, and draw the appendix figure (Fig. 13):
 
 ```bash
-python production_workflow/analyze_transfer_predictability.py \
+python production_workflow/analyze_transfer_predictability_counts.py \
   --map-fields <map fields directory> \
   --pig-fields <controlled run>/map_fields/REG_PIG_CFG02_controlled_fields.npz \
   --dataset <canonical_master_dataset.csv.gz> --output <results directory>
-python production_workflow/generate_appendix_transfer_predictability_figure.py \
+python production_workflow/check_transfer_classifier_thresholds.py \
+  --map-fields <map fields directory> \
+  --pig-fields <controlled run>/map_fields/REG_PIG_CFG02_controlled_fields.npz \
+  --dataset <canonical_master_dataset.csv.gz> --output <results directory>
+python production_workflow/check_transfer_classifier_fit.py \
+  --map-fields <map fields directory> \
+  --dataset <canonical_master_dataset.csv.gz> --output <results directory>
+python production_workflow/generate_appendix_transfer_counts_figure.py \
   --results <results directory> --output <figure directory>
 ```
+
+The first script writes the square tests to `counts_folds.csv`, the PIG tests
+to `counts_pig.csv` and `counts_summary.json`, whose `published_model` block
+holds the numbers in the appendix. The second writes `threshold_folds.csv` and
+`threshold_summary.json` (the cut-off checks); the third writes
+`positive_control.csv` and `positive_control_summary.json` (fit on training
+rows and on rows withheld at random). The earlier AUC analysis,
+`analyze_transfer_predictability.py` with
+`generate_appendix_transfer_predictability_figure.py`, is superseded; its
+outputs are kept in archive 07 under `auc_legacy/`.
 
 The accepted outputs are in archive 07. Re-exporting CFG02 and CFG04 reproduces
 the archive-06 arrays exactly, which is a useful check that the export is set up
