@@ -62,6 +62,25 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## Discussion: random versus spatial holdout as a test of the hypothesis - 26 September 2026
+
+- One paragraph added to "Interpreting the point-wise relationship". It states
+  that if C were a point-wise function of the predictors, validation on randomly
+  withheld rows and transfer to a spatially separate region with good predictor
+  support would agree, and shows that they do not: CFG02 median C RMSE 0.08 and
+  R^2_C 0.99 on validation rows (Table 6) against 0.30 and negative R^2_C in eight
+  of ten withheld squares (Table 7), with 94-99% of every square satisfying both
+  support criteria (Fig. 5a). It adds that tuning regularization or early
+  stopping against spatially withheld data is not needed under the hypothesis,
+  and that a gain from smoothing toward a uniform control would move away from a
+  point-wise relationship.
+- Every number is already in the paper; checked against the archives: validation
+  medians 0.079 and 0.986, withheld median 0.30, R^2_C negative in 8 of 10,
+  CFG02 both-support 94.3-98.7% (gate2 support_categories.csv).
+- No analysis, figure, table or archive changed. Citations, figure includes,
+  environments and headings identical; four new cross-references, all resolving
+  to the intended objects. 53 pages.
+
 ## Transfer-predictability reporting changed to counts - 25 September 2026
 
 - The appendix section "Predicting where transfer succeeds" now reports how

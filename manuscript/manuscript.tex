@@ -672,6 +672,24 @@ to PIG (Appendix~\nameref{app:transfer_predictability}). The PIG experiment show
 that the same distinctions remain important when the held-out region is
 expanded from a 50~km square to an entire glacier catchment.
 
+The contrast between random and spatial holdouts is itself a test of the
+hypothesis in Eqn~\ref{eq:functional_relationship}. If $C$ were a point-wise
+function of the predictors, a relationship fitted to randomly withheld rows
+would hold equally in a spatially separate region wherever the predictor values
+are represented in the training data, and the two tests would agree. They do
+not. CFG02 reproduces randomly withheld validation rows with a median $C$ RMSE
+of 0.08 and $R_C^2$ of 0.99 (Table~\ref{tab:validation_c_diagnostics}), but in
+the withheld central squares its median $C$ RMSE is 0.30 and $R_C^2$ is negative
+in eight of ten (Table~\ref{tab:c_diagnostics}), although 94--99\% of every
+square satisfies both support criteria (Fig.~\ref{fig:support_skill}a). The
+difference is therefore not explained by extrapolation beyond the training
+data; it reflects structure in the inversion-derived $C$ that the local
+predictors do not capture. Selecting the regularization or the stopping point
+against spatially withheld data might improve transfer, but under the
+point-wise hypothesis no such selection would be needed, and a gain obtained by
+smoothing the prediction toward a spatially uniform control would move away
+from, not toward, a point-wise relationship.
+
 The spatial differences in performance are not simply explained by the
 BedMachine diagnostics considered here. Reported bed-elevation uncertainty has
 only a weak relationship with local velocity error across the square tests
