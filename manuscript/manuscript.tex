@@ -137,7 +137,7 @@ Interpolation to the model grid adds no spatial information beyond what the orig
 
 \subsection{Ice-flow model and basal-friction inversion}
 
-All simulations used Icepack \citep{shapero2021icepack} and a depth-integrated stress balance based on the Shallow Shelf Approximation (SSA) \citep{macayeal1989large}. Because the shallow-shelf approximation neglects vertical shear, we compare the modeled horizontal velocity directly with the observed surface velocity. Because the inferred basal-friction control depends on the adopted stress-balance approximation and basal law, the model parameter $C_b$ is model-dependent rather than a unique representation of basal conditions.
+All simulations used Icepack \citep{shapero2021icepack} and a depth-integrated stress balance based on the Shallow Shelf Approximation (SSA) \citep{macayeal1989large}. The unstructured triangular mesh has 9,069 vertices and 17,653 elements over 310,546~km$^2$, with a median element edge length of 6.6~km. The basal-friction control uses continuous quadratic elements on this mesh, giving 35,797 control points. Because the shallow-shelf approximation neglects vertical shear, we compare the modeled horizontal velocity directly with the observed surface velocity. Because the inferred basal-friction control depends on the adopted stress-balance approximation and basal law, the model parameter $C_b$ is model-dependent rather than a unique representation of basal conditions.
 
 Basal friction is represented with a Weertman-type law,
 \begin{equation}
@@ -842,14 +842,14 @@ Within cells crossed by the geographic boundary, the quadratic basis connects
 inside- and outside-mask values. The transition can therefore be steep but is
 not a literal discontinuity in $C$, and we applied no explicit taper. The
 central square is separated from the footprint boundary by the 40~km buffer.
-All controlled solves converged, but convergence and this separation do not
+All 76 controlled solves converged at the primary limit of 50 Newton iterations, with no retries at the higher limit, but convergence and this separation do not
 show that boundary influence is negligible. The change in modeled velocity
 between the two designs is consistent with spatial coupling in the ice-flow
 model, but it does not isolate a uniquely non-local contribution because the
 surrounding control prescription and the transition at the replacement
 boundary change together.
 
-We initialized the inversion with $C=0$ and ran it for 300 optimization iterations. Figure~\ref{fig:lcurve} shows the L-curve used to select the
+We initialized the inversion with $C=0$ and ran it for 300 optimization iterations. At that point the gradient norm was $6.7\times10^{-5}$, below the $10^{-3}$ ceiling adopted for acceptance, and the relative changes in misfit and in unweighted roughness over the final iterations were $1.4\times10^{-5}$ and $3.4\times10^{-5}$. Figure~\ref{fig:lcurve} shows the L-curve used to select the
 regularization parameter. The maximum-curvature criterion selected
 $r_C\simeq0.014$ from the refined candidates. The adjacent candidate,
 $r_C\simeq0.017$, had curvature within approximately 4\% of the selected
@@ -1097,7 +1097,9 @@ respectively. Poor agreement with the reference $C$ can still coexist with impro
 \begin{table*}
 \caption{Comparison between predicted and reference $C$ in the ten central
 squares. Each entry gives $C$ RMSE / $R_C^2$ for the median predicted $C$
-field. RMSE is in dimensionless $C$ units.}
+field, computed on finite-element cells and weighted by cell area. RMSE is in
+dimensionless $C$ units. Values quoted on the 450~m observation rows elsewhere
+in the text differ by at most 0.01.}
 \label{tab:c_diagnostics}
 \centering\scriptsize
 \setlength{\tabcolsep}{4pt}
@@ -1434,6 +1436,17 @@ evaluated. For the improvement criterion they labeled 30.8\%, 36.4\% and
 common outcome. For the stricter criterion they labeled 64.2\%, 90.8\% and
 89.7\% correctly, against 92.0\%. No input set exceeded the more common outcome
 in either case.
+
+Part of the reason is that the relationship between ice speed and success
+differs between the two settings. In the training squares the predicted $C$
+meets the improvement criterion less often in faster flow, at 98.2\% of rows in
+the slowest quarter of speeds and 34.7\% in the third quarter. In PIG the
+pattern is reversed. No training row for the PIG test is faster than
+455~m~a$^{-1}$, 11\% of the evaluated PIG area is faster than this, and the
+improvement criterion is met at 76.2\% of the PIG rows within the training
+speed range against 88.8\% of those beyond it. A classifier that has learned
+where transfer succeeds in the squares therefore carries that association in
+the wrong direction when it is applied to the catchment.
 
 The predictors therefore do not provide a reliable way to identify in advance
 where the predicted $C$ will improve modeled velocity. The combined classifier
