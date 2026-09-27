@@ -666,33 +666,34 @@ velocity performance, and sparser training representation does not consistently
 produce larger $C$ errors. Agreement with the reference $C$ is also related to,
 but does not determine, the resulting velocity error. Nor can the predictors,
 taken together, indicate in advance where the predicted $C$ will improve on
-uniform $C$: a classifier trained on all twelve predictors is no better than
+uniform $C$: a classifier trained on all twelve predictors is rarely better than
 predicting whichever outcome is more common in the withheld region, is not
 consistently better than one using observed speed alone, and does not transfer
 to PIG (Appendix~\nameref{app:transfer_predictability}). The PIG experiment shows
 that the same distinctions remain important when the held-out region is
 expanded from a 50~km square to an entire glacier catchment.
 
-The contrast between random and spatial holdouts is itself a test of the
+The contrast between random and spatial holdouts bears directly on the
 hypothesis in Eqn~\ref{eq:functional_relationship}. If $C$ were a point-wise
 function of the predictors, a relationship that reproduces randomly withheld
-rows would hold equally in a spatially separate region wherever the predictor
-values are represented in the training data, and the two tests would agree. They do
-not. CFG02 reproduces randomly withheld validation rows with a median $C$ RMSE
-of 0.08 and $R_C^2$ of 0.99 (Table~\ref{tab:validation_c_diagnostics}), but in
-the withheld central squares its median $C$ RMSE is 0.30 and $R_C^2$ is negative
-in eight of ten (Table~\ref{tab:c_diagnostics}), although 94--99\% of every
-square satisfies both support criteria (Fig.~\ref{fig:support_skill}a). Even
-held-out rows whose predictor combinations are at least as densely represented
-in the training data as a typical training row have a median $C$ RMSE of 0.30
-(Table~\ref{tab:representation_c}), almost four times the validation value. The
-difference is therefore not explained by extrapolation beyond the training data
-or by sparse representation within it; it reflects structure in the
-inversion-derived $C$ that the local predictors do not capture. Selecting the regularization or the stopping point
-against spatially withheld data might improve transfer, but under the
-point-wise hypothesis no such selection would be needed, and a gain obtained by
-smoothing the prediction toward a spatially uniform control would move away
-from, not toward, a point-wise relationship.
+rows should reproduce spatially withheld rows with comparable accuracy wherever
+similar predictor values are well represented in the training data. CFG02
+reproduces randomly withheld validation rows with a median $C$ RMSE of 0.08 and
+$R_C^2$ of 0.99 (Table~\ref{tab:validation_c_diagnostics}), but in the withheld
+central squares its median $C$ RMSE is 0.30 and $R_C^2$ is negative in eight of
+ten (Table~\ref{tab:c_diagnostics}), although 94--99\% of every square satisfies
+both support criteria (Fig.~\ref{fig:support_skill}a). A fitted model can
+transfer poorly for other reasons, such as limited sampling of the predictor
+space or approximation error, but the errors do not decrease where the training
+data are denser: held-out rows whose predictor combinations are at least as
+densely represented as a typical training row have the same median $C$ RMSE of
+0.30 (Table~\ref{tab:representation_c}). The difference is therefore not
+explained by the support and representation measures tested here, and it points
+to structure in the inversion-derived $C$ that the local predictors do not
+capture. Selecting the regularization or the stopping point against spatially
+withheld data might improve transfer, but a gain obtained by shrinking the
+prediction toward a spatially uniform control would reflect less use of the
+predictors rather than a closer point-wise relationship with them.
 
 The spatial differences in performance are not simply explained by the
 BedMachine diagnostics considered here. Reported bed-elevation uncertainty has
@@ -1006,10 +1007,10 @@ We apply the same construction at two stages, using different predictor sets.
 Square selection used all twelve predictors, so a candidate square had to be
 supported in the full predictor space: at least 95\% of its area had to lie
 within the marginal bounds of each predictor, and at least 95\% had to satisfy
-the joint criterion. This is a stricter requirement than the one applied to any
-individual configuration. The support values reported for
-each configuration use only that configuration's predictors and therefore have
-their own thresholds.
+the joint criterion. The support values reported for each configuration use
+only that configuration's predictors, transformation and threshold, so the two
+stages are not nested: a square selected with all twelve predictors can have
+lower support for an individual configuration (Fig.~\ref{fig:support_skill}a).
 
 Reported predictor support is the area fraction satisfying both the marginal and joint criteria. We retain all held-out points in the modeled velocity evaluation, regardless of support.
 
@@ -1073,7 +1074,7 @@ PIG & 1,303,307 & 227,685 & $-0.08$--$2.69$ & $-1.28$--$2.05$ & 85.4\\
 
 These comparisons show how the reference-$C$ range in each held-out region overlaps that in the training-and-validation region; modeled velocity tests whether the predicted control reproduces the observed flow. The reference $C$ is one regularized, model-dependent inversion solution, and modeled velocity remains the primary evaluation in this study.
 
-We measure agreement with the inversion-reference control using $C$ RMSE and the coefficient of determination $R_C^2$. The latter is one minus the sum of squared prediction errors divided by the sum of squared deviations of reference $C$ from its mean over the same evaluated locations.
+We measure agreement with the inversion-reference control using $C$ RMSE and the coefficient of determination $R_C^2$. The latter is one minus the sum of squared prediction errors divided by the sum of squared deviations of reference $C$ from its mean over the same evaluated locations. These diagnostics compare the median MLP prediction with the reference $C$. The control used in the simulations equals this prediction except within mesh cells that cross the edge of the replaced region, where it blends into the reference. Those cells contain none of the central-square rows, 2.5\% of the PIG rows and 8--11\% of the rows in the SQ05 and SQ06 complete footprints for which we report $C$ RMSE; evaluating the applied control instead changes those $C$ RMSE values by at most 0.003 and leaves the PIG correlation with velocity error unchanged at 0.67.
 
 Table~\ref{tab:validation_c_diagnostics} reports agreement with the inversion-reference control on the validation rows. Each MLP was evaluated on its own validation rows, so the table reports the median of the ten member-level results for each square--configuration experiment. Validation $C$ RMSE is lower and $R_C^2$ higher for the other five configurations than for CFG04. The contrast with the spatially held-out results in Table~\ref{tab:c_diagnostics} shows that agreement on randomly withheld rows within the training region does not imply comparable transfer to a spatially separated square.
 
@@ -1279,7 +1280,7 @@ comparisons used to summarize differences among configurations.
 
 The MLP has ten hidden layers of 200 units. Each hidden layer is followed by batch normalization and a SiLU activation, and the final layer is linear. Predictors and $C$ are robustly scaled using medians and interquartile ranges fitted on training rows only. Adam uses an initial learning rate of $10^{-3}$ and batch size 1024, with reproducible epoch-wise shuffling. The learning rate is multiplied by 0.2, down to $10^{-6}$, after 15 epochs without a validation-MSE decrease of at least $10^{-4}$. Training stops after 45 epochs without such a decrease, and the fitted MLP with the lowest unpenalized validation MSE is used.
 
-A separate CFG06 calculation selected the L2 penalty without using any of the ten central squares. Its fixed 70/20/10 split contained 1,407,671 rows: 985,369 for training, 281,534 for validation, and 140,768 for testing. We applied L2 penalties of 0, $10^{-6}$, $10^{-5}$, and $10^{-4}$ to the hidden-layer weights and compared them using unpenalized validation MSE. The respective minimum values were 0.001207, 0.001332, 0.001583, and 0.003117. No nonzero penalty reduced validation MSE below that of the zero-penalty model, so all final MLP trainings used $\lambda_{\mathrm{L2}}=0$. We did not use the test rows to choose the penalty. 
+A separate CFG06 calculation selected the L2 penalty without using any of the ten central squares. It retained the square buffers, PIG and the inter-catchment corridors, so the regional tests were withheld from their final MLP fits but not from this calibration. Its fixed 70/20/10 split contained 1,407,671 rows: 985,369 for training, 281,534 for validation, and 140,768 for testing. We applied L2 penalties of 0, $10^{-6}$, $10^{-5}$, and $10^{-4}$ to the hidden-layer weights and compared them using unpenalized validation MSE. The respective minimum values were 0.001207, 0.001332, 0.001583, and 0.003117. No nonzero penalty reduced validation MSE below that of the zero-penalty model, so all final MLP trainings used $\lambda_{\mathrm{L2}}=0$. We did not use the test rows to choose the penalty. 
 
 We did not optimize the network architecture separately for each predictor
 configuration or held-out region. Instead, we used the same relatively large
@@ -1423,9 +1424,10 @@ location, as in the evaluated square. For PIG, we trained on the ten central
 squares, excluding 18,409 rows that lie inside PIG, and evaluated CFG02 over
 the complete catchment. We report the percentage of held-out rows the
 classifier labels correctly, and compare it with the percentage obtained by
-predicting whichever outcome is more common in that region. That comparison is
-the relevant one: a user who knew nothing beyond the regional outcome rate
-could achieve it without any predictors.
+predicting whichever outcome is more common in that region. That reference uses
+the region's own outcome rate, which a user would not know in advance, so we
+also compare with predicting the outcome that is more common in the training
+squares, which a user could do.
 
 In 10 of the 60 square tests (12 for the stricter criterion), the outcome was
 the same at every evaluated row, so no classifier could separate locations
@@ -1437,7 +1439,9 @@ than of individual locations.
 Across the 294 remaining tests the classifiers labeled 1,967,017 of 3,626,370
 held-out rows correctly, or 54.2\%. The median was 51.4\%, against 77.5\% for
 predicting the more common outcome, and the classifiers exceeded that rule in
-32 of the 294 tests. For the improvement criterion the median percentages
+32 of the 294 tests. Predicting the outcome that is more common in the training
+squares gives a median of 70.0\%, and the classifiers exceeded that rule in 98
+of the 294 tests. For the improvement criterion the median percentages
 correct were 57.9 using observed speed alone, 62.6 using the twelve predictors,
 and 61.6 using both, against a median of 77.6 for the more common outcome
 (Fig.~\ref{fig:transfer_predictability}a). For the stricter criterion they were
@@ -1445,7 +1449,9 @@ and 61.6 using both, against a median of 77.6 for the more common outcome
 Adding the twelve predictors to observed speed did not help: the combined
 classifier exceeded the more common outcome in 5 of 50 tests under the
 improvement criterion and 4 of 48 under the stricter one, while observed speed
-alone did so in 10 and 8.
+alone did so in 10 and 8. Against the training-square rule, the combined
+classifier did better in 14 and 19 of these tests, and observed speed alone in
+17 and 22.
 
 These failures are not a matter of the classifier fitting its training data
 poorly. The same classifier labeled 98.7\% of its training rows correctly, and
@@ -1481,8 +1487,9 @@ the wrong direction when it is applied to the catchment.
 The predictors therefore do not provide a reliable way to identify in advance
 where the predicted $C$ will improve modeled velocity. The combined classifier
 is not consistently better than one using observed speed alone, rarely improves
-on predicting the more common regional outcome, and does not transfer from the
-squares to PIG. That the same classifier reproduces its training squares almost
+on predicting the more common regional outcome, falls short of the
+training-square rule in most tests, and does not transfer from the squares to
+PIG. That the same classifier reproduces its training squares almost
 exactly points to the difficulty being spatial transfer rather than model
 capacity, and the tests in which every row shared one outcome point the same
 way: whether the point-wise relationship succeeds is largely a property of the

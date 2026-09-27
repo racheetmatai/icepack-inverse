@@ -62,6 +62,35 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## External audit corrections - 26 September 2026
+
+- Discussion ("The contrast between random and spatial holdouts"): the
+  inference is now stated as comparable accuracy expected under a point-wise
+  relationship, acknowledges that a fitted model can transfer poorly for other
+  reasons, and gives the evidence against the main alternatives (errors do not
+  decrease with denser representation: Table 8 medians 0.299, 0.297, 0.301);
+  shrinkage toward a uniform control is described as less use of the
+  predictors (a constant is itself a point-wise function).
+- C diagnostics are defined as comparing the median MLP prediction with the
+  reference C. Checked read-only in the container: the applied control differs
+  from that prediction only in cells crossing the replacement edge (0 central
+  square rows, 2.5% of PIG rows, 7.9% and 10.5% of the SQ05 and SQ06 footprint
+  rows); using the applied control changes those C RMSE values by at most
+  0.003 (SQ06 CFG04 0.4399 -> 0.4370) and leaves the PIG Spearman correlation at
+  0.674.
+- Classifier appendix: the more-common-outcome rule is labelled a hindsight
+  reference (it uses the held-out region's outcome rate) and a rule available
+  in advance is added, computed from `counts_folds.csv`: predicting the outcome
+  more common in the training squares gives a median of 70.0%, and the
+  classifiers exceed it in 98 of 294 tests (combined 14/50 and 19/48; speed
+  only 17/50 and 22/48). The main-text sentence now says "rarely better than".
+- Appendix E states that the L2 calibration retained the buffers, PIG and the
+  corridors. Appendix C no longer calls the twelve-predictor selection
+  stricter than every configuration: the criteria are not nested (10
+  configuration-square pairs have joint support below 95%).
+- Response letter M3 updated to match. Manuscript 54 pages; citations, labels,
+  figures, environments and headings unchanged.
+
 ## Fourth audit - 26 September 2026
 
 - `environments/paper_requirements.txt` now pins `meshio==4.4.6`. The Fig. 3b
