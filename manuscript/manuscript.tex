@@ -786,17 +786,7 @@ the basal traction acting on the ice. For horizontal depth-averaged velocity $\m
 +\mathrm{tr}(\dot{\boldsymbol{\epsilon}})\mathbf{I}\right],\qquad
 \mu=\frac{1}{2}A^{-1/n}\dot{\epsilon}_e^{1/n-1},
 \end{equation}
-with $\dot{\boldsymbol{\epsilon}}=
-(\nabla\mathbf{u}+\nabla\mathbf{u}^{\mathrm T})/2$,
-$\dot{\epsilon}_e=\left[(\dot{\boldsymbol{\epsilon}}:
-\dot{\boldsymbol{\epsilon}}+\mathrm{tr}(\dot{\boldsymbol{\epsilon}})^2
-+\dot{\epsilon}_{\min}^2)/2\right]^{1/2}$, $\mathbf{I}$ the horizontal
-identity tensor, $\dot{\epsilon}_{\min}=10^{-5}$~a$^{-1}$ Icepack's default
-strain-rate floor, $A$ the temperature-dependent rate factor, and $n=3$ the
-Glen exponent. The modeled velocity is depth-averaged. Its comparison with
-the MEaSUREs surface velocity therefore uses the shallow-shelf assumption
-that vertical shear is negligible. We use the depth-averaged englacial temperature of
-\citet{van2013using}. We linearly interpolate this field to the model mesh and supply it in kelvin to Icepack's rate-factor function to calculate $A$ \citep{shapero2021icepack}. This differs from the surface-air-temperature predictor used by the MLP.
+with $\dot{\boldsymbol{\epsilon}}= (\nabla\mathbf{u}+\nabla\mathbf{u}^{\mathrm T})/2$, $\dot{\epsilon}_e=\left[(\dot{\boldsymbol{\epsilon}}: \dot{\boldsymbol{\epsilon}}+\mathrm{tr}(\dot{\boldsymbol{\epsilon}})^2 +\dot{\epsilon}_{\min}^2)/2\right]^{1/2}$, $\mathbf{I}$ the horizontal identity tensor, $\dot{\epsilon}_{\min}=10^{-5}$~a$^{-1}$ Icepack's default strain-rate floor, $A$ the temperature-dependent rate factor, and $n=3$ the Glen exponent. The modeled velocity is depth-averaged. Its comparison with the MEaSUREs surface velocity therefore uses the shallow-shelf assumption that vertical shear is negligible. We use the depth-averaged englacial temperature of \citet{van2013using}. We linearly interpolate this field to the model mesh and supply it in kelvin to Icepack's rate-factor function to calculate $A$ \citep{shapero2021icepack}. This differs from the surface-air-temperature predictor used by the MLP.
 
 The basal law is Eqn~\ref{eq:weertman}, with the Icepack sliding exponent $n=3$ in that equation. The dimensionless basal-friction control $C$ is distinct from the dimensional basal-friction coefficient $C_b$ that enters the traction law:
 \begin{equation}
