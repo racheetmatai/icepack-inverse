@@ -806,8 +806,8 @@ Here $\rho_w$ is seawater density, $p_w$ is the hydrostatic water-pressure
 estimate, $p_i$ is ice overburden pressure, $p=1$ is the ramp exponent used
 in this study, and $C_0=0.01$~MPa~(m~a$^{-1}$)$^{-1/3}$. Consequently $C_b$ has
 units MPa~(m~a$^{-1}$)$^{-1/3}$, while $C$ and $\phi$ are dimensionless.
-The ramp is continuous and piecewise, with kinks introduced by the maximum
-operations; it is not a differentiably smooth effective-pressure law.
+The ramp is continuous and piecewise, with abrupt changes in slope introduced
+by the maximum operations; it is not a smooth effective-pressure law.
 
 Quadratic finite-element basis functions are used. We prescribe observed velocities along the non-terminus boundaries and apply an ocean-pressure traction condition at the termini. In that terminus condition the water-depth magnitude is $d=\max(h-s,0)$ and the normal-stress contribution is proportional to $(\rho_i g h^2-\rho_w g d^2)/2$. We filled eleven Dirichlet velocity degrees of freedom that lacked a colocated valid velocity pixel from the nearest valid centered MEaSUREs pixel. 
 
