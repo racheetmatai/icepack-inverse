@@ -6,3 +6,4 @@ pyproj==3.7.0
 reportlab==5.0.1
 h5py==3.12.1
 PyMuPDF==1.28.2
+meshio==4.4.6

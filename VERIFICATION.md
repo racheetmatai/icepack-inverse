@@ -62,6 +62,24 @@
   "Predicting where transfer succeeds" made a subsection. Figure and table
   numbering unchanged; 52 pages.
 
+## Fourth audit - 26 September 2026
+
+- `environments/paper_requirements.txt` now pins `meshio==4.4.6`. The Fig. 3b
+  generator reads the model mesh with meshio; the tested container environment
+  (Python 3.10.12, the versions listed in that file) already had it, but the
+  documented environment did not, so `scripts/reproduce_paper.py` would have
+  stopped at Fig. 3.
+- Manuscript: the Methods state that only C is inverted and that the rate
+  factor is prescribed from englacial temperature; the Discussion notes that C
+  therefore also absorbs errors in ice softness, for example in shear margins;
+  the Introduction adds that Kyrke-Smith and others (2017) found stronger
+  correlation between profile-averaged values. 54 pages.
+- Checked without change: the held-out marginal and joint support code, the
+  area-weighted C diagnostics behind Table 7, the mesh file hash in git and
+  archive 01, and the three prior-study summaries in the Introduction. The
+  redrawn Figs. 10-11 come from a summary table byte-identical to the archived
+  one.
+
 ## Second and third audits - 26 September 2026
 
 - No result, table value or conclusion changed. Every number recomputed during

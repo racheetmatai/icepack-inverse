@@ -71,7 +71,8 @@ but did not identify a direct predictive relationship.
 \citet{das2023quest} found no robust correlation between inferred sliding
 parameters and radar-derived basal reflectivity over Thwaites Glacier, while
 \citet{kyrke2017can} found only weak kilometer-scale association between basal
-drag and seismic acoustic impedance along Pine Island Glacier (PIG).
+drag and seismic acoustic impedance along Pine Island Glacier (PIG), although
+values averaged along each seismic profile correlated more strongly.
 
 These studies, together with our understanding of basal processes, suggest that the relationship between basal conditions and basal resistance may be complex and nonlinear, involving thermo-mechanical feedbacks, subglacial hydrology, and spatially variable bed properties. Following the field inversion and machine learning (FIML) approach of \citet{parish2016paradigm}, we use nonlinear regression with a multilayer perceptron (MLP) as a flexible representation of $f$ in Eqn~\ref{eq:functional_relationship} to relate the selected observables to the inversion-derived friction control $C$.
 
@@ -164,7 +165,7 @@ J(\mathbf{u},C;r_C)=\frac{1}{2NU^2}\sum_{i=1}^{N}\left\lVert\mathbf{u}(\mathbf{x
 where $N$ is the number of paired-velocity observations, $|\Omega|$ is the domain area, $U=1$~m~a$^{-1}$ and $L=7.5$~km are fixed reference scales that make both terms dimensionless, and $r_C$ controls smoothness. Smaller $r_C$ gives stronger smoothing. The misfit is unweighted, matching the velocity RMSE that we use for evaluation. Following the use of L-curves in ice-sheet inverse models
 \citep{wolovick2023regularization}, we selected
 $r_C \simeq 0.014$ using a maximum-curvature criterion
-(Appendix Fig.~\ref{fig:lcurve}). We obtain gradients of Eqn~\ref{eq:objective} using the adjoint method. We use the resulting field (Fig.~\ref{fig:definitive_inversion}) for every learning experiment. 
+(Appendix Fig.~\ref{fig:lcurve}). We obtain gradients of Eqn~\ref{eq:objective} using the adjoint method. Only $C$ is inverted; the rate factor in Glen's flow law is prescribed from englacial temperature (Appendix section~\nameref{app:ssa}). We use the resulting field (Fig.~\ref{fig:definitive_inversion}) for every learning experiment. 
 
 %Following the use of L-curves in ice-sheet inverse models \citep{wolovick2023regularization}, a maximum-curvature criterion selected $r_C\simeq0.014$ from the refined candidates. The adjacent candidate $r_C\simeq0.017$ had curvature within approximately 4\% of the selected value, so the curve identifies a narrow elbow range rather than one exact value. The sector-wide inversion began from exactly $C=0$ and reached a stable endpoint after 300 optimization iterations.
 
@@ -708,8 +709,10 @@ physical variability relevant to $C$. For example, \citet{hoffman2022impact}
 showed that small-scale basal roughness can strongly influence basal resistance, but continental-scale datasets do not resolve these scales.
 The geophysical products also provide indirect information at relatively
 coarse spatial resolution. In addition, the inferred $C$ depends on the
-adopted stress balance, basal law, and regularized inversion, rather than
-representing a unique physical property of the bed.
+adopted stress balance, basal law, prescribed ice rheology, and regularized
+inversion, rather than representing a unique physical property of the bed.
+Because the rate factor is prescribed rather than inverted, $C$ also absorbs
+errors in ice softness, for example in shear margins.
 
 The point-wise formulation itself may also be limiting. The MLP uses only the
 predictor values at each location and cannot use information from neighboring
