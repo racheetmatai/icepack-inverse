@@ -1,4 +1,4 @@
-"""Independent integrity verifier for the Gate-4 C/target panel bundle."""
+"""Check the files of the held-out C and reference-C figure panels."""
 
 from __future__ import annotations
 

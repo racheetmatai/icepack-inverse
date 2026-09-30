@@ -1,4 +1,4 @@
-"""Finalize the 20-Aug smoke after correcting its CSV comparison diagnostic."""
+"""Write the final record of a GPU smoke test, using the CSV-to-CSV comparison of predictions."""
 
 from __future__ import annotations
 

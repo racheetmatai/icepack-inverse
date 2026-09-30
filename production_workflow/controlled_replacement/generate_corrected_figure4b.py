@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate Figure 4b from corrected controlled-replacement metrics."""
+"""Draw the relative-skill panel of the support figure from the restricted-replacement metrics."""
 
 from pathlib import Path
 import argparse
@@ -46,7 +46,7 @@ image = ax.imshow(matrix.to_numpy(), aspect="auto", cmap="RdBu_r", norm=norm)
 for i in range(10):
     for j in range(6):
         value = matrix.iloc[i, j]
-        ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=7.0,
+        ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=9.0,
                 color="white" if value < 0.42 or value > 1.65 else "black")
         if value >= 1:
             ax.add_patch(Rectangle((j - 0.5, i - 0.5), 1, 1, fill=False,

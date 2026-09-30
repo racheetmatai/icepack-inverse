@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sequentially execute/resume the frozen four-fit L2 calibration on CUDA."""
+"""Run, or resume, the four L2 calibration fits on the GPU, one after another."""
 
 from __future__ import annotations
 

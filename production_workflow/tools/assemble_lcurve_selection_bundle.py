@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Assemble a portable, provenance-closed L-curve selection decision bundle.
+"""Package the L-curve runs and the r_C selection into one portable, hash-checked folder.
 
-This tool intentionally does not create a completed production L-curve study or
-a definitive-inversion reference.  It packages an explicitly acknowledged
-manual refinement window, verifies every accepted endpoint with the production
-point validator, reruns the frozen selector, and records only the regularization
-selection decision.
+It packages the refinement window chosen by hand around the corner, checks
+every accepted run with the same validity test used in production, reruns the
+curvature selection, and records only the selected r_C.  It does not create
+the reference inversion itself.
 """
 
 from __future__ import annotations
@@ -58,8 +57,8 @@ STABLE_ENVIRONMENT_KEYS = (
     "versions",
 )
 
-# These differences change provenance metadata but not the frozen scientific
-# sources or numerical runtime.  Known conflicting image IDs are still rejected.
+# These differences change provenance metadata but not the scientific source
+# code or the numerical runtime.  Known conflicting image IDs are still rejected.
 SAFE_ENVIRONMENT_DIFFERENCES = {
     "docker_image_hint",
     "docker_image_id",
@@ -372,7 +371,7 @@ def assemble_bundle(
     output_dir: Path,
     create_plot: bool = True,
 ) -> dict:
-    """Create one immutable selection-only bundle from an explicit plan."""
+    """Create the selection folder from an explicit plan."""
     source_root = source_root.resolve()
     plan_path = plan_path.resolve()
     output_dir = output_dir.resolve()

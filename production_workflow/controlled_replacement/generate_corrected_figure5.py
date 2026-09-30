@@ -1,8 +1,7 @@
-"""Generate the proposed 3 x 2 replacement for manuscript Figure 5.
+"""Draw the 3 x 2 map figure of the square results.
 
-This is a presentation-only product. It does not modify the manuscript. The
-velocity panels use the complete 130 km held-out footprints exported after the
-verified Icepack forward evaluations. The two velocity fields are averaged to
+Presentation only. The velocity panels use the complete 130 km held-out
+footprints exported from the Icepack forward simulations. The two velocity fields are averaged to
 a 1.8 km display grid before triangulation; all scientific metrics remain those
 computed on the native evaluation population.
 """
@@ -183,9 +182,9 @@ def panel_finish(ax, region, squares, panel: str, locator: bool = False) -> None
 
 
 def label_primary_squares(ax, squares: pd.DataFrame) -> None:
-    """Label squares outside every 130 km footprint using audited callouts."""
+    """Place square labels outside every 130 km footprint, at hand-checked positions."""
     # Hand-tuned label positions avoid all ten held-out footprints. Automatic
-    # offsets are not reliable here because several frozen footprints nearly
+    # offsets are not reliable here because several footprints nearly
     # touch. Coordinates are EPSG:3031 kilometres.
     placements = {
         "SQ01": (-1590.0, -25.0, "top"),
@@ -213,10 +212,10 @@ def label_primary_squares(ax, squares: pd.DataFrame) -> None:
         elif side == "right":
             anchor_x = row.footprint_xmax_m / 1000.0
             anchor_y = row.center_y_m / 1000.0
-        else:  # pragma: no cover - frozen placements above are exhaustive.
+        else:  # pragma: no cover - the placements above cover every square.
             raise RuntimeError(f"Unknown label side for {row.square_id}: {side}")
 
-        # The label anchor itself must not fall in any frozen footprint.
+        # The label anchor itself must not fall in any footprint.
         for other in squares.itertuples():
             if (
                 other.footprint_xmin_m / 1000.0 <= text_x <= other.footprint_xmax_m / 1000.0
@@ -287,7 +286,7 @@ def main() -> None:
             base.draw_speed_basemap(axes[row, col], region, velocity_context, alpha=0.20)
 
     axes[0, 0].set_title("CFG02\nSelected ice predictors", fontweight="bold", pad=7)
-    axes[0, 1].set_title("CFG04\nSelected geophysical predictors", fontweight="bold", pad=7)
+    axes[0, 1].set_title("CFG04\nSelected subglacial predictors", fontweight="bold", pad=7)
 
     c_images = []
     absolute_images = []
@@ -314,7 +313,7 @@ def main() -> None:
             axes[2, col],
             tri,
             error_difference,
-            cmap="RdBu_r",
+            cmap="PuOr_r",
             norm=SymLogNorm(linthresh=10.0, linscale=1.0, vmin=-2000.0, vmax=2000.0, base=10),
         ))
 
@@ -371,8 +370,8 @@ def main() -> None:
         fig.text(0.018, y, label, rotation=90, ha="center", va="center", fontsize=12.5, fontweight="bold")
 
     geometry_handles = [
-        Line2D([0], [0], color="0.15", lw=1.3, label="50 km primary test square"),
-        Line2D([0], [0], color="0.15", lw=1.1, ls=(0, (4, 3)), label="130 km held-out footprint"),
+        Line2D([0], [0], color="0.15", lw=1.3, label="50 km evaluation square"),
+        Line2D([0], [0], color="0.15", lw=1.1, ls=(0, (4, 3)), label="130 km withheld region"),
     ]
     fig.legend(
         handles=geometry_handles,

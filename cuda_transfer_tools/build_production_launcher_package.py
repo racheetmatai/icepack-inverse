@@ -53,7 +53,7 @@ def build_shards(destination: Path) -> dict:
     regional = [0] * SHARDS
     configuration = [Counter() for _ in range(SHARDS)]
     assignments: dict[str, int] = {}
-    # Assign regional jobs first so each shard receives 2--3, then all primary
+    # Assign regional jobs first so each shard receives 2--3, then all square
     # jobs. The deterministic greedy score also keeps each feature configuration
     # at 4--5 jobs/shard while retaining 27--28 total jobs/shard.
     assignment_order = sorted(

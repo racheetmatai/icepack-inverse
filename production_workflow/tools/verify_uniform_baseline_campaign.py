@@ -1,4 +1,4 @@
-"""Independent structural and numerical audit of the 12 uniform-C baselines."""
+"""Check the 12 uniform-C simulations."""
 
 from __future__ import annotations
 

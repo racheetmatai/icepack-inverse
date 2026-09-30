@@ -1,4 +1,4 @@
-"""Independent audit for the completed forward-evaluation bundle."""
+"""Check the forward-simulation evaluation outputs."""
 
 from __future__ import annotations
 

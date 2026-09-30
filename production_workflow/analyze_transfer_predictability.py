@@ -23,7 +23,7 @@ improve on speed alone, the predictors carry no additional information about
 where transfer succeeds.
 
 No inversion, MLP training or forward simulation is run; the inputs are
-saved per-row error fields and the canonical dataset.
+saved per-row error fields and the dataset.
 """
 from __future__ import annotations
 

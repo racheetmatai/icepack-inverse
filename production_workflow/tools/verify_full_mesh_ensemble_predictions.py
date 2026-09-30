@@ -1,4 +1,4 @@
-"""Independent array-level verifier for all full-mesh ensemble controls."""
+"""Check the predicted C arrays for every ensemble member."""
 
 from __future__ import annotations
 

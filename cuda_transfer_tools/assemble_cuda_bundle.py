@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble the immutable Gate-3 CUDA transfer directory."""
+"""Assemble the directory copied to the GPU system for MLP training."""
 
 from __future__ import annotations
 

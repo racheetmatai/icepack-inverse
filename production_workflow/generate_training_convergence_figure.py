@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate an audited convergence summary from the 600 square-model histories."""
+"""Plot the training and validation loss histories of the 600 square models."""
 
 from __future__ import annotations
 

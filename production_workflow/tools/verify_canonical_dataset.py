@@ -1,4 +1,4 @@
-"""Independently verify a canonical revised Amundsen dataset export."""
+"""Check an exported Amundsen dataset."""
 
 from __future__ import annotations
 

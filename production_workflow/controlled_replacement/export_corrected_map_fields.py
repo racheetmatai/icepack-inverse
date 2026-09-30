@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export corrected row-level fields for affected square and PIG figures."""
+"""Export row-level fields for the square and PIG map figures."""
 
 from __future__ import annotations
 

@@ -1,8 +1,8 @@
-"""Build full-mesh member and median log-C controls from frozen MLP checkpoints.
+"""Predict C at every mesh control point for each ensemble member, and the median.
 
-This stage performs inference only.  It does not run Icepack forward solves.
-Predictions replace the adopted definitive inversion control only on the frozen
-eligible grounded CG2 mask; every other degree of freedom is retained exactly.
+Prediction only; no Icepack forward solves.  Predictions replace the
+inversion-reference C only at the eligible grounded CG2 control points; all
+other values keep the reference C exactly.
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def construct_hybrid_controls(
     eligible: np.ndarray,
     eligible_predictions: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return ten hybrid member controls and their vertex-wise median."""
+    """Return the ten member controls and their pointwise median."""
     reference = np.asarray(reference_log_c, dtype=np.float64)
     mask = np.asarray(eligible, dtype=bool)
     predictions = np.asarray(eligible_predictions, dtype=np.float64)

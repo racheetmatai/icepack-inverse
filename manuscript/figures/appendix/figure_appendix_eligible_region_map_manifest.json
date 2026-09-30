@@ -1,0 +1,16 @@
+{
+  "addresses": "R-DET-25a (review_text.txt L266): figure explicitly showing the modeled region vs. the region used for metrics",
+  "grid_cells_5km": {
+    "eligible": 11772,
+    "excluded_from_metrics": 752,
+    "inside_modeled_domain": 12524
+  },
+  "outputs": {
+    "figure_appendix_eligible_region_map.pdf": "c7c4fc4b34066c4e4503444226d5d27f0042ad02fb4feab667abf83cc1723cd5",
+    "figure_appendix_eligible_region_map.png": "779ccae2b1dcb9396f6b4d509ef0326b555c0132ec1a746365a0fdbfa24c8568",
+    "figure_appendix_eligible_region_map.svg": "f2a6f09cbc73cb0b0baec7b97b764d98f7fbc085770af2369a28b6a08489ad0d"
+  },
+  "schema": "jog-appendix-eligibility-map-v1",
+  "source": "production_workflow/frozen_design/amundsen_input_support_grid_5km.npz (frozen; no new computation)",
+  "status": "complete"
+}

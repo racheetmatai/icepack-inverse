@@ -1,4 +1,4 @@
-"""Independent structural and numerical verifier for the spread diagnostic."""
+"""Check the files and numbers of the ensemble-spread diagnostic."""
 
 from __future__ import annotations
 

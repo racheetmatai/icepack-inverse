@@ -31,6 +31,7 @@ RESULTS = [
 APPENDIX = [
     "appendix_training_convergence.pdf",
     "lcurve_appendix.png",
+    "lcurve_appendix.pdf",
     "method_overview.pdf",
     "regional_target_distributions.png",
     "square_target_distributions.png",
@@ -127,8 +128,8 @@ def main() -> None:
         )
         shutil.copy2(lcurve, work / "lcurve_appendix.png")
 
-        # Replace affected legacy artwork with the verified controlled-
-        # replacement/original-observation products.
+        # Replace the earlier figures with those from the restricted-replacement
+        # simulations, evaluated on the original observations.
         controlled = artifacts / "production_workflow/controlled_replacement_20260917_a"
         if not controlled.is_dir():
             raise FileNotFoundError(
@@ -155,22 +156,25 @@ def main() -> None:
         run([python, str(controlled_code / "generate_corrected_figure6_velocity_panels.py")], controlled_env)
         run([python, str(controlled_code / "generate_corrected_inversion_panels.py")], controlled_env)
         run([python, str(controlled_code / "generate_corrected_figure1.py")], controlled_env)
-        # Rebuild the L-curve from the accepted points and the saved
-        # unconverged candidate (validated but not plotted).
+        # Rebuild the L-curve from the saved runs: the selection window and the
+        # converged r_C = 0.005 run as regular points, r_C = 0.05 as unconverged.
         gate1 = artifacts / "production_runs/gate1_lcurve_selection_bundle_20260819_a"
         lcurve_out = work / "lcurve"
         run([python, str(controlled_code / "extend_lcurve_figure.py"),
              "--accepted-table", str(gate1 / "lcurve_points.csv"),
+             "--extra-converged-manifest", str(
+                 gate1 / "excluded_evidence/gate1_lcurve_20260813_a/points"
+                 / "regc_0p005_2a20f934_attempt01/point_manifest.json"),
              "--unconverged-manifest", str(
                  gate1 / "excluded_evidence/gate1_lcurve_v2_20260814_a/points"
                  / "regc_0p05_e7039c84_attempt01/point_manifest.json"),
              "--output", str(lcurve_out)], env)
-        shutil.copy2(lcurve_out / "lcurve_appendix_extended.png",
-                     work / "lcurve_appendix.png")
+        for suffix in ("png", "pdf"):
+            shutil.copy2(lcurve_out / f"lcurve_appendix_extended.{suffix}",
+                         work / f"lcurve_appendix.{suffix}")
 
-        # Appendix figures added after the controlled-replacement release:
-        # the eligible-region map (frozen 5 km grid) and the
-        # transfer-predictability figure (archived classifier results).
+        # The eligible-region map (model mesh and dataset rows) and the
+        # transfer-predictability figure (saved classifier results).
         run([python, str(workflow / "generate_appendix_eligibility_map.py"),
              "--output", str(work)], env)
         predictability = artifacts / "production_workflow/transfer_predictability_20260919_a"
@@ -209,7 +213,12 @@ def main() -> None:
         for name in ('table1_predictors_and_configurations.csv',
                      'table2_primary_performance.csv',
                      'table3_high_support_low_skill_examples.csv'):
-            pd.testing.assert_frame_equal(pd.read_csv(work / name), pd.read_csv(archived / name))
+            # The archived tables carry the earlier group names ("All geophysical")
+            # in configuration_label; compare every other column, including the
+            # configuration IDs.
+            new = pd.read_csv(work / name).drop(columns='configuration_label', errors='ignore')
+            old = pd.read_csv(archived / name).drop(columns='configuration_label', errors='ignore')
+            pd.testing.assert_frame_equal(new, old)
             verified_tables.append(name)
     except Exception as error:  # noqa: BLE001 - report the failure, don't crash silently
         report = {

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Count-based version of the transfer-predictability test.
 
-Same design as the published analysis — leave-one-square-out over the ten
+Same design as analyze_transfer_predictability.py — leave-one-square-out over the ten
 central squares, plus the PIG transfer test, six configurations, two success
 criteria, three feature sets. Only the reported quantity changes: how many
 held-out points the classifier labels correctly, against the score of simply
@@ -146,9 +146,8 @@ def main() -> None:
 
 
 def summarize(folds: pd.DataFrame) -> dict:
-    """Summarize the square folds. The paper reports the published classifier;
-    the larger ("deep") forest is a capacity check and is counted only in the
-    fold totals."""
+    """Summarize the square folds. The paper reports the main classifier; the
+    larger ("deep") forest is a capacity check counted only in the fold totals."""
     scored = folds[folds.correct.notna()]
     published = scored[scored.model == "published"]
     return {

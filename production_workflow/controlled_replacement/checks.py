@@ -52,7 +52,7 @@ def verify_control_pair(
 
 
 def manuscript_rows(table: pd.DataFrame) -> pd.DataFrame:
-    """Select only the controlled/original-observation manuscript scenario."""
+    """Select the scenario reported in the paper: restricted replacement, original observations."""
     if "scenario" not in table.columns:
         raise ValueError("Scenario column is missing")
     selected = table.loc[table["scenario"].eq(MANUSCRIPT_SCENARIO)].copy()

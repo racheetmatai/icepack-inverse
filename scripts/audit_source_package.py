@@ -1,4 +1,4 @@
-"""Audit tracked source files before making a reproduction release."""
+"""Check the tracked source files before making a release."""
 import ast
 import json
 import re

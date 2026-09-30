@@ -1,4 +1,4 @@
-"""Read-only topology/BC audit of copied production mesh; no numerical solves."""
+"""Read-only check of the mesh topology and boundary labels; no solves."""
 from pathlib import Path
 from collections import Counter, defaultdict
 import hashlib

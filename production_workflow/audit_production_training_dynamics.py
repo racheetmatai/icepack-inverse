@@ -1,8 +1,8 @@
-"""Blinded audit of production-training dynamics.
+"""Summarize training dynamics from the training records alone.
 
-This script reads only run manifests, resolved specifications, training
-summaries, history.csv, and learning_rate_history.csv. It deliberately never
-opens held-out test data or validation_predictions.csv.gz.
+Reads run manifests, resolved specifications, training summaries,
+history.csv, and learning_rate_history.csv. It never opens held-out test
+data or validation_predictions.csv.gz.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ def audit_run(run_dir: Path) -> dict:
     history = pd.read_csv(run_dir / "history.csv")
     lr_history = pd.read_csv(run_dir / "learning_rate_history.csv")
 
-    # Hard guards against silently changing the frozen protocol.
+    # Stop if the training settings differ from the fixed protocol.
     policy = spec["policy"]
     assert int(policy["max_epochs"]) == MAX_EPOCHS
     assert int(policy["early_stopping"]["patience"]) == EARLY_STOPPING_PATIENCE

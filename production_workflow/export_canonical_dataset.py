@@ -1,4 +1,4 @@
-"""Export the canonical revised Amundsen dataset from an adopted inversion."""
+"""Export the Amundsen training and evaluation dataset from the reference inversion."""
 
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ import shutil
 import socket
 import sys
 
-# When executed by file path, Python places production_workflow/ before the
-# repository root. Put the live repository first so ``src`` cannot resolve to
-# the intentionally incomplete four-file provenance snapshot in this folder.
+# When executed by file path, Python places production_workflow/ on sys.path.
+# Put the repository root first as well, so that a top-level ``src`` in a
+# working copy takes precedence; in this package ``src`` is production_workflow/src.
 REPO_ROOT_HINT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT_HINT) in sys.path:
     sys.path.remove(str(REPO_ROOT_HINT))
@@ -90,7 +90,7 @@ def _mesh_membership_and_boundary(mesh_path: Path, coordinates: np.ndarray):
 def assign_regions(
     coordinates: np.ndarray, mesh_paths: dict[str, Path]
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Apply the frozen regional-mesh containment and overlap rule directly."""
+    """Assign each point to a region using the catchment meshes and the overlap rule."""
     order = ("PIG", "Thwaites", "Dotson")
     membership = np.zeros((len(coordinates), 3), dtype=bool)
     boundaries = []
@@ -228,7 +228,7 @@ def build_frame(object_, velocity, config: dict) -> tuple[pd.DataFrame, dict]:
         config["frozen_design"]["selected_squares"]["path"]
     )
     region_codes, raw_region_membership_count = assign_regions(coordinates, mesh_paths)
-    # Reproduce all frozen 5 km labels before applying the same rule to rows.
+    # Reproduce the stored 5 km region labels before applying the same rule to rows.
     frozen_partition_path = resolve_design_path(
         config["frozen_design"]["five_region_partition"]["path"]
     )

@@ -37,8 +37,8 @@ def block(
         "gradient_norm": gradient_norm,
         "all_finite": all_finite,
         "objective_identities_passed": objective_identities_passed,
-        # Practical E/R acceptance is intentionally independent of native ROL
-        # termination, which remains a separately preserved diagnostic.
+        # The misfit/roughness acceptance rule does not depend on how the ROL
+        # optimizer terminated; the termination status is kept as a diagnostic.
         "native_termination": "iteration_limit",
     }
 

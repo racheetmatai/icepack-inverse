@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diagnose centered MEaSUREs interpolation on the frozen FE spaces."""
+"""Check pixel-centred MEaSUREs interpolation on the model's finite-element spaces."""
 
 import json
 

@@ -1,4 +1,4 @@
-"""Plot saved, support-corrected median-control results; no physical solves."""
+"""Plot square velocity RMSE for the earlier sector-wide replacement design; no solves. reproduce_paper.py replaces this figure with the restricted-replacement version."""
 from pathlib import Path
 import argparse
 import hashlib

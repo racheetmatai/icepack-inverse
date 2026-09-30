@@ -1,4 +1,4 @@
-"""Build the source-only smoke acceptance amendment."""
+"""Build the source-only update to the GPU smoke-test package."""
 
 from __future__ import annotations
 

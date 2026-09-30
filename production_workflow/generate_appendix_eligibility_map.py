@@ -1,18 +1,11 @@
 #!/usr/bin/env python3
-"""Appendix figure: modeled domain vs. the region used for metrics.
+"""Appendix figure: the modeled domain and the region used for metrics.
 
-Addresses reviewer comment R-DET-25a (review_text.txt L266): "Metrics are
-only reported when phi > 0.1, but that region is not shown anywhere...
-There should be a figure explicitly showing the region." The prior response
-added text (the population paragraph in Appendix section
-"Eligible rows, predictor construction, and support") but, on review, never
-added the requested figure: every existing map already restricts display to
-the eligible region, so the excluded fringe is never shown for contrast.
-
-Uses only the frozen 5 km support grid
-(frozen_design/amundsen_input_support_grid_5km.npz), which is the same grid
-every other figure already masks by; no new computation, inversion, or
-simulation.
+Every 450 m MEaSUREs pixel centre inside the model mesh is coloured: blue if
+it is an eligible dataset row (used for training and every reported metric),
+orange otherwise (phi <= 0.1, or no valid velocity).  Percentages are fractions
+of the pixels inside the mesh.  Reads the model mesh and the saved dataset
+only; no inversion or simulation is run.
 """
 from __future__ import annotations
 
@@ -24,17 +17,18 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.tri as mtri
+import meshio
 import numpy as np
+import pandas as pd
 from matplotlib.colors import ListedColormap, BoundaryNorm
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generate_revision_figures_and_tables as base  # noqa: E402
 
-# base.DESIGN honours JOG_ARTIFACT_ROOT in the packaged workflow, so the
-# frozen grid is found in an unpacked artifact directory as well as here.
-DESIGN = base.DESIGN
 OUT = ROOT / "manuscript/figures/appendix"
+PIXEL_M = 450.0
 
 
 def sha256(path: Path) -> str:
@@ -45,9 +39,10 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def support_grid() -> dict[str, np.ndarray]:
-    with np.load(DESIGN / "amundsen_input_support_grid_5km.npz", allow_pickle=False) as z:
-        return {k: z[k] for k in z.files}
+def mesh_path() -> Path:
+    # The same lookup as base.quadratic_mesh_triangulation.
+    path = base.ARTIFACT_ROOT / "amundsen.msh"
+    return path if path.is_file() else ROOT / "amundsen.msh"
 
 
 def main() -> None:
@@ -57,59 +52,85 @@ def main() -> None:
                         help="directory for the figure files (default: manuscript/figures/appendix)")
     out = parser.parse_args().output
     base.style()
-    s = support_grid()
-    r = base.region_context()
-    inside = s["inside"]
-    grounded = s["grounded"]
-    velocity_available = s["velocity_available"]
-    eligible = s["eligible"]
-    if not np.array_equal(eligible, inside & grounded & velocity_available):
-        raise RuntimeError("eligible mask no longer equals inside & grounded & velocity_available")
 
-    x, y = s["x_grid"] / 1000.0, s["y_grid"] / 1000.0
-    extent = [x[0] - 2.5, x[-1] + 2.5, y[0] - 2.5, y[-1] + 2.5]
+    mesh = meshio.read(mesh_path())
+    triangles = np.concatenate([cells.data for cells in mesh.cells if cells.type == "triangle"])
+    vertices = np.asarray(mesh.points[:, :2], dtype=float)
+    finder = mtri.Triangulation(vertices[:, 0], vertices[:, 1], triangles).get_trifinder()
 
-    # Category grid: 0 outside modeled domain (transparent), 1 modeled but
-    # excluded from metrics (not grounded, or grounded without a paired
-    # velocity observation), 2 eligible (used for training and metrics).
-    category = np.zeros(inside.shape, dtype=np.int8)
-    category[inside & ~eligible] = 1
-    category[eligible] = 2
-    n_inside = int(inside.sum())
-    n_excluded = int((inside & ~eligible).sum())
-    n_eligible = int(eligible.sum())
+    rows = pd.read_csv(base.DATASET / "canonical_master_dataset.csv.gz",
+                       usecols=["x", "y", "common_eligible"])
+    eligible_rows = rows[rows["common_eligible"].astype(bool)]
+
+    # Pixel-centre lattice of the MEaSUREs grid, anchored on the dataset rows and
+    # covering the mesh and every dataset row with a one-pixel margin.
+    x_anchor, y_anchor = float(rows["x"].iloc[0]), float(rows["y"].iloc[0])
+    if not (np.allclose(np.remainder(rows["x"] - x_anchor, PIXEL_M), 0.0)
+            and np.allclose(np.remainder(rows["y"] - y_anchor, PIXEL_M), 0.0)):
+        raise RuntimeError("Dataset rows are not on one 450 m pixel lattice")
+
+    def lattice(anchor: float, low: float, high: float) -> np.ndarray:
+        first = anchor + np.floor((low - anchor) / PIXEL_M - 1) * PIXEL_M
+        last = anchor + np.ceil((high - anchor) / PIXEL_M + 1) * PIXEL_M
+        return np.arange(first, last + PIXEL_M / 2, PIXEL_M)
+
+    xs = lattice(x_anchor, min(vertices[:, 0].min(), rows["x"].min()),
+                 max(vertices[:, 0].max(), rows["x"].max()))
+    ys = lattice(y_anchor, min(vertices[:, 1].min(), rows["y"].min()),
+                 max(vertices[:, 1].max(), rows["y"].max()))
+    grid_x, grid_y = np.meshgrid(xs, ys)
+    in_mesh = finder(grid_x, grid_y) >= 0
+
+    eligible = np.zeros(grid_x.shape, dtype=bool)
+    column = np.rint((eligible_rows["x"].to_numpy() - xs[0]) / PIXEL_M).astype(int)
+    row = np.rint((eligible_rows["y"].to_numpy() - ys[0]) / PIXEL_M).astype(int)
+    eligible[row, column] = True
+
+    # Category grid: 0 outside the mesh (transparent), 1 inside the mesh but
+    # excluded from metrics, 2 eligible and inside the mesh.
+    category = np.zeros(grid_x.shape, dtype=np.int8)
+    category[in_mesh] = 1
+    category[in_mesh & eligible] = 2
+    n_inside = int(in_mesh.sum())
+    n_excluded = int((in_mesh & ~eligible).sum())
+    n_eligible = int((in_mesh & eligible).sum())
 
     display = np.ma.masked_where(category == 0, category)
     cmap = ListedColormap(["#f4a582", "#4477AA"])  # excluded, eligible
     norm = BoundaryNorm([0.5, 1.5, 2.5], 2)
+    extent = [(xs[0] - PIXEL_M / 2) / 1000.0, (xs[-1] + PIXEL_M / 2) / 1000.0,
+              (ys[0] - PIXEL_M / 2) / 1000.0, (ys[-1] + PIXEL_M / 2) / 1000.0]
 
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(6.4, 6.2), constrained_layout=True)
-    ax.imshow(display, origin="lower", extent=extent, cmap=cmap, norm=norm)
-    base.map_axes(ax, r["outline"])
-    base.add_antarctica_locator(ax, r["outline"])
+    ax.imshow(display, origin="lower", extent=extent, cmap=cmap, norm=norm,
+              interpolation="nearest")
+    base.map_axes(ax, vertices)
+    base.add_antarctica_locator(ax, vertices)
     ax.plot([], [], color="#4477AA", lw=6,
             label=f"Eligible: used for training and metrics ({n_eligible/n_inside:.1%} of modeled domain)")
     ax.plot([], [], color="#f4a582", lw=6,
-            label=f"Modeled but excluded from metrics ($\\phi\\leq0.1$ or no paired\nvelocity observation; {n_excluded/n_inside:.1%} of modeled domain)")
+            label="Modeled but excluded from metrics ($\\phi\\leq0.1$ or no valid\n"
+                  f"velocity observation; {n_excluded/n_inside:.1%} of modeled domain)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=1,
-              frameon=True, framealpha=0.95, borderaxespad=0.0, fontsize=9.0)
+              frameon=True, framealpha=0.95, borderaxespad=0.0, fontsize=11)
 
     out.mkdir(parents=True, exist_ok=True)
     stem = "figure_appendix_eligible_region_map"
     paths = []
     for suffix in ("png", "pdf", "svg"):
         path = out / f"{stem}.{suffix}"
-        fig.savefig(path, bbox_inches="tight", pad_inches=0.05)
+        fig.savefig(path, bbox_inches="tight", pad_inches=0.05, dpi=240)
         paths.append(path)
     plt.close(fig)
 
     record = {
-        "schema": "jog-appendix-eligibility-map-v1",
+        "schema": "jog-appendix-eligibility-map-v2",
         "status": "complete",
-        "addresses": "R-DET-25a (review_text.txt L266): figure explicitly showing the modeled region vs. the region used for metrics",
-        "source": "production_workflow/frozen_design/amundsen_input_support_grid_5km.npz (frozen; no new computation)",
-        "grid_cells_5km": {"inside_modeled_domain": n_inside, "excluded_from_metrics": n_excluded, "eligible": n_eligible},
+        "sources": {"mesh": str(mesh_path().name),
+                    "dataset": "canonical_master_dataset.csv.gz (x, y, common_eligible)"},
+        "pixels_450m": {"inside_modeled_domain": n_inside, "excluded_from_metrics": n_excluded,
+                        "eligible": n_eligible},
         "outputs": {path.name: sha256(path) for path in paths},
     }
     (out / f"{stem}_manifest.json").write_text(

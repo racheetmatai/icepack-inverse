@@ -1,4 +1,4 @@
-"""Strict verifier for a JOG production inference bundle."""
+"""Check the saved MLP checkpoints used for prediction."""
 
 from __future__ import annotations
 

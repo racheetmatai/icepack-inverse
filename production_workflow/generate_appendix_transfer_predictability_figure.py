@@ -8,6 +8,9 @@ analyze_transfer_predictability.py.
 
 Both panels share one fixed canvas and are saved without tight bounding
 boxes, so the two subfigures render at identical size.
+
+This is the AUC version of the figure; the paper uses the count version made
+by generate_appendix_transfer_counts_figure.py.
 """
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Plot corrected controlled-replacement median-control results; no solves."""
+"""Plot square velocity RMSE for the median controls (restricted replacement); no solves."""
 from pathlib import Path
 import argparse
 import hashlib

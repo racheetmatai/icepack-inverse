@@ -1,4 +1,4 @@
-"""Create frozen aggregate tables and a complete median-field spatial atlas."""
+"""Create summary tables and maps of the median-control results."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ import pandas as pd
 
 CONFIGS = [f"CFG{i:02d}" for i in range(1, 7)]
 CONFIG_LABELS = {
-    "CFG01": "All ice", "CFG02": "Selected ice", "CFG03": "All geophysical",
-    "CFG04": "Selected geophysical", "CFG05": "Selected combined",
+    "CFG01": "All ice", "CFG02": "Selected ice", "CFG03": "All subglacial",
+    "CFG04": "Selected subglacial", "CFG05": "Selected combined",
     "CFG06": "Selected combined + alignment",
 }
 CONTRASTS = [("CFG02", "CFG01"), ("CFG04", "CFG03"),
@@ -71,13 +71,10 @@ def tables(root: Path, output: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         vector_RMSE_q75_m_per_a=("vector_rmse_m_per_a", lambda x: x.quantile(.75)),
         P_exp_median_percent=("P_exp_percent", "median"),
     ).reset_index()
-    # squares_better_than_uniform is computed directly from the RMSE
-    # comparison (the active criterion; equivalent to relative_rmse < 1), not
-    # from P_exp_percent > 0. Both are mathematically equivalent (P_exp is a
-    # monotonic rescaling of the same MSE ratio), but the retired P_exp
-    # metric must not be the literal derivation of an actively reported
-    # statistic. See production_workflow/controlled_replacement/checks.py and
-    # evaluate_controlled_campaign.py for the same criterion used elsewhere.
+    # squares_better_than_uniform counts squares with relative_rmse < 1,
+    # computed directly from the RMSE comparison. P_exp_percent > 0 is
+    # equivalent but is not reported in the paper. The same criterion is used
+    # in controlled_replacement/checks.py and evaluate_controlled_campaign.py.
     better_than_uniform = (
         squares.assign(better=squares["vector_rmse_m_per_a"] < squares["uniform_vector_rmse_m_per_a"])
         .groupby("configuration")["better"].sum().astype(int)

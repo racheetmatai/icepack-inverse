@@ -1,6 +1,6 @@
-"""Generate the PIG CFG02 diagnostic panels and their evidence audit.
+"""Draw the PIG CFG02 panels and write the numbers behind them.
 
-The manuscript is not modified. Each panel is exported as a separate vector
+Each panel is exported as a separate vector
 PDF so LaTeX can place the subfigure letter and title below while preserving
 the panel's native aspect ratio.
 """

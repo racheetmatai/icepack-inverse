@@ -219,7 +219,7 @@ def main() -> None:
         args.output / "footprint_replacement_before_after.csv", index=False
     )
 
-    # Reproduce the current accepted whole-population values before accepting any correction.
+    # First reproduce the previously reported all-row values, then compare the corrected ones.
     accepted = pd.read_csv(args.accepted_metrics)
     accepted = accepted.loc[
         accepted["support_stratum"].eq("all")

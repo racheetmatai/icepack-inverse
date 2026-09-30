@@ -1,4 +1,4 @@
-"""Evaluate the already-frozen L2 model once on the sealed calibration test rows."""
+"""Evaluate the selected L2 model once on the calibration test rows, which were not used for selection."""
 
 from __future__ import annotations
 
@@ -53,9 +53,9 @@ def main() -> None:
     x = frame.loc[test, features].to_numpy(np.float64); reference = frame.loc[test, FROZEN_POLICY["target"]].to_numpy(np.float64)
     input_scaler = joblib.load(run / "input_scaler.joblib"); target_scaler = joblib.load(run / "target_scaler.joblib")
     import tensorflow as tf
-    # Evaluate the exact minimum-val_data_mse checkpoint. In runs produced
-    # before the exact-checkpoint reload fix, restored_best_model.keras can be
-    # the EarlyStopping min_delta epoch rather than the exact minimum epoch.
+    # Evaluate the checkpoint at the exact minimum of val_data_mse.
+    # restored_best_model.keras can instead hold the epoch chosen by
+    # EarlyStopping's min_delta rule, which may differ from that minimum.
     model = tf.keras.models.load_model(run / "best_model.keras")
     scaled_x = input_scaler.transform(x).astype(np.float32)
     scaled_reference = target_scaler.transform(reference.reshape(-1, 1)).reshape(-1)

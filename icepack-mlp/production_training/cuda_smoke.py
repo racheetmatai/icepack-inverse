@@ -1,4 +1,4 @@
-"""Bounded end-to-end CUDA rehearsal of one registered production job."""
+"""Short end-to-end GPU test of one production training job."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ def run(args: argparse.Namespace) -> Path:
     ))
     verification = verify_training_run(run_dir)
 
-    # Reload the accepted split and saved scalers independently.
+    # Reload the saved split and scalers from disk.
     prepared = load_prepared_job(args.dataset_dir, args.split_bundle, args.job_id, full_hash_check=True)
     input_scaler = joblib.load(run_dir / "input_scaler.joblib")
     target_scaler = joblib.load(run_dir / "target_scaler.joblib")

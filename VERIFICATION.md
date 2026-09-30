@@ -1,5 +1,136 @@
 # Release verification
 
+## Submitted manuscript and paper checks - 30 September 2026
+
+- `manuscript/manuscript.tex` and `manuscript/bibliography.bib` are the
+  submitted versions; `manuscript/manuscript.pdf` was rebuilt from them (53
+  pages). Figures are unchanged from 29 September.
+- New `production_workflow/paper_checks/` holds the read-only checks behind
+  four statements in the text. Each reads the unpacked Zenodo artifacts only;
+  nothing is retrained or re-simulated. Results of the runs on 30 September
+  are listed below each script's name.
+  - `regional_validation_c.py`: REG_INTER CFG04-06 median validation C RMSE /
+    R_C^2 0.317/0.764, 0.021/0.999, 0.020/0.999, as in the appendix.
+  - `check_blend_bound.py`: largest change in footprint C RMSE 0.0038 (SQ01
+    CFG04); 0 affected rows in all 60 central squares; PIG unchanged at four
+    decimals. Supports "at most 0.004".
+  - `check_speed_classes.py`: in the complete SQ06 footprint, flow of
+    100-1000 m/a carries 90.8% of the CFG04 squared velocity error (62.1% +
+    28.7%) and flow below 100 m/a carries 3.6%; CFG02 has the smaller C error
+    in the faster classes and CFG04 in the slowest. The C RMSEs printed here
+    (0.435 and 0.437) use the controls applied in the simulations; the
+    manuscript's 0.435 and 0.440 use the median predictions, as in the C tables.
+  - `training_density_sensitivity.py`: identical to the 28 September run; the
+    k = 20 baseline reproduces the published percentiles (largest difference
+    1e-14); median within-square Spearman correlations stay between -0.131
+    and 0.092 in every variant (PIG 0.014-0.089).
+- Hash-pinned sources restored. The 28 September comment and docstring
+  rewrite had changed 33 Python files whose committed SHA-256 is recorded in
+  archived manifests (run manifests of the 660 training runs, L-curve and
+  dataset provenance, diagnostic manifests); `verify_lcurve_selection_bundle.py`
+  enforces one of them (`lcurve_selection.py`), so any script that loads the
+  definitive inversion stopped with "Verifier is not using the frozen selector
+  source". These 33 files are now byte-identical to the previous release.
+  31 of the rewrites were comment-only; the other two only renamed plot
+  labels ("geophysical" to "subglacial") in diagnostics not used in the paper,
+  whose archived outputs keep the old labels. The only remaining tracked file
+  whose previous hash appears in an archived manifest is Figure 5, which was
+  regenerated on purpose (29 September entry below).
+- Tested in a clean copy in the Icepack container after these changes: 8/8
+  package tests and 66/66 workflow tests pass; `scripts/reproduce_paper.py`
+  passes (22 outputs present; Tables 1-3 equal the archived values), and 21
+  of 22 figures render identically to `manuscript/figures`, the remaining
+  PIG panel (figure6a) differing only by anti-aliasing (mean 0.14 of 255).
+
+## Predictor-group name and paper title - 29 September 2026
+
+- The paper now calls the second predictor group "subglacial-product" instead
+  of "geophysical-product", and its title is "Do ice and subglacial
+  observables determine basal friction? A point-wise test in the Amundsen Sea
+  sector". Visible labels in seven scripts changed accordingly (for example
+  "Selected subglacial" for CFG04 in Table 2 and the Figure 5 column title).
+  Identifiers such as `CFG04_best_geophysical` are unchanged because they name
+  files and keys in the archived artifacts; the README explains this.
+- `reproduce_paper.py` compares Tables 1-3 with the archived tables without
+  the `configuration_label` column, which holds the earlier names in the
+  archive; every other column, including the configuration IDs, is compared.
+- Figure 5 in `manuscript/figures/results/` was regenerated; only the CFG04
+  column title differs from the previous file.
+- Figure 1 (`generate_method_overview.py`, a drawing with no data) was
+  reworded at the author's request: step 3 now says "Use reference C as the
+  target outside the withheld region. Train separate MLPs for each test.";
+  step 4 is "Simulate velocity with predicted C" ("Replace reference C with
+  predicted C inside the withheld region. Run one Icepack simulation with this
+  C field."); step 5 says "Compare modeled with observed velocity. Repeat with
+  uniform C and with reference C." The regenerated
+  `manuscript/figures/appendix/method_overview.pdf` replaces the old one.
+- Study-region panels (`figure1a_observed_speed_and_regions`,
+  `figure1b_holdout_geometry`, drawn by `figure1()` in
+  `generate_revision_figures_and_tables.py`): both are now saved at the same
+  height (6.2 x 5.6 in and 4.9 x 5.6 in, no tight cropping) so that, placed
+  side by side at equal height (subfigure widths 0.545 and 0.43 of the text
+  width), they print at the same scale; the legend font is 10.5 pt (was 9) and
+  the dashed-line legend entry reads "Withheld region". Data and drawing are
+  otherwise unchanged. Not yet re-run through `reproduce_paper.py`.
+- Figure-style pass for the reviewer's figure comment (30 September): Figure 6
+  legend reads "50 km evaluation square" / "130 km withheld region"
+  (`generate_corrected_figure5.py`); Figure 13 y-label and reference line use
+  "first rule" (`generate_appendix_transfer_counts_figure.py`); larger cell
+  values in Figure 5 (`generate_revision_figures_and_tables.py`,
+  `generate_corrected_figure4b.py`); L-curve point labels 10 pt, labelled
+  ticks at 1-2-3-5 on both log axes, rightmost label placed left
+  (`extend_lcurve_figure.py`); eligibility-map legend 11 pt
+  (`generate_appendix_eligibility_map.py`); reference-C distribution panels
+  drawn on an 11 x 5.4 in canvas with larger text (`assemble_c_target_panels.py`).
+  Data are unchanged. Regenerated from the archived artifacts; not yet re-run
+  through the full `reproduce_paper.py`.
+- Approved by the author (30 September): Figure 5a support map uses cividis
+  (viridis is kept for speed only); the ML-minus-uniform local error
+  difference in Figures 6 (rows e, f) and 7c uses PuOr_r (red-blue is kept for
+  the C difference). Figure 3c uses the same velocity-error colour limits as
+  Figures 6 and 7 (1-2000 m/a, log) and the label "Vector velocity error";
+  Figure 3b is clipped to the same map extent as panels a and c
+  (`generate_revision_figures_and_tables.py`,
+  `controlled_replacement/generate_corrected_inversion_panels.py`,
+  `generate_corrected_figure5.py`, `generate_corrected_figure6_velocity_panels.py`).
+- Tested in a clean copy of the repository in the container: 8/8 package
+  tests, 66/66 workflow tests, and a full `reproduce_paper.py` run from the
+  archived artifacts passed (21/21 figures present, 3 tables match; 6 min 41 s).
+  The reproduced Figure 5 matches the new file.
+
+## Code comments, two figure scripts, and test settings - 28 September 2026
+
+- Comments and docstrings in 96 Python files now describe what each script
+  does in the paper's terms (inversion-reference C, misfit and roughness,
+  restricted replacement), without internal stage names or revision history.
+  A syntax-tree comparison with docstrings removed confirms that the code of
+  all 96 files is unchanged. Content corrections: the grounding ramp is
+  described as continuous but not smooth, scaling the friction coefficient
+  C0 * phi * exp(C); C is described as the dimensionless basal-friction
+  control; the `lcar` and `δ` parameters are described correctly; observation
+  pixels are described as having equal projected area.
+- `extend_lcurve_figure.py` draws the r_C = 0.005 run as a regular point and
+  r_C = 0.05 as an unconverged point. The r_C = 0.005 run converged (final
+  gradient norm 1.7e-4, below 1e-3) with the same scientific source code as the
+  selection-window runs; it was stopped by a fixed iteration count rather than
+  the block-wise rule. Recomputed with the six converged points, the maximum
+  curvature is still at r_C = 0.014142, with the next-highest 7.1% lower.
+  `reproduce_paper.py` passes the r_C = 0.005 manifest from the archived
+  selection bundle and also copies a PDF version of the figure.
+- `generate_appendix_eligibility_map.py` colours the 450 m pixel centres inside
+  the model mesh using the saved dataset rows, instead of the 5 km design grid,
+  whose domain flag differed from the mesh near the Dotson ice front and around
+  islands. 94.6% of the 1,533,530 in-mesh pixels are eligible.
+- `pytest.ini` sets the import paths and turns off output capture. In a clean
+  clone, `python -m pytest tests` (8 passed) and
+  `python -m pytest production_workflow/tests` (66 passed) need no further
+  settings; the README gives the commands.
+- `manuscript/VERIFICATION_REPORT.md` no longer records a local folder path.
+- End to end: in the clean clone, `reproduce_paper.py` run on the deposited
+  archives (with the current archive 07) finished, all 21 expected figure
+  files were present, and the three regenerated tables match the archived
+  values.
+
 ## Transfer-predictability addition — 19 September 2026
 
 - New analysis for the appendix section "Predicting where transfer succeeds"

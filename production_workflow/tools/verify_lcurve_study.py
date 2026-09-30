@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independently verify a completed revised L-curve study evidence bundle."""
+"""Check a completed L-curve study folder."""
 
 from __future__ import annotations
 

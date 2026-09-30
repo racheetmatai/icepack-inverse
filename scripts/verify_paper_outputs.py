@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check that every frozen paper figure is present and non-empty."""
+"""Check that every paper figure is present and non-empty."""
 
 from __future__ import annotations
 

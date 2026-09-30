@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Named generator for manuscript Table 6 (validation C RMSE / R_C^2).
+"""Compute the validation-agreement table (validation C RMSE and R_C^2).
 
-Table 6 ("Validation agreement with the inversion-reference control") had no
-dedicated generator script; its values were only reproducible by manually
-reading each member's saved validation_predictions.csv.gz. This script
-aggregates those saved per-member files (no retraining, no new predictions)
-into exactly Table 6's numbers, closing that traceability gap.
+The table compares validation predictions with the inversion-reference
+control.  This script aggregates each member's saved
+validation_predictions.csv.gz; no retraining and no new predictions.
 
 Requires the CUDA training campaign's per-run validation predictions, e.g.
 from cuda_results/JOG_PRODUCTION_RESULTS_20260828/<audit-id>/runs/.

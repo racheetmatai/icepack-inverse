@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate only the affected PIG velocity panels from corrected fields."""
+"""Draw the PIG velocity panels from the exported map fields."""
 
 from __future__ import annotations
 
@@ -115,7 +115,7 @@ def draw(kind: str, x_edges: np.ndarray, y_edges: np.ndarray,
     elif kind == "difference":
         image = ax.imshow(
             np.ma.masked_invalid(grids["error_difference"]), origin="lower", extent=extent,
-            cmap="RdBu_r", norm=SymLogNorm(linthresh=10, linscale=1, vmin=-2000,
+            cmap="PuOr_r", norm=SymLogNorm(linthresh=10, linscale=1, vmin=-2000,
                                              vmax=2000, base=10), interpolation="bilinear",
             interpolation_stage="rgba", rasterized=True, zorder=2,
         )

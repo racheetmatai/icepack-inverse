@@ -93,11 +93,10 @@ def draw(kind: str, region: dict[str, np.ndarray], values: dict[str, np.ndarray]
     else:
         image = ax.imshow(
             array, origin="lower", extent=extent, cmap="inferno",
-            norm=LogNorm(vmin=max(0.5, np.nanpercentile(array.compressed(), 0.1)),
-                         vmax=np.nanmax(array.compressed())),
+            norm=LogNorm(vmin=1.0, vmax=2000.0),
         )
         stem = "figure3c_inversion_velocity_residual"
-        label = r"Vector error (m a$^{-1}$; log scale)"
+        label = r"Vector velocity error (m a$^{-1}$; log scale)"
     colorbar = fig.colorbar(image, ax=ax, shrink=0.88, pad=0.02)
     colorbar.set_label(label)
     base.map_axes(ax, region["outline"])

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-"""Rebuild the joint-support distance thresholds from the frozen 5 km grid.
+"""Recompute the joint-support distance thresholds from the 5 km support grid.
 
 The joint-support criterion used in square selection and in the reported
 per-configuration support is a distance cutoff in a transformed predictor
-space.  ``describe_heldout_distributions.py`` *consumes* those cutoffs from
-``frozen_design/five_region_partition_and_support.json``; this script is the
-missing producer, so that the construction can be verified independently.
+space.  ``describe_heldout_distributions.py`` reads those cutoffs from
+``frozen_design/five_region_partition_and_support.json``; this script
+recomputes them so that the construction can be checked.
 
 For one predictor set the construction is:
 
-1.  Take the predictor values on the frozen eligible 5 km sector grid.
+1.  Take the predictor values on the eligible 5 km sector grid.
 2.  Map each predictor's ranks to standard-normal quantiles
     (``QuantileTransformer``), then apply whitened PCA retaining at least
     99% of the variance.  This is the same transform as ``fit_reference`` in
@@ -23,7 +23,7 @@ For one predictor set the construction is:
 
 The script recomputes the threshold for the twelve-predictor selection screen
 and for each of the six predictor configurations, and checks every value
-against the frozen record.  It writes nothing into the frozen design and
+against the stored record.  It does not modify the stored design files and
 exits non-zero if any threshold fails to reproduce.
 
 This script reads inputs only.  It does not use velocity, the inversion
@@ -47,7 +47,7 @@ REFERENCE_QUANTILE = 95.0
 RELATIVE_TOLERANCE = 1e-9
 
 # Same configuration names and predictor lists as describe_heldout_distributions.py,
-# keyed by the identifiers used inside the frozen support record.
+# keyed by the identifiers used inside the stored support record.
 FEATURE_CONFIGURATIONS = {
     "1_all_ice": ["s", "h", "mag_s", "mag_h", "driving_stress", "surface_air_temp"],
     "2_best_ice": ["s", "h", "mag_s", "mag_h", "surface_air_temp"],

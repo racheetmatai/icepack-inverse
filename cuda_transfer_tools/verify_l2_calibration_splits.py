@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independently verify the frozen four-fit L2 calibration split bundle."""
+"""Check the four-fit L2 calibration split files."""
 
 from __future__ import annotations
 

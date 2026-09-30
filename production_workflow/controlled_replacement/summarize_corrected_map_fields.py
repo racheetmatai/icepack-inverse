@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarize corrected controlled-replacement map fields."""
+"""Summarize the exported map fields of the restricted-replacement simulations."""
 
 from __future__ import annotations
 
@@ -72,11 +72,11 @@ for configuration in ("CFG02", "CFG04"):
 summary = pd.DataFrame(rows)
 summary.to_csv(ROOT / "corrected_spatial_summary.csv", index=False)
 
-# Named generator for two manuscript items that previously had none: the
-# square-maps paragraph's three exceedance percentages (fraction of central-
-# square area where velocity error, and separately inversion-reference
-# error, exceeds INVERSION_CONTOUR_LEVEL_M_PER_A) and Table 2's Uniform C
-# row (median/IQR of uniform-C RMSE across the ten squares).
+# Two sets of numbers reported in the paper: the three exceedance percentages
+# in the square-maps paragraph (fraction of central-square area where velocity
+# error, and separately inversion-reference error, exceeds
+# INVERSION_CONTOUR_LEVEL_M_PER_A) and the Uniform C row of the primary
+# performance table (median/IQR of uniform-C RMSE across the ten squares).
 exceedance = {}
 for configuration in ("CFG02", "CFG04"):
     with np.load(MAPS / f"{configuration}_ten_square_controlled_fields.npz", allow_pickle=False) as data:

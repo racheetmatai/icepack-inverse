@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent structural/semantic verifier for Gate-2 diagnostics."""
+"""Check the held-out support and reference-C diagnostics."""
 
 from __future__ import annotations
 

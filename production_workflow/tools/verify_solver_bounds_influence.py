@@ -1,4 +1,4 @@
-"""Independent verifier for the Gate-4 solver/fallback/bounds influence audit."""
+"""Check the outputs of the solver-retry and C-bounds check."""
 
 from __future__ import annotations
 

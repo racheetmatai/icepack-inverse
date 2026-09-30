@@ -1,4 +1,4 @@
-"""Freeze one global L2 value from the four matched CFG06 calibration fits."""
+"""Select one global L2 value from the four matched CFG06 calibration fits."""
 
 from __future__ import annotations
 

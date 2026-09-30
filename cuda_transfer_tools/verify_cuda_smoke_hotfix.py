@@ -1,4 +1,4 @@
-"""Standard-library verifier for the JOG CUDA smoke hotfix package."""
+"""Verify the GPU smoke-test package using only the Python standard library."""
 
 from __future__ import annotations
 

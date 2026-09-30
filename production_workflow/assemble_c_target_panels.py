@@ -1,4 +1,4 @@
-"""Assemble final held-out C mosaics and inversion-target distributions."""
+"""Assemble the held-out C maps and the reference-C distributions."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ import pandas as pd
 CONFIG_LABELS = {
     "CFG01": "All ice",
     "CFG02": "Best ice",
-    "CFG03": "All geophysical",
-    "CFG04": "Best geophysical",
+    "CFG03": "All subglacial",
+    "CFG04": "Best subglacial",
     "CFG05": "Best combined",
     "CFG06": "Combined + alignment",
 }
@@ -211,7 +211,7 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
     regional_centers = (regional_edges[:-1] + regional_edges[1:]) / 2
     records = []
 
-    fig, axes = plt.subplots(2, 5, figsize=(15.4, 6.9), sharex=False, sharey=False)
+    fig, axes = plt.subplots(2, 5, figsize=(11.0, 5.4), sharex=False, sharey=False)
     for index, axis in enumerate(axes.flat, start=1):
         experiment = f"SQ{index:02d}"
         mask_path = splits / "population_masks" / f"{experiment}.npz"
@@ -242,14 +242,15 @@ def plot_target_distributions(dataset: Path, splits: Path, output: Path) -> tupl
                   label="Central 50 km square")
         axis.set_xlim(display_min, display_max)
         axis.set_ylim(bottom=0)
-        axis.set_title(experiment, fontsize=10)
+        axis.set_title(experiment, fontsize=11)
+        axis.tick_params(labelsize=10.5)
         axis.grid(alpha=.16)
-    for axis in axes[-1, :]: axis.set_xlabel("Inversion-reference C")
-    for axis in axes[:, 0]: axis.set_ylabel("Density")
+    for axis in axes[-1, :]: axis.set_xlabel("Inversion-reference C", fontsize=10.5)
+    for axis in axes[:, 0]: axis.set_ylabel("Density", fontsize=10.5)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     # No title in the artwork; the manuscript caption describes the figure.
     fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False,
-               bbox_to_anchor=(.5, .995))
+               bbox_to_anchor=(.5, .995), fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, .93))
     square_path = output / "square_target_distributions.png"
     fig.savefig(square_path, dpi=300, facecolor="white"); fig.savefig(square_path.with_suffix(".svg"))

@@ -1,4 +1,4 @@
-"""Compare rendered figure files with the frozen manuscript artwork."""
+"""Compare regenerated figures with the figures in the manuscript."""
 import argparse
 import json
 from pathlib import Path

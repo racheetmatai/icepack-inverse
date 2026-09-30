@@ -1,4 +1,4 @@
-"""Independent verifier for the complete 726-control Icepack campaign."""
+"""Check the outputs of all 726 Icepack forward solves."""
 
 from __future__ import annotations
 

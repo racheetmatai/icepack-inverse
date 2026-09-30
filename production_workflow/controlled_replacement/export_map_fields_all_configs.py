@@ -3,7 +3,7 @@
 
 Same computation as the archived export_corrected_map_fields.py, which
 hardcodes CONFIGS = ("CFG02", "CFG04"); this variant takes --configs and a
-separate --output so the archived map_fields/ and the frozen script are left
+separate --output so the archived map_fields/ and the original script are left
 untouched. Re-exporting CFG02/CFG04 here reproduces the archived arrays,
 which is used as a correctness check.
 

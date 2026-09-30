@@ -131,7 +131,7 @@ def main() -> None:
 
     # The observation population represents regular 450 m pixels.  Map each FE
     # cell barycentre to its nearest pixel centre and require that exact row ID
-    # to be in the frozen common-eligible population.
+    # to be in the common eligible population.
     x0 = float(frame.x.min()); y0 = float(frame.y.min()); spacing = 450.0
     sx = x0 + np.rint((centres[:, 0] - x0) / spacing) * spacing
     sy = y0 + np.rint((centres[:, 1] - y0) / spacing) * spacing

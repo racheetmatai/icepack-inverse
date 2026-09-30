@@ -55,12 +55,12 @@ def draw(label: str, folds: pd.DataFrame, pig: pd.DataFrame, show_legend: bool) 
             ax.scatter([i + 0.36], [margin], marker="*", s=130, color="0.1",
                        edgecolor="white", linewidths=0.6, zorder=5)
     ax.axhline(0.0, color="0.45", lw=1.0, ls="--", zorder=1)
-    ax.text(-0.5, 2.0, "Same as guessing the more common outcome",
+    ax.text(-0.5, 2.0, "Same as the first rule",
             va="bottom", ha="left", fontsize=8.5, color="0.35")
     ax.set_xticks(range(len(FEATURE_ORDER)), FEATURE_LABELS)
     ax.set_xlim(-0.55, 2.95)
     ax.set_ylim(-95, 30)
-    ax.set_ylabel("Correct labels minus the more common\noutcome (percentage points)")
+    ax.set_ylabel("Correct labels minus the first rule\n(percentage points)")
     ax.spines[["top", "right"]].set_visible(False)
     if show_legend:
         handles = [Line2D([], [], marker="o", ls="", color=c, markersize=5, label=k)

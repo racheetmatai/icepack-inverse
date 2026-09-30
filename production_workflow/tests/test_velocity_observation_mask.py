@@ -1,4 +1,4 @@
-"""Focused regressions for the production velocity-observation support."""
+"""Tests for selecting the velocity observations."""
 
 import unittest
 

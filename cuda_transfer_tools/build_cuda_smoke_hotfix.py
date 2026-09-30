@@ -1,4 +1,4 @@
-"""Build the small source-only exact-checkpoint CUDA smoke package."""
+"""Build the small source-only GPU smoke-test package that reloads the best checkpoint."""
 
 from __future__ import annotations
 

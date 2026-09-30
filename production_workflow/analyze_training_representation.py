@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Training-representation diagnostic for frozen JOG holdouts.
+"""Training-representation diagnostic for the spatial holdout experiments.
 
-This script reads the accepted dataset, splits, support transform definition,
-and forward-evaluation archives. It does not train a model or run Icepack.
+Reads the dataset, row splits, support transformation, and forward-simulation
+results. It does not train a model or run Icepack.
 """
 
 from __future__ import annotations
@@ -280,9 +280,9 @@ def load_velocity(args, experiment, config, query_ids):
 
 
 def load_support(args, eligible_row_ids_original_order, experiment, config, query_ids):
-    """Load frozen support categories by stable row ID.
+    """Load support categories by stable row ID.
 
-    The support archive stores integer positions in the canonical eligible-row
+    The support archive stores integer positions in the eligible-row
     order used by describe_heldout_distributions.py.  The training split and
     forward-evaluation tables are sorted by stable row ID, so positions cannot
     be transferred directly between them.
@@ -570,7 +570,7 @@ def run(args):
 
     make_figures(all_points, categories, output)
 
-    # Verification against authoritative full-population square metrics.
+    # Check against the square metrics computed on all rows.
     authoritative = pd.read_csv(args.forward_dir / "median_population_metrics.csv")
     checks = []
     for row in overall.loc[overall.experiment.str.startswith("SQ")].itertuples():

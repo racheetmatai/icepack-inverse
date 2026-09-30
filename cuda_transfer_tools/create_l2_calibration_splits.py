@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the frozen CFG06 L2 calibration population and 70/20/10 split."""
+"""Create the CFG06 L2 calibration population and its fixed 70/20/10 split."""
 
 from __future__ import annotations
 

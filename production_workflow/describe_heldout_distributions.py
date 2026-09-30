@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Frozen descriptive input-support and reference-C diagnostics.
+"""Input-support and reference-C diagnostics for the held-out regions.
 
-This program reads the accepted canonical master dataset.  It never changes
-the dataset, feature configurations, masks, or experiment locations.  Joint
-support retains the outcome-blind 5 km reference representation and cutoffs
-used to freeze the experiments; marginal intervals are calculated from each
-experiment's actual common-eligible development population.
+Reads the dataset and never changes it, the predictor configurations, the
+masks, or the experiment locations.  Joint support uses the 5 km reference
+grid and distance cutoffs fixed when the experiments were designed, before any
+results were examined; marginal intervals come from each experiment's eligible
+training and validation rows.
 """
 
 from __future__ import annotations

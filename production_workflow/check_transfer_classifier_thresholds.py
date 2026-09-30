@@ -2,7 +2,7 @@
 """Does the 0.5 cut-off explain the classifier's poor labelling?
 
 For every fold, three accuracies:
-  * at 0.5, scikit-learn's default and what the published run implies;
+  * at 0.5, scikit-learn's default and the value used in the main analysis;
   * at a threshold chosen on a held-out slice of the TRAINING squares, which
     is what a real user could do;
   * at the best possible threshold for the held-out square itself — an oracle

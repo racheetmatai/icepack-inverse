@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independently verify frozen row partitions and deterministic split bundle."""
+"""Check the row splits for every experiment."""
 
 from __future__ import annotations
 

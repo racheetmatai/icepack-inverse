@@ -1,8 +1,8 @@
-"""Evidence audit for the manuscript's spatial-patterns subsection.
+"""Summarize the numbers behind the paper's spatial-patterns subsection.
 
-The script does not edit manuscript sources. It joins the finalized forward,
-C-diagnostic, support, regional-partition, and footprint-error evidence for
-CFG02 and CFG04 and writes a compact machine-readable audit.
+Joins the forward-simulation, C-diagnostic, support, regional-partition, and
+footprint-error results for CFG02 and CFG04 and writes them to one
+machine-readable file.
 """
 
 from __future__ import annotations

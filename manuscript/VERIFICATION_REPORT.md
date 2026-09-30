@@ -62,9 +62,8 @@
 - The latest package has one unambiguous active root:
   `latex_revision/manuscript/igs2eannalsguide.tex`.
 - Its complete input order was resolved and flattened into `manuscript.tex`.
-- The original archive was no longer present in Downloads at final packaging;
-  the previously created faithful extraction at
-  `F:/Codex/JOG/tmp/latest_overleaf_20260907` was used.
+- The original archive was no longer available at final packaging; a
+  previously made, unmodified extraction of it was used.
 - An untouched-source build was attempted first. It exposed four non-portable
   Figure 5/6 paths in `pass1_results.tex`; the canonical package fixes those
   references without changing the source pass file.

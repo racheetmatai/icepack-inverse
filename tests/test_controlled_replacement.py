@@ -50,15 +50,12 @@ class ControlledReplacementChecks(unittest.TestCase):
         self.assertEqual(selected["value"].tolist(), [2])
 
     def test_evaluators_import_the_tested_relative_rmse(self) -> None:
-        """Guards against `relative_rmse` being silently re-duplicated.
+        """Check that the evaluation uses the tested checks.relative_rmse.
 
-        An earlier version of evaluate_controlled_campaign.py defined its own
-        copy of relative_rmse instead of importing checks.relative_rmse, so
-        this test (though passing) did not actually cover the function the
-        real evaluation used. evaluate_intercatchment.py and
-        compare_replacement_footprints.py both import relative_rmse from
-        evaluate_controlled_campaign, so fixing the one source fixes all
-        three.
+        evaluate_controlled_campaign.py must import relative_rmse from checks
+        rather than define its own copy. evaluate_intercatchment.py and
+        compare_replacement_footprints.py import it from
+        evaluate_controlled_campaign, so this covers all three scripts.
         """
         source = (ROOT / "production_workflow/controlled_replacement"
                   / "evaluate_controlled_campaign.py").read_text(encoding="utf-8")
